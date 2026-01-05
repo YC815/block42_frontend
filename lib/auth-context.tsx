@@ -17,7 +17,7 @@ interface AuthState {
   login: (username: string, password: string) => Promise<void>;
   register: (username: string, password: string) => Promise<User>;
   logout: () => void;
-  fetchCurrentUser: () => Promise<void>;
+  fetchCurrentUser: (tokenOverride?: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthState | null>(null);
@@ -26,6 +26,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [token, setToken] = useState<string | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+
+  const maskToken = (value: string | null) => {
+    if (!value) return null;
+    return `${value.slice(0, 8)}...${value.slice(-6)}`;
+  };
 
   // 初始化：從 localStorage 讀取 token
   useEffect(() => {
@@ -43,6 +48,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const login = async (username: string, password: string) => {
+    if (process.env.NODE_ENV === "development") {
+      console.log("[auth] login request", { username });
+    }
     const data = await apiClient<AuthResponse>({
       method: "POST",
       endpoint: "/api/v1/auth/login",
@@ -53,7 +61,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem("auth_token", data.access_token);
 
     // 登錄成功後獲取用戶資訊
-    await fetchCurrentUser();
+    if (process.env.NODE_ENV === "development") {
+      console.log("[auth] login response", {
+        token: maskToken(data.access_token),
+        tokenType: data.token_type,
+      });
+    }
+    await fetchCurrentUser(data.access_token);
   };
 
   const register = async (username: string, password: string): Promise<User> => {
@@ -71,13 +85,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     localStorage.removeItem("auth_token");
   };
 
-  const fetchCurrentUser = async () => {
+  const fetchCurrentUser = async (tokenOverride?: string) => {
     try {
+      if (process.env.NODE_ENV === "development") {
+        console.log("[auth] fetch current user", {
+          token: maskToken(tokenOverride || localStorage.getItem("auth_token")),
+        });
+      }
       const currentUser = await apiClient<User>({
         method: "GET",
         endpoint: "/api/v1/auth/users/me",
         requiresAuth: true,
+        tokenOverride,
       });
+      if (process.env.NODE_ENV === "development") {
+        console.log("[auth] current user response", currentUser);
+      }
       setUser(currentUser);
     } finally {
       setIsLoading(false);

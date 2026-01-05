@@ -1,6 +1,8 @@
 /**
  * Block42 Frontend - API 類型定義
- * 與後端 Pydantic models 對應的 TypeScript 接口
+ * 與後端 Pydantic models 完全對應的 TypeScript 接口
+ *
+ * 重要：此檔案已完全重寫以匹配後端架構
  */
 
 // ==================== User 相關類型 ====================
@@ -9,7 +11,6 @@ export interface User {
   id: number;
   username: string;
   is_superuser: boolean;
-  created_at: string;
 }
 
 export interface UserRegister {
@@ -29,111 +30,184 @@ export interface AuthResponse {
 
 // ==================== Level 相關類型 ====================
 
-export type LevelStatus = "DRAFT" | "PENDING" | "PUBLISHED" | "REJECTED";
+/**
+ * Level 狀態（後端使用小寫）
+ */
+export type LevelStatus = 'draft' | 'pending' | 'published' | 'rejected';
 
+/**
+ * 公開 Level 資料（對應 LevelOut）
+ */
 export interface Level {
   id: string; // NanoID (12 chars)
   title: string;
-  status: LevelStatus;
   author_id: number;
+  status: LevelStatus;
   is_official: boolean;
-  official_order: number | null;
-  map_data: MapData;
+  official_order: number;
+  map: MapData;
   config: LevelConfig;
-  solution: LevelSolution | null;
-  metadata: LevelMetadata;
   created_at: string;
   updated_at: string;
 }
 
+/**
+ * 詳細 Level 資料（Designer/Admin，可含 solution）
+ */
+export interface LevelDetail extends Level {
+  solution: Solution | null;
+}
+
+/**
+ * 簡化的列表項目（用於列表顯示）
+ */
+export interface LevelListItem {
+  id: string;
+  title: string;
+  author_id: number;
+  status: LevelStatus;
+  is_official: boolean;
+  created_at: string;
+}
+
 // ==================== JSONB 資料結構 ====================
 
+/**
+ * 地圖資料結構
+ *
+ * 重要變更：
+ * - 移除 width, height（後端不使用）
+ * - start 增加 dir 欄位
+ * - stars 移除 color 欄位
+ * - tiles.type 改為 tiles.color
+ */
 export interface MapData {
-  width: number;
-  height: number;
   start: {
     x: number;
     y: number;
+    dir: 0 | 1 | 2 | 3; // 0:上, 1:右, 2:下, 3:左
   };
   stars: Array<{
     x: number;
     y: number;
-    color: string;
   }>;
   tiles: Array<{
     x: number;
     y: number;
-    type: string;
+    color: 'R' | 'G' | 'B';
   }>;
 }
 
+/**
+ * 關卡配置
+ *
+ * 重要變更：
+ * - 扁平化結構（移除 slots 嵌套）
+ * - available_commands 改為 tools 物件
+ */
 export interface LevelConfig {
-  slots: {
-    f0: number;
-    f1: number;
-    f2: number;
+  f0: number; // 0-20
+  f1: number; // 0-20
+  f2: number; // 0-20
+  tools: {
+    paint_red: boolean;
+    paint_green: boolean;
+    paint_blue: boolean;
   };
-  available_commands: string[];
 }
 
-export interface LevelSolution {
-  commands: string[];
-}
-
-export interface LevelMetadata {
-  reject_reason?: string;
+/**
+ * 解答資料
+ *
+ * 重要變更：
+ * - 分離為 commands_f0, commands_f1, commands_f2
+ * - 增加 steps_count 欄位
+ */
+export interface Solution {
+  commands_f0: string[];
+  commands_f1: string[];
+  commands_f2: string[];
+  steps_count: number;
 }
 
 // ==================== API Request/Response 類型 ====================
 
+/**
+ * 建立關卡請求
+ */
 export interface LevelCreate {
   title: string;
-  map_data: MapData;
+  map: MapData;
   config: LevelConfig;
 }
 
+/**
+ * 更新關卡請求
+ */
 export interface LevelUpdate {
-  title?: string;
-  map_data?: MapData;
-  config?: LevelConfig;
+  title: string;
+  map: MapData;
+  config: LevelConfig;
 }
 
+/**
+ * 發布關卡請求
+ */
 export interface LevelPublish {
-  solution: LevelSolution;
-  as_official?: boolean;
-  official_order?: number;
+  solution: Solution;
+  as_official?: boolean; // 管理員專用
+  official_order?: number; // 管理員專用
 }
 
+/**
+ * 審核通過請求
+ */
 export interface LevelApprove {
   as_official?: boolean;
   official_order?: number;
 }
 
+/**
+ * 駁回關卡請求
+ */
 export interface LevelReject {
   reason: string;
 }
 
-// 簡化的列表項目（用於列表顯示）
-export interface LevelListItem {
-  id: string;
-  title: string;
-  status: LevelStatus;
-  author_id: number;
-  is_official: boolean;
-  created_at: string;
+// ==================== 遊戲引擎類型（前端特有）====================
+
+/**
+ * 方向常數（與後端 dir 對應）
+ */
+export enum Direction {
+  UP = 0,
+  RIGHT = 1,
+  DOWN = 2,
+  LEFT = 3,
 }
 
-// ==================== API 回應統一格式 ====================
+/**
+ * 顏色常數
+ */
+export type TileColor = 'R' | 'G' | 'B';
 
-export interface ApiResponse<T = unknown> {
-  status: number;
-  data?: T;
-  error?: string;
-}
+/**
+ * 命令類型（前端遊戲引擎使用）
+ */
+export type CommandType =
+  | 'move'
+  | 'turn_left'
+  | 'turn_right'
+  | 'paint_red'
+  | 'paint_green'
+  | 'paint_blue'
+  | 'f1'
+  | 'f2';
 
-// ==================== 測試數據類型 ====================
-
-export interface TestAccount {
-  username: string;
-  password: string;
+/**
+ * 座標類型（輔助類型）
+ */
+export interface Coordinate {
+  x: number;
+  y: number;
 }

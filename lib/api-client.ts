@@ -11,6 +11,7 @@ interface ApiOptions {
   endpoint: string;
   body?: unknown;
   requiresAuth?: boolean;
+  tokenOverride?: string;
 }
 
 /**
@@ -21,7 +22,7 @@ interface ApiOptions {
  * @throws Error - 當請求失敗時拋出錯誤
  */
 export async function apiClient<T>(options: ApiOptions): Promise<T> {
-  const { method, endpoint, body, requiresAuth = false } = options;
+  const { method, endpoint, body, requiresAuth = false, tokenOverride } = options;
 
   // 1. 構建 headers
   const headers: HeadersInit = {
@@ -29,11 +30,10 @@ export async function apiClient<T>(options: ApiOptions): Promise<T> {
   };
 
   // 2. 如果需要認證，從 localStorage 讀取 token
-  if (requiresAuth) {
-    const token = localStorage.getItem("auth_token");
-    if (token) {
-      headers["Authorization"] = `Bearer ${token}`;
-    }
+  const resolvedToken =
+    tokenOverride || (requiresAuth ? localStorage.getItem("auth_token") : null);
+  if (resolvedToken) {
+    headers["Authorization"] = `Bearer ${resolvedToken}`;
   }
 
   // 3. 構建完整 URL
@@ -51,11 +51,15 @@ export async function apiClient<T>(options: ApiOptions): Promise<T> {
     if (!response.ok) {
       // 嘗試解析錯誤訊息
       let errorMessage = `HTTP ${response.status}`;
+      let errorData: unknown = null;
       try {
-        const errorData = await response.json();
+        errorData = await response.json();
         errorMessage = errorData.detail || errorData.message || errorMessage;
       } catch {
         // JSON 解析失敗，使用預設錯誤訊息
+      }
+      if (process.env.NODE_ENV === "development") {
+        console.warn("[api]", method, url, "->", response.status, errorData);
       }
       throw new Error(errorMessage);
     }
