@@ -131,9 +131,10 @@ export function TutorialTour({ steps, open, onClose }: TutorialTourProps) {
 
   useEffect(() => {
     if (!open || !step?.selector) return;
+    const selector = step.selector;
     const handler = (event: Event) => {
       const target = event.target as HTMLElement | null;
-      if (target && target.closest(step.selector)) {
+      if (target && target.closest(selector)) {
         goNext();
       }
     };
