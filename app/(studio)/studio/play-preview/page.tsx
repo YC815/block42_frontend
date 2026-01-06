@@ -96,26 +96,26 @@ export default function PlayPreviewPage() {
   return (
     <div className="h-[calc(100vh-4rem)] overflow-hidden bg-[radial-gradient(circle_at_top,rgba(56,189,248,0.18),transparent_45%),radial-gradient(circle_at_20%_20%,rgba(250,204,21,0.18),transparent_40%),linear-gradient(180deg,#f8fafc,#e2e8f0)]">
       <div className="relative mx-auto flex h-full max-w-[1400px] flex-col gap-3 px-6 py-4">
-        {game.didSucceed && (
-          <GameResultOverlay
-            title="通關完成"
-            description="已成功收集所有星星。"
-            tone="success"
-            secondaryAction={
-              <button
-                type="button"
-                onClick={game.reset}
-                className="rounded-full border border-slate-200 bg-white px-5 py-2 text-sm font-semibold text-slate-600 shadow-sm transition hover:border-slate-300"
-              >
-                再試一次
-              </button>
-            }
-          />
-        )}
         <div className="flex min-h-0 flex-1 flex-col gap-3">
           <div className="flex min-h-0 flex-[3] flex-col gap-3">
             <div className="flex min-h-0 flex-1 rounded-[28px] border border-slate-200/80 bg-white/85 p-4 shadow-[0_16px_40px_-32px_rgba(15,23,42,0.5)] backdrop-blur">
               <div className="relative flex min-h-0 flex-1 items-stretch">
+                {game.didSucceed && (
+                  <GameResultOverlay
+                    title="通關完成"
+                    description="已成功收集所有星星。"
+                    tone="success"
+                    secondaryAction={
+                      <button
+                        type="button"
+                        onClick={game.reset}
+                        className="rounded-full border border-slate-200 bg-white px-5 py-2 text-sm font-semibold text-slate-600 shadow-sm transition hover:border-slate-300"
+                      >
+                        再試一次
+                      </button>
+                    }
+                  />
+                )}
                 <GameCanvas
                   mapData={payload.map}
                   state={currentState}
@@ -141,14 +141,14 @@ export default function PlayPreviewPage() {
 
           <div className="flex min-h-0 flex-[2] gap-3">
             <div className="w-[clamp(180px,22vw,240px)] shrink-0">
-              <CommandToolbox
-                config={payload.config}
-                activeCommand={game.selectedSlotState?.type ?? null}
-                activeCondition={game.selectedSlotState?.condition ?? null}
-                disabled={!game.selectedSlot}
-                onSelectCommand={game.applyCommand}
-                onSelectCondition={game.applyCondition}
-              />
+                <CommandToolbox
+                  config={payload.config}
+                  activeCommand={game.selectedSlotState?.type ?? null}
+                  activeCondition={game.selectedSlotState?.condition ?? null}
+                  disabled={!game.selectedSlot || game.isEditingLocked}
+                  onSelectCommand={game.applyCommand}
+                  onSelectCondition={game.applyCondition}
+                />
             </div>
             <div className="flex min-h-0 flex-1 flex-col gap-2">
               <ProgrammingWorkspace
@@ -157,6 +157,7 @@ export default function PlayPreviewPage() {
                 selectedSlot={game.selectedSlot}
                 onSelectSlot={game.selectSlot}
                 onClearTrack={game.clearTrack}
+                disabled={game.isEditingLocked}
               />
               {game.execution?.finalState.status === "failure" && (
                 <div className="rounded-2xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">

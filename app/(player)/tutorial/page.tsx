@@ -418,24 +418,6 @@ function InteractivePane({ level, levelNumber, totalLevels, onComplete, onNextLe
   return (
     <div className="grid gap-4 lg:grid-cols-[1.55fr_0.9fr]">
       <div className="relative flex min-h-[600px] flex-col gap-3 rounded-[28px] border border-slate-200/80 bg-white/80 p-4 shadow-[0_18px_48px_-32px_rgba(15,23,42,0.45)] backdrop-blur">
-        {game.didSucceed && (
-          <GameResultOverlay
-            title="通關完成"
-            description="這一關可以重播重練，或直接跳到下一關。"
-            tone="success"
-            primaryAction={onNextLevel ? (
-              <Button onClick={onNextLevel}>下一關</Button>
-            ) : (
-              <Button onClick={handleReset}>再跑一次</Button>
-            )}
-            secondaryAction={
-              <Button variant="outline" onClick={handleReset}>
-                重置本關
-              </Button>
-            }
-          />
-        )}
-
         <div className="flex items-center justify-between rounded-2xl border border-slate-200/80 bg-white/90 px-4 py-3">
           <div>
             <div className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">
@@ -454,6 +436,23 @@ function InteractivePane({ level, levelNumber, totalLevels, onComplete, onNextLe
           <div className="flex min-h-0 flex-[3] flex-col gap-3">
             <div className="flex min-h-0 flex-1 rounded-[28px] border border-slate-200/80 bg-white/85 p-4 shadow-[0_16px_40px_-32px_rgba(15,23,42,0.5)] backdrop-blur">
               <div className="relative flex min-h-0 flex-1 items-stretch">
+                {game.didSucceed && (
+                  <GameResultOverlay
+                    title="通關完成"
+                    description="這一關可以重播重練，或直接跳到下一關。"
+                    tone="success"
+                    primaryAction={onNextLevel ? (
+                      <Button onClick={onNextLevel}>下一關</Button>
+                    ) : (
+                      <Button onClick={handleReset}>再跑一次</Button>
+                    )}
+                    secondaryAction={
+                      <Button variant="outline" onClick={handleReset}>
+                        重置本關
+                      </Button>
+                    }
+                  />
+                )}
                 <GameCanvas mapData={level.map} state={currentState} fitToContainer />
                 <div className="pointer-events-none absolute inset-0 rounded-[24px] ring-1 ring-slate-900/10" />
               </div>
@@ -479,7 +478,7 @@ function InteractivePane({ level, levelNumber, totalLevels, onComplete, onNextLe
                 config={level.config}
                 activeCommand={game.selectedSlotState?.type ?? null}
                 activeCondition={game.selectedSlotState?.condition ?? null}
-                disabled={!game.selectedSlot}
+                disabled={!game.selectedSlot || game.isEditingLocked}
                 onSelectCommand={game.applyCommand}
                 onSelectCondition={game.applyCondition}
               />
@@ -491,6 +490,7 @@ function InteractivePane({ level, levelNumber, totalLevels, onComplete, onNextLe
                 selectedSlot={game.selectedSlot}
                 onSelectSlot={game.selectSlot}
                 onClearTrack={game.clearTrack}
+                disabled={game.isEditingLocked}
               />
               {game.execution?.finalState.status === "failure" && (
                 <div className="rounded-2xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">

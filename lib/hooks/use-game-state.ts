@@ -17,7 +17,9 @@ import {
 import { serializeCommands } from "@/lib/game-engine/commands";
 
 const DEFAULT_SPEED = 1;
-const SPEED_UNIT_MS = 700;
+const SPEED_UNIT_MS = 100;
+const MIN_STEP_MS = 20;
+const MIN_RUN_DELAY_MS = 100;
 
 export type TrackKey = "f0" | "f1" | "f2";
 
@@ -136,8 +138,10 @@ export function useGameState({
   const [isRunning, setIsRunning] = useState(false);
   const [speed, setSpeed] = useState(DEFAULT_SPEED);
   const [stepIndex, setStepIndex] = useState(0);
+  const [minDelayElapsed, setMinDelayElapsed] = useState(true);
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const minDelayTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const initialState = useMemo(() => {
     return mapData ? createInitialState(mapData) : null;
@@ -162,17 +166,28 @@ export function useGameState({
 
   const didSucceed = useMemo(() => {
     if (!execution) return false;
-    return execution.success && isComplete;
-  }, [execution, isComplete]);
+    return execution.success && isComplete && minDelayElapsed;
+  }, [execution, isComplete, minDelayElapsed]);
+
+  const isEditingLocked = useMemo(() => {
+    if (isRunning) return true;
+    if (!execution) return false;
+    return !isComplete;
+  }, [execution, isRunning, isComplete]);
 
   const resetPlayback = useCallback(() => {
     if (timerRef.current) {
       clearInterval(timerRef.current);
       timerRef.current = null;
     }
+    if (minDelayTimerRef.current) {
+      clearTimeout(minDelayTimerRef.current);
+      minDelayTimerRef.current = null;
+    }
     setIsRunning(false);
     setExecution(null);
     setStepIndex(0);
+    setMinDelayElapsed(true);
   }, []);
 
   const ensureExecution = useCallback(() => {
@@ -187,6 +202,13 @@ export function useGameState({
     if (!mapData || !config) return;
     const result = ensureExecution();
     if (!result) return;
+    if (minDelayTimerRef.current) {
+      clearTimeout(minDelayTimerRef.current);
+    }
+    setMinDelayElapsed(false);
+    minDelayTimerRef.current = setTimeout(() => {
+      setMinDelayElapsed(true);
+    }, MIN_RUN_DELAY_MS);
     setIsRunning(true);
   }, [mapData, config, ensureExecution]);
 
@@ -230,7 +252,7 @@ export function useGameState({
   useEffect(() => {
     if (!isRunning || !execution) return;
 
-    const interval = Math.max(150, SPEED_UNIT_MS / speed);
+    const interval = Math.max(MIN_STEP_MS, SPEED_UNIT_MS / speed);
     timerRef.current = setInterval(() => {
       setStepIndex((prev) => {
         if (!execution) return prev;
@@ -255,11 +277,13 @@ export function useGameState({
   }, [isRunning, execution, speed]);
 
   const selectSlot = useCallback((track: TrackKey, index: number) => {
+    if (isEditingLocked) return;
     setSelectedSlot({ track, index });
-  }, []);
+  }, [isEditingLocked]);
 
   const applyCommand = useCallback(
     (type: CommandType) => {
+      if (isEditingLocked) return;
       if (!selectedSlot) return;
       setSlots((prev) => {
         const trackSlots = prev[selectedSlot.track] ?? [];
@@ -272,11 +296,12 @@ export function useGameState({
         return { ...prev, [selectedSlot.track]: nextTrack };
       });
     },
-    [selectedSlot]
+    [selectedSlot, isEditingLocked]
   );
 
   const applyCondition = useCallback(
     (color: TileColor | null) => {
+      if (isEditingLocked) return;
       if (!selectedSlot) return;
       setSlots((prev) => {
         const trackSlots = prev[selectedSlot.track] ?? [];
@@ -292,19 +317,21 @@ export function useGameState({
         return { ...prev, [selectedSlot.track]: nextTrack };
       });
     },
-    [selectedSlot]
+    [selectedSlot, isEditingLocked]
   );
 
   const clearTrack = useCallback((track: TrackKey) => {
+    if (isEditingLocked) return;
     setSlots((prev) => ({
       ...prev,
       [track]: prev[track].map(() => ({ ...EMPTY_SLOT })),
     }));
-  }, []);
+  }, [isEditingLocked]);
 
   const clearAll = useCallback(() => {
+    if (isEditingLocked) return;
     setSlots(createSlots(config));
-  }, [config]);
+  }, [config, isEditingLocked]);
 
   const serializeSolution = useCallback(() => {
     return {
@@ -337,6 +364,7 @@ export function useGameState({
     timelineIndex: stepIndex,
     isComplete,
     didSucceed,
+    isEditingLocked,
     isRunning,
     speed,
     setSpeed,

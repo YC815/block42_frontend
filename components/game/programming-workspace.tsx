@@ -12,6 +12,7 @@ interface ProgrammingWorkspaceProps {
   selectedSlot: SelectedSlot;
   onSelectSlot: (track: TrackKey, index: number) => void;
   onClearTrack: (track: TrackKey) => void;
+  disabled?: boolean;
 }
 
 const COMMAND_ICONS: Record<CommandType, { label: string; bg?: string }> = {
@@ -52,6 +53,7 @@ function TrackRow({
   selectedIndex,
   onSelectSlot,
   onClear,
+  disabled,
 }: {
   label: string;
   trackKey: TrackKey;
@@ -60,6 +62,7 @@ function TrackRow({
   selectedIndex: number | null;
   onSelectSlot: (index: number) => void;
   onClear: () => void;
+  disabled?: boolean;
 }) {
   return (
     <div className="flex items-center gap-3 rounded-xl border border-slate-200/80 bg-white px-3 py-2">
@@ -93,9 +96,11 @@ function TrackRow({
                   : command
                     ? "border-slate-200/80 bg-white text-slate-700"
                     : "border-slate-100 bg-slate-50 text-slate-400"
-              } ${isSelected ? "ring-2 ring-slate-900/70 ring-offset-1 ring-offset-white" : ""}`}
+              } ${
+                isSelected ? "ring-2 ring-slate-900/70 ring-offset-1 ring-offset-white" : ""
+              } ${disabled ? "cursor-not-allowed opacity-60" : "cursor-pointer"}`}
               data-tour-id={`workspace-${trackKey}-slot-${index}`}
-              onClick={() => onSelectSlot(index)}
+              onClick={disabled ? undefined : () => onSelectSlot(index)}
             >
               {command ? (
                 <span
@@ -117,8 +122,9 @@ function TrackRow({
       <button
         type="button"
         className={`rounded-full border px-2 py-1 text-[10px] font-semibold ${
-          "border-slate-200 text-slate-500"
+          disabled ? "border-slate-100 text-slate-300" : "border-slate-200 text-slate-500"
         }`}
+        disabled={disabled}
         onClick={onClear}
       >
         清空
@@ -133,6 +139,7 @@ export function ProgrammingWorkspace({
   selectedSlot,
   onSelectSlot,
   onClearTrack,
+  disabled = false,
 }: ProgrammingWorkspaceProps) {
   const tracks: Array<{
     key: "f0" | "f1" | "f2";
@@ -168,6 +175,7 @@ export function ProgrammingWorkspace({
             selectedIndex={selectedSlot?.track === track.key ? selectedSlot.index : null}
             onSelectSlot={(index) => onSelectSlot(track.key, index)}
             onClear={() => onClearTrack(track.key)}
+            disabled={disabled}
           />
         ))}
       </div>

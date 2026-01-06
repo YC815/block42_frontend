@@ -196,24 +196,24 @@ export default function PlayLevelPage() {
   return (
     <div className="h-[calc(100vh-4rem)] overflow-hidden bg-slate-50">
       <div className="relative mx-auto flex h-full max-w-[1400px] flex-col gap-3 px-6 py-4">
-        {game.didSucceed && (
-          <GameResultOverlay
-            title="通關完成"
-            description="已成功收集所有星星。"
-            tone="success"
-            primaryAction={nextButton ?? backButton}
-            secondaryAction={
-              <>
-                {nextButton ? backButton : null}
-                {retryButton}
-              </>
-            }
-          />
-        )}
         <div className="flex min-h-0 flex-1 flex-col gap-3">
           <div className="flex min-h-0 flex-[3] flex-col gap-3">
             <div className="flex min-h-0 flex-1 rounded-[28px] border border-slate-200/80 bg-white/85 p-4 shadow-[0_16px_40px_-32px_rgba(15,23,42,0.5)] backdrop-blur">
               <div className="relative flex min-h-0 flex-1 items-stretch">
+                {game.didSucceed && (
+                  <GameResultOverlay
+                    title="通關完成"
+                    description="已成功收集所有星星。"
+                    tone="success"
+                    primaryAction={nextButton ?? backButton}
+                    secondaryAction={
+                      <>
+                        {nextButton ? backButton : null}
+                        {retryButton}
+                      </>
+                    }
+                  />
+                )}
                 <GameCanvas
                   mapData={level.map}
                   state={currentState}
@@ -239,14 +239,14 @@ export default function PlayLevelPage() {
 
           <div className="flex min-h-0 flex-[2] gap-3">
             <div className="w-[clamp(180px,22vw,240px)] shrink-0">
-              <CommandToolbox
-                config={level.config}
-                activeCommand={game.selectedSlotState?.type ?? null}
-                activeCondition={game.selectedSlotState?.condition ?? null}
-                disabled={!game.selectedSlot}
-                onSelectCommand={game.applyCommand}
-                onSelectCondition={game.applyCondition}
-              />
+                <CommandToolbox
+                  config={level.config}
+                  activeCommand={game.selectedSlotState?.type ?? null}
+                  activeCondition={game.selectedSlotState?.condition ?? null}
+                  disabled={!game.selectedSlot || game.isEditingLocked}
+                  onSelectCommand={game.applyCommand}
+                  onSelectCondition={game.applyCondition}
+                />
             </div>
             <div className="flex min-h-0 flex-1 flex-col gap-2">
               <ProgrammingWorkspace
@@ -255,6 +255,7 @@ export default function PlayLevelPage() {
                 selectedSlot={game.selectedSlot}
                 onSelectSlot={game.selectSlot}
                 onClearTrack={game.clearTrack}
+                disabled={game.isEditingLocked}
               />
               {game.execution?.finalState.status === "failure" && (
                 <div className="rounded-2xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">

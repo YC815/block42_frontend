@@ -107,32 +107,6 @@ export function PlaytestModal({
 
       <div className="flex-1 overflow-hidden">
         <div className="relative mx-auto flex h-full max-w-[1400px] flex-col gap-4 px-6 py-4">
-          {showResult && game.didSucceed && (
-            <GameResultOverlay
-              title="通關完成"
-              description="已成功收集所有星星，可以直接提交發布。"
-              tone="success"
-              primaryAction={
-                <button
-                  type="button"
-                  onClick={onPublish}
-                  disabled={!canPublish}
-                  className="rounded-full bg-teal-500 px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-teal-400 disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  提交發布
-                </button>
-              }
-              secondaryAction={
-                <button
-                  type="button"
-                  onClick={() => setShowResult(false)}
-                  className="rounded-full border border-slate-200 bg-white px-5 py-2 text-sm font-semibold text-slate-600 shadow-sm transition hover:border-slate-300"
-                >
-                  繼續試玩
-                </button>
-              }
-            />
-          )}
           <div className="flex flex-wrap items-center justify-between gap-4 rounded-[22px] border border-white/70 bg-white/85 px-4 py-3 text-sm text-slate-600 shadow-[0_16px_40px_-32px_rgba(15,23,42,0.5)] backdrop-blur">
             <div className="flex items-center gap-3">
               <span className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">
@@ -165,6 +139,32 @@ export function PlaytestModal({
             <div className="flex min-h-0 flex-[3] flex-col gap-3">
               <div className="flex min-h-0 flex-1 rounded-[28px] border border-slate-200/80 bg-white/85 p-4 shadow-[0_16px_40px_-32px_rgba(15,23,42,0.5)] backdrop-blur">
                 <div className="relative flex min-h-0 flex-1 items-stretch">
+                  {showResult && game.didSucceed && (
+                    <GameResultOverlay
+                      title="通關完成"
+                      description="已成功收集所有星星，可以直接提交發布。"
+                      tone="success"
+                      primaryAction={
+                        <button
+                          type="button"
+                          onClick={onPublish}
+                          disabled={!canPublish}
+                          className="rounded-full bg-teal-500 px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-teal-400 disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                          提交發布
+                        </button>
+                      }
+                      secondaryAction={
+                        <button
+                          type="button"
+                          onClick={() => setShowResult(false)}
+                          className="rounded-full border border-slate-200 bg-white px-5 py-2 text-sm font-semibold text-slate-600 shadow-sm transition hover:border-slate-300"
+                        >
+                          繼續試玩
+                        </button>
+                      }
+                    />
+                  )}
                   <GameCanvas
                     mapData={mapData}
                     state={currentState}
@@ -194,7 +194,7 @@ export function PlaytestModal({
                   config={config}
                   activeCommand={game.selectedSlotState?.type ?? null}
                   activeCondition={game.selectedSlotState?.condition ?? null}
-                  disabled={!game.selectedSlot}
+                  disabled={!game.selectedSlot || game.isEditingLocked}
                   onSelectCommand={game.applyCommand}
                   onSelectCondition={game.applyCondition}
                 />
@@ -206,6 +206,7 @@ export function PlaytestModal({
                   selectedSlot={game.selectedSlot}
                   onSelectSlot={game.selectSlot}
                   onClearTrack={game.clearTrack}
+                  disabled={game.isEditingLocked}
                 />
                 {game.execution?.finalState.status === "failure" && (
                   <div className="rounded-2xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">

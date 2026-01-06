@@ -23,7 +23,6 @@ import {
   hasStar,
 } from "./types";
 
-const MAX_DEPTH = 100;
 const MAX_STEPS = 1000;
 
 type FunctionKey = "f0" | "f1" | "f2";
@@ -78,60 +77,50 @@ function cloneState(state: GameState): GameState {
  * 執行單一命令
  * @returns 新的遊戲狀態（不修改原狀態）
  */
+function meetsCondition(command: Command, state: GameState, mapData: MapData): boolean {
+  if (!command.condition) return true;
+  const currentColor = getTileColor(
+    state.position.x,
+    state.position.y,
+    mapData,
+    state.paintedTiles
+  );
+  return currentColor === command.condition;
+}
+
 function executeCommand(
   state: GameState,
   command: Command,
   mapData: MapData,
   config: LevelConfig
-): { next: GameState; executed: boolean } {
-  // 條件不符時直接略過，不消耗步數
-  if (command.condition) {
-    const currentColor = getTileColor(
-      state.position.x,
-      state.position.y,
-      mapData,
-      state.paintedTiles
-    );
-    if (currentColor !== command.condition) {
-      return { next: state, executed: false };
-    }
-  }
-
+): GameState {
   const newState = cloneState(state);
-  newState.steps++;
 
-  // 檢查條件修飾
   switch (command.type) {
     case "move":
-      return { next: executeMove(newState, mapData), executed: true };
+      return executeMove(newState, mapData);
 
     case "turn_left":
       newState.direction = ((newState.direction + 3) % 4) as 0 | 1 | 2 | 3;
-      return { next: newState, executed: true };
+      return newState;
 
     case "turn_right":
       newState.direction = ((newState.direction + 1) % 4) as 0 | 1 | 2 | 3;
-      return { next: newState, executed: true };
+      return newState;
 
     case "paint_red":
-      return { next: executePaint(newState, "R", config), executed: true };
+      return executePaint(newState, "R", config);
 
     case "paint_green":
-      return { next: executePaint(newState, "G", config), executed: true };
+      return executePaint(newState, "G", config);
 
     case "paint_blue":
-      return { next: executePaint(newState, "B", config), executed: true };
-
-    case "f0":
-    case "f1":
-    case "f2":
-      // 函數呼叫標記，由外層處理
-      return { next: newState, executed: false };
+      return executePaint(newState, "B", config);
 
     default:
       newState.status = "failure";
       newState.error = `未知命令: ${command.type}`;
-      return { next: newState, executed: true };
+      return newState;
   }
 }
 
@@ -203,106 +192,35 @@ export function executeCommands(
   const states: GameState[] = [];
   const queueSnapshots: Command[][] = [];
   let currentState = createInitialState(mapData);
-  const frames: Array<{ commands: Command[]; index: number }> = [
-    { commands: commands.f0, index: 0 },
-  ];
-
-  const snapshotQueue = () => {
-    const queue: Command[] = [];
-    for (let i = frames.length - 1; i >= 0; i -= 1) {
-      const frame = frames[i];
-      if (frame.index < frame.commands.length) {
-        queue.push(...frame.commands.slice(frame.index));
-      }
-    }
-    queueSnapshots.push(queue);
-  };
-
-  const replaceQueueSnapshot = () => {
-    const queue: Command[] = [];
-    for (let i = frames.length - 1; i >= 0; i -= 1) {
-      const frame = frames[i];
-      if (frame.index < frame.commands.length) {
-        queue.push(...frame.commands.slice(frame.index));
-      }
-    }
-    if (queueSnapshots.length === 0) {
-      queueSnapshots.push(queue);
-      return;
-    }
-    queueSnapshots[queueSnapshots.length - 1] = queue;
-  };
+  const totalStars = mapData.stars.length;
+  let queue = commands.f0.slice();
 
   const pushTimeline = () => {
     states.push(cloneState(currentState));
-    snapshotQueue();
+    queueSnapshots.push(queue.slice());
   };
 
   // 初始狀態與 queue
-  if (mapData.stars.length === 0) {
-    currentState.status = "success";
-    frames.length = 0;
-  }
   pushTimeline();
 
-  let guard = 0;
-  while (frames.length > 0 && guard < MAX_STEPS + MAX_DEPTH * 10) {
-    guard += 1;
+  while (queue.length > 0) {
     if (currentState.status === "failure" || currentState.status === "success") break;
 
-    const frame = frames[frames.length - 1];
-    if (!frame) break;
+    const command = queue.shift();
+    if (!command) break;
 
-    if (frame.index >= frame.commands.length) {
-      frames.pop();
-      continue;
-    }
+    currentState.steps += 1;
+    const shouldExecute = meetsCondition(command, currentState, mapData);
 
-    const command = frame.commands[frame.index];
-    frame.index += 1;
-
-    if (isFunctionCommand(command)) {
-      // 條件不符的函式呼叫應該被略過，不展開、不耗費時間
-      if (command.condition) {
-        const currentColor = getTileColor(
-          currentState.position.x,
-          currentState.position.y,
-          mapData,
-          currentState.paintedTiles
-        );
-        if (currentColor !== command.condition) {
-          // 條件不符：消耗時間軸並移除佔位符，但狀態不變
-          pushTimeline();
-          continue;
+    if (shouldExecute) {
+      if (isFunctionCommand(command)) {
+        const key = command.type;
+        if (canCallFunction(key, config, commands)) {
+          queue = [...commands[key], ...queue];
         }
+      } else {
+        currentState = executeCommand(currentState, command, mapData, config);
       }
-
-      const key = command.type;
-      if (canCallFunction(key, config, commands)) {
-        if (frames.length >= MAX_DEPTH + 1) {
-          currentState.status = "failure";
-          currentState.error = "函數呼叫層級過深！";
-          pushTimeline();
-          break;
-        }
-        frames.push({ commands: commands[key], index: 0 });
-        // 函式展開佔用一個時間點（狀態不變，queue 更新）
-        pushTimeline();
-      }
-      // 函式呼叫本身消耗掉，若不可呼叫則僅更新隊列
-      if (!canCallFunction(key, config, commands)) {
-        pushTimeline();
-      }
-      continue;
-    }
-
-    const result = executeCommand(currentState, command, mapData, config);
-    currentState = result.next;
-
-    if (!result.executed) {
-      // 條件不符，消耗一拍：狀態不變但隊列前進
-      pushTimeline();
-      continue;
     }
 
     if (currentState.steps > MAX_STEPS) {
@@ -312,33 +230,30 @@ export function executeCommands(
 
     if (
       currentState.status !== "failure" &&
-      currentState.collectedStars.size === mapData.stars.length
+      totalStars > 0 &&
+      currentState.collectedStars.size === totalStars
     ) {
       currentState.status = "success";
-      frames.length = 0;
+      queue = [];
     }
 
+    // 條件不符或函式展開依然消耗一拍
     pushTimeline();
 
-    if (currentState.status === "failure" || currentState.status === "success") {
-      break;
-    }
+    if (currentState.status === "failure" || currentState.status === "success") break;
   }
 
   const success =
     currentState.status !== "failure" &&
-    currentState.collectedStars.size === mapData.stars.length;
+    (totalStars === 0
+      ? queue.length === 0
+      : currentState.collectedStars.size === totalStars);
 
   if (success) {
     currentState.status = "success";
   } else if (currentState.status === "idle") {
     currentState.status = "failure";
     currentState.error = currentState.error || "未收集所有星星";
-  }
-
-  // 確保終點有對應的 queue snapshot
-  if (queueSnapshots.length < states.length) {
-    snapshotQueue();
   }
 
   return {

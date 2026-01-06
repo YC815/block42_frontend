@@ -79,20 +79,20 @@ export function Navbar() {
           <div className="flex items-center space-x-6">
             {isAuthenticated ? (
               <>
+                {/* 使用教學 */}
+                <Link
+                  href="/tutorial"
+                  className={navLinkClass(isTutorialPage)}
+                >
+                  使用教學
+                </Link>
+
                 {/* 官方關卡 */}
                 <Link
                   href="/levels?tab=official"
                   className={navLinkClass(isOfficialActive)}
                 >
                   官方關卡
-                </Link>
-
-                {/* 新手指引 */}
-                <Link
-                  href="/tutorial"
-                  className={navLinkClass(isTutorialPage)}
-                >
-                  導覽模式
                 </Link>
 
                 {/* 社群關卡 */}
