@@ -11,6 +11,11 @@ import type {
   LevelReject,
   AdminLevelListItem,
   AdminLevelUpdate,
+  AdminUserCreate,
+  AdminUserUpdate,
+  AdminLevelTransferRequest,
+  AdminLevelTransferResult,
+  User,
 } from "@/types/api";
 
 /**
@@ -69,4 +74,42 @@ export async function updateAdminLevel(
  */
 export async function deleteAdminLevel(levelId: string): Promise<void> {
   return del<void>(`/api/v1/admin/levels/${levelId}`, true);
+}
+
+/**
+ * 取得所有使用者（管理用）
+ */
+export async function getAllUsers(): Promise<User[]> {
+  return get<User[]>("/api/v1/admin/users", true);
+}
+
+/**
+ * 建立使用者（管理用）
+ */
+export async function createAdminUser(data: AdminUserCreate): Promise<User> {
+  return post<User>("/api/v1/admin/users", data, true);
+}
+
+/**
+ * 更新使用者（管理用）
+ */
+export async function updateAdminUser(userId: number, data: AdminUserUpdate): Promise<User> {
+  return put<User>(`/api/v1/admin/users/${userId}`, data, true);
+}
+
+/**
+ * 刪除使用者（管理用）
+ */
+export async function deleteAdminUser(userId: number): Promise<void> {
+  return del<void>(`/api/v1/admin/users/${userId}`, true);
+}
+
+/**
+ * 轉移使用者關卡（管理用）
+ */
+export async function transferAdminLevels(
+  userId: number,
+  data: AdminLevelTransferRequest
+): Promise<AdminLevelTransferResult> {
+  return post<AdminLevelTransferResult>(`/api/v1/admin/users/${userId}/transfer-levels`, data, true);
 }

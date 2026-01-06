@@ -226,13 +226,13 @@ export function EditorPage({ levelId, mode = "designer" }: EditorPageProps) {
           </div>
           <div className="flex items-center gap-2">
             <button
-              className="rounded-full border border-slate-200 bg-white px-5 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50"
+              className="h-10 rounded-full border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50"
               onClick={handlePlaytest}
             >
               試玩驗證
             </button>
             <button
-              className="rounded-full bg-slate-900 px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800"
+              className="h-10 rounded-full bg-slate-900 px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800"
               onClick={handleSave}
             >
               {mode === "admin" ? "儲存關卡" : "儲存草稿"}
@@ -240,17 +240,20 @@ export function EditorPage({ levelId, mode = "designer" }: EditorPageProps) {
             {mode === "designer" && (
               <div className="flex flex-col items-end gap-1">
                 <button
-                  className="rounded-full bg-teal-500 px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-teal-400 disabled:cursor-not-allowed disabled:opacity-50"
-                  onClick={handlePublish}
-                  disabled={!playtestPassed}
+                  className="h-10 rounded-full bg-teal-500 px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-teal-400"
+                  onClick={() => {
+                    if (playtestPassed) {
+                      handlePublish();
+                    } else {
+                      handlePlaytest();
+                    }
+                  }}
                 >
-                  提交發布
+                  測試過關並提交發布
                 </button>
-                {!playtestPassed && (
-                  <span className="text-xs text-slate-500">
-                    需要先在測試頁面完成過關才可以發佈
-                  </span>
-                )}
+                <span className="min-h-[16px] text-xs text-slate-500">
+                  {!playtestPassed ? "需要先在測試頁面完成過關才可以發佈" : ""}
+                </span>
               </div>
             )}
           </div>

@@ -23,6 +23,33 @@ export interface UserLogin {
   password: string;
 }
 
+// ==================== Admin User 相關類型 ====================
+
+export interface AdminUserCreate {
+  username: string;
+  password: string;
+  is_superuser: boolean;
+}
+
+export interface AdminUserUpdate {
+  username?: string;
+  password?: string;
+  is_superuser?: boolean;
+}
+
+export interface AdminLevelTransferItem {
+  level_id: string;
+  new_author_id: number;
+}
+
+export interface AdminLevelTransferRequest {
+  transfers: AdminLevelTransferItem[];
+}
+
+export interface AdminLevelTransferResult {
+  transferred: number;
+}
+
 export interface AuthResponse {
   access_token: string;
   token_type: string;
