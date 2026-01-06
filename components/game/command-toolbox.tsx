@@ -69,7 +69,10 @@ export function CommandToolbox({
   const functions: Array<"f0" | "f1" | "f2"> = ["f0", "f1", "f2"];
 
   return (
-    <div className="flex h-full flex-col gap-3 rounded-2xl border border-slate-200/80 bg-white/85 p-3 shadow-[0_16px_40px_-32px_rgba(15,23,42,0.5)] backdrop-blur">
+    <div
+      className="flex h-full flex-col gap-3 rounded-2xl border border-slate-200/80 bg-white/85 p-3 shadow-[0_16px_40px_-32px_rgba(15,23,42,0.5)] backdrop-blur"
+      data-tour-id="command-toolbox"
+    >
       <div className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
         Commands
       </div>
@@ -88,6 +91,7 @@ export function CommandToolbox({
                     : "border-slate-200/80 bg-white text-slate-700 hover:border-slate-300"
               }`}
               aria-label={COMMAND_TITLES[cmd]}
+              data-tour-id={`command-${cmd}`}
               onClick={() => onSelectCommand(cmd)}
             >
               {COMMAND_ICONS[cmd].label}
@@ -108,6 +112,7 @@ export function CommandToolbox({
                       : "border-slate-200/80 bg-white text-slate-700 hover:border-slate-300"
                 }`}
                 aria-label={COMMAND_TITLES[cmd]}
+                data-tour-id={`command-${cmd}`}
                 onClick={() => onSelectCommand(cmd)}
               >
                 {COMMAND_ICONS[cmd].label}
@@ -140,6 +145,7 @@ export function CommandToolbox({
                 }`}
                 disabled={disabled}
                 aria-label={COMMAND_TITLES[cmd]}
+                data-tour-id={`brush-${cmd.replace("paint_", "")}`}
                 onClick={() => onSelectCommand(cmd)}
               >
                 <div className={`flex h-8 w-8 items-center justify-center rounded-full ${squareColor}`}>
@@ -170,9 +176,10 @@ export function CommandToolbox({
                 key={color}
                 type="button"
                 disabled={disabled}
-                className={`h-6 w-6 rounded-full ${bg} ${
-                  isActive ? "ring-2 ring-offset-2 ring-slate-900/70" : "ring-0"
-                } ${disabled ? "opacity-40" : ""}`}
+                  className={`h-6 w-6 rounded-full ${bg} ${
+                    isActive ? "ring-2 ring-offset-2 ring-slate-900/70" : "ring-0"
+                  } ${disabled ? "opacity-40" : ""}`}
+                data-tour-id={`condition-${color === "R" ? "red" : color === "G" ? "green" : "blue"}`}
                 onClick={() => onSelectCondition(tileColor)}
               />
             );

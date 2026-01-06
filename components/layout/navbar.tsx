@@ -26,6 +26,7 @@ export function Navbar() {
   const pathname = usePathname();
   const [tabParam, setTabParam] = useState<string | null>(null);
   const isLevelsPage = pathname === "/levels";
+  const isTutorialPage = pathname === "/tutorial";
   const isOfficialActive = isLevelsPage && (tabParam === "official" || !tabParam);
   const isCommunityActive = isLevelsPage && tabParam === "community";
 
@@ -84,6 +85,14 @@ export function Navbar() {
                   className={navLinkClass(isOfficialActive)}
                 >
                   官方關卡
+                </Link>
+
+                {/* 新手指引 */}
+                <Link
+                  href="/tutorial"
+                  className={navLinkClass(isTutorialPage)}
+                >
+                  導覽模式
                 </Link>
 
                 {/* 社群關卡 */}

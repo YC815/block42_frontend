@@ -162,7 +162,7 @@ export function GameCanvas({
   const tokenSize = Math.max(12, Math.round(resolvedCellSize * 0.58));
 
   return (
-    <div className="relative h-full w-full">
+    <div className="relative h-full w-full" data-tour-id="game-canvas">
       <div className="absolute inset-0 rounded-[28px] bg-slate-100" />
       <div className="relative h-full w-full p-6">
         <div

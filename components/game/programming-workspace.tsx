@@ -94,6 +94,7 @@ function TrackRow({
                     ? "border-slate-200/80 bg-white text-slate-700"
                     : "border-slate-100 bg-slate-50 text-slate-400"
               } ${isSelected ? "ring-2 ring-slate-900/70 ring-offset-1 ring-offset-white" : ""}`}
+              data-tour-id={`workspace-${trackKey}-slot-${index}`}
               onClick={() => onSelectSlot(index)}
             >
               {command ? (
@@ -149,7 +150,10 @@ export function ProgrammingWorkspace({
   ];
 
   return (
-    <div className="flex h-full flex-col gap-2 rounded-2xl border border-slate-200/80 bg-white/85 p-3 shadow-[0_16px_40px_-32px_rgba(15,23,42,0.5)] backdrop-blur">
+    <div
+      className="flex h-full flex-col gap-2 rounded-2xl border border-slate-200/80 bg-white/85 p-3 shadow-[0_16px_40px_-32px_rgba(15,23,42,0.5)] backdrop-blur"
+      data-tour-id="workspace"
+    >
       <div className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
         Functions
       </div>

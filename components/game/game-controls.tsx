@@ -32,6 +32,7 @@ export function GameControls({
             : "border-slate-900/60 bg-slate-900 text-white hover:bg-slate-800"
         }`}
         aria-label="開始執行"
+        data-tour-id="control-run"
       >
         ▶
       </button>
@@ -45,6 +46,7 @@ export function GameControls({
             : "border-slate-200 bg-white text-slate-700 hover:border-slate-300"
         }`}
         aria-label="單步執行"
+        data-tour-id="control-step"
       >
         ⏭
       </button>
@@ -53,6 +55,7 @@ export function GameControls({
         onClick={onReset}
         className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 bg-white text-sm font-semibold text-slate-700 shadow-sm transition hover:border-slate-300"
         aria-label="重置"
+        data-tour-id="control-reset"
       >
         ↺
       </button>
