@@ -237,12 +237,16 @@ export function executeCommands(
   };
 
   // 初始狀態與 queue
+  if (mapData.stars.length === 0) {
+    currentState.status = "success";
+    frames.length = 0;
+  }
   pushTimeline();
 
   let guard = 0;
   while (frames.length > 0 && guard < MAX_STEPS + MAX_DEPTH * 10) {
     guard += 1;
-    if (currentState.status === "failure") break;
+    if (currentState.status === "failure" || currentState.status === "success") break;
 
     const frame = frames[frames.length - 1];
     if (!frame) break;
@@ -304,9 +308,17 @@ export function executeCommands(
       currentState.error = "步數超過上限！";
     }
 
+    if (
+      currentState.status !== "failure" &&
+      currentState.collectedStars.size === mapData.stars.length
+    ) {
+      currentState.status = "success";
+      frames.length = 0;
+    }
+
     pushTimeline();
 
-    if (currentState.status === "failure") {
+    if (currentState.status === "failure" || currentState.status === "success") {
       break;
     }
   }

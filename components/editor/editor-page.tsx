@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import { EditorToolbar } from "@/components/editor/editor-toolbar";
 import { EditorCanvas } from "@/components/editor/editor-canvas";
 import { SettingsPanel } from "@/components/editor/settings-panel";
+import { PlaytestModal } from "@/components/editor/playtest-modal";
 import {
   compileMapData,
   computeContentBounds,
@@ -54,7 +55,12 @@ export function EditorPage({ levelId }: EditorPageProps) {
   const [paintColor, setPaintColor] = useState<"R" | "G" | "B">("R");
   const [playtestPassed, setPlaytestPassed] = useState(false);
   const [playtestSolution, setPlaytestSolution] = useState<Solution | null>(null);
-  const [activePreviewKey, setActivePreviewKey] = useState<string | null>(null);
+  const [isPlaytestOpen, setIsPlaytestOpen] = useState(false);
+  const [playtestPayload, setPlaytestPayload] = useState<{
+    title: string;
+    map: MapData;
+    config: LevelConfig;
+  } | null>(null);
 
   const compiledMap = useMemo(() => compileMapData(mapData), [mapData]);
   const contentBounds = useMemo(() => computeContentBounds(mapData), [mapData]);
@@ -62,8 +68,6 @@ export function EditorPage({ levelId }: EditorPageProps) {
     () => validateRenderSize(compiledMap, MAX_RENDER_SIZE),
     [compiledMap]
   );
-
-  const PREVIEW_STORAGE_PREFIX = "block42:play-preview:";
 
   const levelQuery = useQuery({
     queryKey: ["level", levelId],
@@ -115,24 +119,9 @@ export function EditorPage({ levelId }: EditorPageProps) {
   useEffect(() => {
     setPlaytestPassed(false);
     setPlaytestSolution(null);
-    setActivePreviewKey(null);
+    setIsPlaytestOpen(false);
+    setPlaytestPayload(null);
   }, [mapData, config]);
-
-  useEffect(() => {
-    const handleMessage = (event: MessageEvent) => {
-      if (event.origin !== window.location.origin) return;
-      const data = event.data as { type?: string; key?: string; solution?: Solution };
-      if (data?.type !== "playtest-success") return;
-      if (!activePreviewKey || data.key !== activePreviewKey) return;
-      setPlaytestPassed(true);
-      if (data.solution) {
-        setPlaytestSolution(data.solution);
-      }
-    };
-
-    window.addEventListener("message", handleMessage);
-    return () => window.removeEventListener("message", handleMessage);
-  }, [activePreviewKey]);
 
   const ensureMapWithinLimit = () => {
     if (sizeCheck.ok) return true;
@@ -175,11 +164,9 @@ export function EditorPage({ levelId }: EditorPageProps) {
 
   const handlePlaytest = () => {
     if (!ensureMapWithinLimit()) return;
-    const previewKey = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
     const payload = { title, map: compileMapData(mapData), config };
-    localStorage.setItem(`${PREVIEW_STORAGE_PREFIX}${previewKey}`, JSON.stringify(payload));
-    setActivePreviewKey(previewKey);
-    window.open(`/studio/play-preview?key=${previewKey}`, "_blank");
+    setPlaytestPayload(payload);
+    setIsPlaytestOpen(true);
   };
 
   if (levelId && levelQuery.isLoading) {
@@ -216,13 +203,20 @@ export function EditorPage({ levelId }: EditorPageProps) {
             >
               儲存草稿
             </button>
-            <button
-              className="rounded-full bg-teal-500 px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-teal-400 disabled:opacity-50"
-              onClick={handlePublish}
-              disabled={!playtestPassed}
-            >
-              提交發布
-            </button>
+            <div className="flex flex-col items-end gap-1">
+              <button
+                className="rounded-full bg-teal-500 px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-teal-400 disabled:cursor-not-allowed disabled:opacity-50"
+                onClick={handlePublish}
+                disabled={!playtestPassed}
+              >
+                提交發布
+              </button>
+              {!playtestPassed && (
+                <span className="text-xs text-slate-500">
+                  需要先在測試頁面完成過關才可以發佈
+                </span>
+              )}
+            </div>
           </div>
         </div>
 
@@ -274,6 +268,25 @@ export function EditorPage({ levelId }: EditorPageProps) {
           </div>
         </div>
       </div>
+      {playtestPayload && isPlaytestOpen && (
+        <PlaytestModal
+          title={playtestPayload.title}
+          mapData={playtestPayload.map}
+          config={playtestPayload.config}
+          canPublish={playtestPassed && !!playtestSolution}
+          playtestPassed={playtestPassed}
+          publishHint="需要先在測試頁面完成過關才可以發佈"
+          onClose={() => {
+            setIsPlaytestOpen(false);
+            setPlaytestPayload(null);
+          }}
+          onPublish={handlePublish}
+          onSuccess={(solution) => {
+            setPlaytestPassed(true);
+            setPlaytestSolution(solution);
+          }}
+        />
+      )}
     </div>
   );
 }

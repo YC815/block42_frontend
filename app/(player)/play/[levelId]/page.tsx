@@ -14,6 +14,7 @@ import { CommandToolbox } from "@/components/game/command-toolbox";
 import { ProgrammingWorkspace } from "@/components/game/programming-workspace";
 import { GameControls } from "@/components/game/game-controls";
 import { ExecutionThreadBar } from "@/components/game/execution-thread";
+import { GameResultOverlay } from "@/components/game/game-result-overlay";
 import { useNavbar } from "@/components/layout/navbar-context";
 
 export default function PlayLevelPage() {
@@ -56,35 +57,48 @@ export default function PlayLevelPage() {
 
   return (
     <div className="h-[calc(100vh-4rem)] overflow-hidden bg-[radial-gradient(circle_at_top,rgba(56,189,248,0.18),transparent_45%),radial-gradient(circle_at_20%_20%,rgba(250,204,21,0.18),transparent_40%),linear-gradient(180deg,#f8fafc,#e2e8f0)]">
-      <div className="mx-auto flex h-full max-w-[1400px] flex-col gap-3 px-6 py-4">
+      <div className="relative mx-auto flex h-full max-w-[1400px] flex-col gap-3 px-6 py-4">
+        {game.didSucceed && (
+          <GameResultOverlay
+            title="通關完成"
+            description="已成功收集所有星星。"
+            tone="success"
+            secondaryAction={
+              <button
+                type="button"
+                onClick={game.reset}
+                className="rounded-full border border-slate-200 bg-white px-5 py-2 text-sm font-semibold text-slate-600 shadow-sm transition hover:border-slate-300"
+              >
+                再試一次
+              </button>
+            }
+          />
+        )}
         <div className="flex min-h-0 flex-1 flex-col gap-3">
           <div className="flex min-h-0 flex-[3] flex-col gap-3">
-            <div className="flex min-h-0 flex-1 flex-col gap-3 rounded-[28px] border border-slate-900/10 bg-slate-950/90 p-4 shadow-[0_30px_80px_-60px_rgba(15,23,42,0.9)]">
+            <div className="flex min-h-0 flex-1 rounded-[28px] border border-slate-200/80 bg-white/85 p-4 shadow-[0_16px_40px_-32px_rgba(15,23,42,0.5)] backdrop-blur">
               <div className="relative flex min-h-0 flex-1 items-stretch">
                 <GameCanvas
                   mapData={level.map}
                   state={currentState}
                   fitToContainer
                 />
-                <div className="pointer-events-none absolute inset-0 rounded-[24px] ring-1 ring-white/10" />
-              </div>
-              <div className="border-t border-white/10 pt-3">
-                <ExecutionThreadBar
-                  queue={queueSnapshot}
-                  embedded
-                  actions={
-                    <GameControls
-                      isRunning={game.isRunning}
-                      speed={game.speed}
-                      onRun={game.run}
-                      onStep={game.step}
-                      onReset={game.reset}
-                      onSpeedChange={game.setSpeed}
-                    />
-                  }
-                />
+                <div className="pointer-events-none absolute inset-0 rounded-[24px] ring-1 ring-slate-900/10" />
               </div>
             </div>
+            <ExecutionThreadBar
+              queue={queueSnapshot}
+              actions={
+                <GameControls
+                  isRunning={game.isRunning}
+                  speed={game.speed}
+                  onRun={game.run}
+                  onStep={game.step}
+                  onReset={game.reset}
+                  onSpeedChange={game.setSpeed}
+                />
+              }
+            />
           </div>
 
           <div className="flex min-h-0 flex-[2] gap-3">

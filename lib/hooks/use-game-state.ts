@@ -112,6 +112,16 @@ export function useGameState({ mapData, config }: GameStateOptions) {
     return execution.states[Math.min(stepIndex, execution.states.length - 1)];
   }, [execution, stepIndex, initialState]);
 
+  const isComplete = useMemo(() => {
+    if (!execution) return false;
+    return stepIndex >= execution.states.length - 1;
+  }, [execution, stepIndex]);
+
+  const didSucceed = useMemo(() => {
+    if (!execution) return false;
+    return execution.success && isComplete;
+  }, [execution, isComplete]);
+
   const resetPlayback = useCallback(() => {
     if (timerRef.current) {
       clearInterval(timerRef.current);
@@ -273,6 +283,8 @@ export function useGameState({ mapData, config }: GameStateOptions) {
     queueSnapshots,
     execution,
     timelineIndex: stepIndex,
+    isComplete,
+    didSucceed,
     isRunning,
     speed,
     setSpeed,

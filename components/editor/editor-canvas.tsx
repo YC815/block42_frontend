@@ -8,7 +8,7 @@
 import type { MapData, TileColor } from "@/types/api";
 import { coordToKey } from "@/lib/game-engine/types";
 import type { EditorTool } from "@/components/editor/editor-toolbar";
-import { computeContentBounds } from "@/lib/map-utils";
+import { computeContentBounds, MAX_GRID_SIZE } from "@/lib/map-utils";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 interface EditorCanvasProps {
@@ -126,9 +126,10 @@ export function EditorCanvas({ mapData, tool, color, onChange }: EditorCanvasPro
       if (!panOrigin.current) return;
       const dx = (event.clientX - panOrigin.current.x) / step;
       const dy = (event.clientY - panOrigin.current.y) / step;
+      const halfLimit = Math.floor(MAX_GRID_SIZE / 2);
       setCamera({
-        x: panOrigin.current.camera.x - dx,
-        y: panOrigin.current.camera.y - dy,
+        x: clamp(panOrigin.current.camera.x - dx, -halfLimit, halfLimit - 1),
+        y: clamp(panOrigin.current.camera.y - dy, -halfLimit, halfLimit - 1),
       });
     };
     const endPan = () => setIsPanning(false);
@@ -147,6 +148,12 @@ export function EditorCanvas({ mapData, tool, color, onChange }: EditorCanvasPro
       return;
     }
     if (isPanning || handMode) return;
+
+    const halfLimit = Math.floor(MAX_GRID_SIZE / 2);
+    if (Math.abs(x) >= halfLimit || Math.abs(y) >= halfLimit) {
+      return;
+    }
+
     const key = coordToKey(x, y);
 
     if (tool === "paint") {
@@ -272,9 +279,10 @@ export function EditorCanvas({ mapData, tool, color, onChange }: EditorCanvasPro
             setZoom((current) => clamp(current + delta, MIN_ZOOM, MAX_ZOOM));
             return;
           }
+          const halfLimit = Math.floor(MAX_GRID_SIZE / 2);
           setCamera((current) => ({
-            x: current.x + event.deltaX / step,
-            y: current.y + event.deltaY / step,
+            x: clamp(current.x + event.deltaX / step, -halfLimit, halfLimit - 1),
+            y: clamp(current.y + event.deltaY / step, -halfLimit, halfLimit - 1),
           }));
         }}
         onMouseDown={(event) => {
@@ -304,10 +312,11 @@ export function EditorCanvas({ mapData, tool, color, onChange }: EditorCanvasPro
             {(() => {
               const horizontalCells = Math.ceil((containerSize.width || 0) / step) + 6;
               const verticalCells = Math.ceil((containerSize.height || 0) / step) + 6;
-              const startX = Math.floor(camera.x - horizontalCells / 2);
-              const endX = Math.floor(camera.x + horizontalCells / 2);
-              const startY = Math.floor(camera.y - verticalCells / 2);
-              const endY = Math.floor(camera.y + verticalCells / 2);
+              const halfLimit = Math.floor(MAX_GRID_SIZE / 2);
+              const startX = Math.max(-halfLimit, Math.floor(camera.x - horizontalCells / 2));
+              const endX = Math.min(halfLimit - 1, Math.floor(camera.x + horizontalCells / 2));
+              const startY = Math.max(-halfLimit, Math.floor(camera.y - verticalCells / 2));
+              const endY = Math.min(halfLimit - 1, Math.floor(camera.y + verticalCells / 2));
 
               const cells = [] as Array<{ x: number; y: number; key: string }>;
               for (let y = startY; y <= endY; y += 1) {

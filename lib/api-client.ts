@@ -64,9 +64,23 @@ export async function apiClient<T>(options: ApiOptions): Promise<T> {
       throw new Error(errorMessage);
     }
 
-    // 6. 解析並返回 JSON
-    const data = await response.json();
-    return data as T;
+    // 6. 解析並返回回應資料（支援 204 No Content）
+    if (response.status === 204 || response.status === 205) {
+      return undefined as T;
+    }
+
+    const contentType = response.headers.get("content-type") || "";
+    const rawText = await response.text();
+
+    if (!rawText) {
+      return undefined as T;
+    }
+
+    if (contentType.includes("application/json")) {
+      return JSON.parse(rawText) as T;
+    }
+
+    return rawText as T;
   } catch (error) {
     // 7. 統一錯誤處理
     if (error instanceof Error) {

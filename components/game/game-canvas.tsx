@@ -163,7 +163,7 @@ export function GameCanvas({
 
   return (
     <div className="relative h-full w-full">
-      <div className="absolute inset-0 rounded-[28px] bg-[radial-gradient(circle_at_top,rgba(56,189,248,0.15),transparent_40%),linear-gradient(180deg,rgba(15,23,42,0.8),rgba(2,6,23,0.95))]" />
+      <div className="absolute inset-0 rounded-[28px] bg-linear-to-br from-slate-100 via-slate-50 to-white" />
       <div className="relative h-full w-full p-6">
         <div
           ref={containerRef}
@@ -188,8 +188,8 @@ export function GameCanvas({
               return (
                 <div
                   key={key}
-                  className={`relative rounded-[10px] border border-white/10 shadow-[inset_0_0_0_1px_rgba(15,23,42,0.8)] ${
-                    color ? tileColorClass(color) : "bg-slate-900/70"
+                  className={`relative rounded-[10px] border border-slate-900/10 shadow-sm ${
+                    color ? tileColorClass(color) : "bg-slate-200/50"
                   }`}
                 >
                   {hasStar && (

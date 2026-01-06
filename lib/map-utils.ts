@@ -10,6 +10,7 @@ import type { MapBounds, MapData, TileColor } from "@/types/api";
 export const DEFAULT_PADDING = 1;
 export const MAX_RENDER_SIZE = 128;
 export const MAX_PADDING = 8;
+export const MAX_GRID_SIZE = 60;
 
 export interface BoundsWithSize extends MapBounds {
   width: number;

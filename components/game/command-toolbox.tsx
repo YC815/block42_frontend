@@ -103,27 +103,28 @@ export function CommandToolbox({
               (cmd === "paint_red" && config.tools.paint_red) ||
               (cmd === "paint_green" && config.tools.paint_green) ||
               (cmd === "paint_blue" && config.tools.paint_blue);
+            if (!enabled) return null;
             const isActive = activeCommand === cmd;
+            const squareColor =
+              cmd === "paint_red"
+                ? "bg-[#E53E3E]"
+                : cmd === "paint_green"
+                  ? "bg-[#38A169]"
+                  : "bg-[#3182CE]";
             return (
               <button
                 key={cmd}
                 type="button"
-                className={`flex h-11 w-11 items-center justify-center rounded-lg border text-sm font-semibold shadow-sm transition ${
-                  enabled && !disabled
-                    ? isActive
-                      ? "border-slate-900 bg-slate-900"
-                      : "border-slate-200/80 bg-white hover:border-slate-300"
-                    : "border-slate-100/80 bg-slate-50 text-slate-300"
+                className={`flex h-11 w-11 items-center justify-center rounded-lg border shadow-sm transition ${
+                  isActive
+                    ? "border-slate-900 bg-slate-100"
+                    : "border-slate-200/80 bg-white hover:border-slate-300"
                 }`}
-                disabled={!enabled || disabled}
+                disabled={disabled}
                 aria-label={COMMAND_TITLES[cmd]}
                 onClick={() => onSelectCommand(cmd)}
               >
-                <span
-                  className={`h-6 w-6 rounded ${COMMAND_ICONS[cmd].bg ?? ""} ${
-                    enabled && !disabled ? "" : "opacity-40"
-                  } ${isActive ? "ring-2 ring-white/80" : ""}`}
-                />
+                <div className={`h-7 w-7 rounded ${squareColor}`} />
               </button>
             );
           })}
@@ -140,10 +141,10 @@ export function CommandToolbox({
             const isActive = activeCondition === tileColor;
             const bg =
               color === "R"
-                ? "bg-rose-500"
+                ? "bg-[#E53E3E]"
                 : color === "G"
-                  ? "bg-emerald-500"
-                  : "bg-sky-500";
+                  ? "bg-[#38A169]"
+                  : "bg-[#3182CE]";
             return (
               <button
                 key={color}
