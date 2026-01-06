@@ -172,10 +172,12 @@ function executePaint(
   config: LevelConfig
 ): GameState {
   // 檢查是否有塗色工具
-  const toolKey = `paint_${color.toLowerCase()}` as
-    | "paint_red"
-    | "paint_green"
-    | "paint_blue";
+  const toolKey =
+    color === "R"
+      ? "paint_red"
+      : color === "G"
+        ? "paint_green"
+        : "paint_blue";
 
   if (!config.tools[toolKey]) {
     state.status = "failure";

@@ -172,6 +172,7 @@ export default function AdminDashboardPage() {
                     {levelsQuery.data.map((level) => {
                       const draft = drafts[level.id];
                       const hasDraft = draft && Object.keys(draft).length > 0;
+                      const authorLabel = level.author_name ?? `#${level.author_id}`;
                       return (
                         <TableRow key={level.id}>
                           <TableCell className="font-mono text-xs text-slate-500">
@@ -187,7 +188,7 @@ export default function AdminDashboardPage() {
                             />
                           </TableCell>
                           <TableCell className="text-sm text-slate-600">
-                            #{level.author_id}
+                            {authorLabel}
                           </TableCell>
                           <TableCell>
                             <select

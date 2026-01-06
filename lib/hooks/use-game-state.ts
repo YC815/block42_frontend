@@ -12,6 +12,7 @@ import {
   buildExecutionQueueSnapshots,
   createInitialState,
   executeCommands,
+  parseCommands,
 } from "@/lib/game-engine/simulator";
 import { serializeCommands } from "@/lib/game-engine/commands";
 
@@ -31,6 +32,12 @@ export type SelectedSlot = { track: TrackKey; index: number } | null;
 interface GameStateOptions {
   mapData?: MapData;
   config?: LevelConfig;
+  initialCommands?: {
+    commands_f0: string[];
+    commands_f1: string[];
+    commands_f2: string[];
+  } | null;
+  initialCommandsKey?: string | null;
 }
 
 const EMPTY_SLOT: CommandSlot = { type: null, condition: null };
@@ -62,6 +69,32 @@ function resizeSlots(prev: SlotSet, config: LevelConfig): SlotSet {
   };
 }
 
+function createSlotsFromCommands(
+  config: LevelConfig,
+  initialCommands: {
+    commands_f0: string[];
+    commands_f1: string[];
+    commands_f2: string[];
+  }
+): SlotSet {
+  const fillTrack = (size: number, commands: Command[]): CommandSlot[] => {
+    const slots = Array.from({ length: size }, () => ({ ...EMPTY_SLOT }));
+    commands.slice(0, size).forEach((command, index) => {
+      slots[index] = {
+        type: command.type,
+        condition: command.condition ?? null,
+      };
+    });
+    return slots;
+  };
+
+  return {
+    f0: fillTrack(config.f0, parseCommands(initialCommands.commands_f0)),
+    f1: fillTrack(config.f1, parseCommands(initialCommands.commands_f1)),
+    f2: fillTrack(config.f2, parseCommands(initialCommands.commands_f2)),
+  };
+}
+
 function toCommandSet(slots: SlotSet): CommandSet {
   const toCommands = (trackSlots: CommandSlot[]) =>
     trackSlots
@@ -85,8 +118,18 @@ function getFirstAvailableSlot(config: LevelConfig): SelectedSlot {
   return null;
 }
 
-export function useGameState({ mapData, config }: GameStateOptions) {
-  const [slots, setSlots] = useState<SlotSet>(() => createSlots(config));
+export function useGameState({
+  mapData,
+  config,
+  initialCommands,
+  initialCommandsKey,
+}: GameStateOptions) {
+  const [slots, setSlots] = useState<SlotSet>(() => {
+    if (config && initialCommands) {
+      return createSlotsFromCommands(config, initialCommands);
+    }
+    return createSlots(config);
+  });
   const [selectedSlot, setSelectedSlot] = useState<SelectedSlot>(null);
 
   const [execution, setExecution] = useState<ExecutionResult | null>(null);
@@ -170,6 +213,15 @@ export function useGameState({ mapData, config }: GameStateOptions) {
       return prev;
     });
   }, [config]);
+
+  const hydratedKeyRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!config || !initialCommands) return;
+    const key = initialCommandsKey ?? "default";
+    if (hydratedKeyRef.current === key) return;
+    hydratedKeyRef.current = key;
+    setSlots(createSlotsFromCommands(config, initialCommands));
+  }, [config, initialCommands, initialCommandsKey]);
 
   useEffect(() => {
     resetPlayback();

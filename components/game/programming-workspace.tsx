@@ -26,6 +26,24 @@ const COMMAND_ICONS: Record<CommandType, { label: string; bg?: string }> = {
   f2: { label: "f2" },
 };
 
+function BrushIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+      className={className}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M15.5 4.5l4 4-9 9h-4v-4l9-9z" />
+      <path d="M4 20c3 0 4-1 4-3 0-1.1.9-2 2-2h4c1.1 0 2 .9 2 2 0 2-1 3-4 3H4z" />
+    </svg>
+  );
+}
+
 function TrackRow({
   label,
   trackKey,
@@ -54,6 +72,10 @@ function TrackRow({
           const command = slot?.type ?? null;
           const condition = slot?.condition ?? null;
           const isSelected = selectedIndex === index;
+          const isPaint =
+            command === "paint_red" ||
+            command === "paint_green" ||
+            command === "paint_blue";
           const conditionBg =
             condition === "R"
               ? "bg-rose-500/80 text-white"
@@ -80,7 +102,11 @@ function TrackRow({
                     COMMAND_ICONS[command].bg ?? ""
                   } ${COMMAND_ICONS[command].bg ? "text-white" : ""}`}
                 >
-                  {COMMAND_ICONS[command].label}
+                  {isPaint ? (
+                    <BrushIcon className="h-3.5 w-3.5 text-white/95" />
+                  ) : (
+                    COMMAND_ICONS[command].label
+                  )}
                 </span>
               ) : null}
             </div>

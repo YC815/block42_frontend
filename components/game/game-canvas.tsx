@@ -51,11 +51,11 @@ function getFittedCellSize(
 function tileColorClass(color: TileColor) {
   switch (color) {
     case "R":
-      return "bg-gradient-to-br from-rose-500/95 via-rose-500/80 to-rose-300/70";
+      return "bg-rose-600";
     case "G":
-      return "bg-gradient-to-br from-emerald-500/95 via-emerald-500/80 to-emerald-300/70";
+      return "bg-emerald-600";
     case "B":
-      return "bg-gradient-to-br from-sky-500/95 via-sky-500/80 to-sky-300/70";
+      return "bg-sky-600";
     default:
       return "bg-slate-500";
   }
@@ -163,7 +163,7 @@ export function GameCanvas({
 
   return (
     <div className="relative h-full w-full">
-      <div className="absolute inset-0 rounded-[28px] bg-linear-to-br from-slate-100 via-slate-50 to-white" />
+      <div className="absolute inset-0 rounded-[28px] bg-slate-100" />
       <div className="relative h-full w-full p-6">
         <div
           ref={containerRef}
@@ -188,7 +188,7 @@ export function GameCanvas({
               return (
                 <div
                   key={key}
-                  className={`relative rounded-[10px] border border-slate-900/10 shadow-sm ${
+                  className={`relative rounded-[10px] border border-slate-900/10 ${
                     color ? tileColorClass(color) : "bg-slate-200/50"
                   }`}
                 >

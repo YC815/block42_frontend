@@ -6,6 +6,7 @@
  */
 
 import Link from "next/link";
+import { usePathname, useSearchParams } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -21,6 +22,18 @@ import { useNavbar } from "@/components/layout/navbar-context";
 export function Navbar() {
   const { user, isAuthenticated, logout } = useAuth();
   const { levelInfo } = useNavbar();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const tabParam = searchParams.get("tab");
+  const isLevelsPage = pathname === "/levels";
+  const isOfficialActive = isLevelsPage && (tabParam === "official" || !tabParam);
+  const isCommunityActive = isLevelsPage && tabParam === "community";
+
+  const navLinkClass = (active: boolean) =>
+    [
+      "text-sm font-medium transition-colors",
+      active ? "text-blue-600 underline underline-offset-8" : "hover:text-blue-600",
+    ].join(" ");
 
   const handleLogout = () => {
     logout();
@@ -56,12 +69,20 @@ export function Navbar() {
           <div className="flex items-center space-x-6">
             {isAuthenticated ? (
               <>
-                {/* 關卡大廳 */}
+                {/* 官方關卡 */}
                 <Link
-                  href="/levels"
-                  className="text-sm font-medium hover:text-blue-600 transition-colors"
+                  href="/levels?tab=official"
+                  className={navLinkClass(isOfficialActive)}
                 >
-                  關卡大廳
+                  官方關卡
+                </Link>
+
+                {/* 社群關卡 */}
+                <Link
+                  href="/levels?tab=community"
+                  className={navLinkClass(isCommunityActive)}
+                >
+                  社群關卡
                 </Link>
 
                 {/* 創作工作室 */}

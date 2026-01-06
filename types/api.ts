@@ -42,6 +42,7 @@ export interface Level {
   id: string; // NanoID (12 chars)
   title: string;
   author_id: number;
+  author_name?: string | null;
   status: LevelStatus;
   is_official: boolean;
   official_order: number;
@@ -65,6 +66,7 @@ export interface LevelListItem {
   id: string;
   title: string;
   author_id: number;
+  author_name?: string | null;
   status: LevelStatus;
   is_official: boolean;
   created_at: string;
@@ -205,11 +207,46 @@ export interface AdminLevelListItem {
   id: string;
   title: string;
   author_id: number;
+  author_name?: string | null;
   status: LevelStatus;
   is_official: boolean;
   official_order: number;
   created_at: string;
   updated_at: string;
+}
+
+// ==================== Progress 相關類型 ====================
+
+export interface LevelProgress {
+  level_id: string;
+  is_completed: boolean;
+  best_steps?: number | null;
+  stars_collected?: number | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface LevelProgressUpdate {
+  is_completed?: boolean;
+  best_steps?: number | null;
+  stars_collected?: number | null;
+}
+
+// ==================== Program 相關類型 ====================
+
+export interface LevelProgram {
+  level_id: string;
+  commands_f0: string[];
+  commands_f1: string[];
+  commands_f2: string[];
+  created_at: string;
+  updated_at: string;
+}
+
+export interface LevelProgramUpdate {
+  commands_f0: string[];
+  commands_f1: string[];
+  commands_f2: string[];
 }
 
 // ==================== 遊戲引擎類型（前端特有）====================

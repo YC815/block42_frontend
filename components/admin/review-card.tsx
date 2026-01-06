@@ -17,13 +17,14 @@ interface ReviewCardProps {
 export function ReviewCard({ level, onApprove, onReject }: ReviewCardProps) {
   const [officialOrder, setOfficialOrder] = useState<number | "">("");
   const [reason, setReason] = useState("");
+  const authorLabel = level.author_name ?? `#${level.author_id}`;
 
   return (
     <div className="rounded-2xl border bg-white p-4 shadow-sm">
       <div className="flex items-center justify-between">
         <div>
           <div className="text-lg font-semibold text-gray-900">{level.title}</div>
-          <div className="text-xs text-gray-500">作者 #{level.author_id}</div>
+          <div className="text-xs text-gray-500">作者 {authorLabel}</div>
         </div>
         <div className="text-xs text-gray-400">
           {new Date(level.created_at).toLocaleDateString()}

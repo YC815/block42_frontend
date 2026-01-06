@@ -38,6 +38,24 @@ const COMMAND_TITLES: Record<CommandType, string> = {
   f2: "呼叫 f2",
 };
 
+function BrushIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+      className={className}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M15.5 4.5l4 4-9 9h-4v-4l9-9z" />
+      <path d="M4 20c3 0 4-1 4-3 0-1.1.9-2 2-2h4c1.1 0 2 .9 2 2 0 2-1 3-4 3H4z" />
+    </svg>
+  );
+}
+
 export function CommandToolbox({
   config,
   activeCommand,
@@ -124,7 +142,9 @@ export function CommandToolbox({
                 aria-label={COMMAND_TITLES[cmd]}
                 onClick={() => onSelectCommand(cmd)}
               >
-                <div className={`h-7 w-7 rounded ${squareColor}`} />
+                <div className={`flex h-8 w-8 items-center justify-center rounded-full ${squareColor}`}>
+                  <BrushIcon className="h-4 w-4 text-white/95" />
+                </div>
               </button>
             );
           })}

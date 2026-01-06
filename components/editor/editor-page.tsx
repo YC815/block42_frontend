@@ -164,10 +164,12 @@ export function EditorPage({ levelId, mode = "designer" }: EditorPageProps) {
     updateMutation.mutate({ id: levelId, data: { title, map: runtimeMap, config } });
   };
 
-  const handlePublish = () => {
+  const handlePublish = async () => {
     if (!levelId) {
-      toast.error("請先儲存關卡");
-      return;
+      if (!title.trim()) {
+        toast.error("請輸入關卡名稱");
+        return;
+      }
     }
     if (!ensureMapWithinLimit()) return;
     if (!playtestPassed) {
@@ -178,7 +180,20 @@ export function EditorPage({ levelId, mode = "designer" }: EditorPageProps) {
       toast.error("尚未取得試玩解答");
       return;
     }
-    publishMutation.mutate({ id: levelId, data: { solution: playtestSolution } });
+    const runtimeMap = compileMapData(mapData);
+    try {
+      let resolvedId = levelId;
+      if (!resolvedId) {
+        const created = await createLevel({ title, map: runtimeMap, config });
+        resolvedId = created.id;
+        router.replace(`/studio/editor/${created.id}`);
+      } else {
+        await updateLevel(resolvedId, { title, map: runtimeMap, config });
+      }
+      publishMutation.mutate({ id: resolvedId, data: { solution: playtestSolution } });
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "自動儲存失敗");
+    }
   };
 
   const handlePlaytest = () => {
