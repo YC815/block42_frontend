@@ -186,6 +186,32 @@ export interface LevelReject {
   reason: string;
 }
 
+/**
+ * 管理員更新關卡（允許部分更新）
+ */
+export interface AdminLevelUpdate {
+  title?: string;
+  map?: MapData;
+  config?: LevelConfig;
+  status?: LevelStatus;
+  is_official?: boolean;
+  official_order?: number;
+}
+
+/**
+ * 管理員列表項目（含官方排序與更新時間）
+ */
+export interface AdminLevelListItem {
+  id: string;
+  title: string;
+  author_id: number;
+  status: LevelStatus;
+  is_official: boolean;
+  official_order: number;
+  created_at: string;
+  updated_at: string;
+}
+
 // ==================== 遊戲引擎類型（前端特有）====================
 
 /**

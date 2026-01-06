@@ -10,6 +10,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import type { LevelConfig, MapData, Solution } from "@/types/api";
 import { getLevelById } from "@/lib/api/levels";
 import { createLevel, updateLevel, publishLevel } from "@/lib/api/designer";
+import { updateAdminLevel } from "@/lib/api/admin";
 import { toast } from "sonner";
 import { EditorToolbar } from "@/components/editor/editor-toolbar";
 import { EditorCanvas } from "@/components/editor/editor-canvas";
@@ -44,9 +45,10 @@ const DEFAULT_CONFIG: LevelConfig = {
 
 interface EditorPageProps {
   levelId?: string;
+  mode?: "designer" | "admin";
 }
 
-export function EditorPage({ levelId }: EditorPageProps) {
+export function EditorPage({ levelId, mode = "designer" }: EditorPageProps) {
   const router = useRouter();
   const [title, setTitle] = useState("未命名關卡");
   const [mapData, setMapData] = useState<MapData>(() => ensureStartFloor(DEFAULT_MAP));
@@ -107,6 +109,15 @@ export function EditorPage({ levelId }: EditorPageProps) {
     },
   });
 
+  const adminUpdateMutation = useMutation({
+    mutationFn: (payload: { id: string; data: { title: string; map: MapData; config: LevelConfig } }) =>
+      updateAdminLevel(payload.id, payload.data),
+    onSuccess: () => toast.success("已更新關卡"),
+    onError: (error: unknown) => {
+      toast.error(error instanceof Error ? error.message : "更新失敗");
+    },
+  });
+
   const publishMutation = useMutation({
     mutationFn: (payload: { id: string; data: { solution: Solution } }) =>
       publishLevel(payload.id, payload.data),
@@ -138,8 +149,16 @@ export function EditorPage({ levelId }: EditorPageProps) {
     }
     if (!ensureMapWithinLimit()) return;
     const runtimeMap = compileMapData(mapData);
-    if (!levelId) {
+    if (mode === "designer" && !levelId) {
       createMutation.mutate({ title, map: runtimeMap, config });
+      return;
+    }
+    if (!levelId) {
+      toast.error("缺少關卡 ID");
+      return;
+    }
+    if (mode === "admin") {
+      adminUpdateMutation.mutate({ id: levelId, data: { title, map: runtimeMap, config } });
       return;
     }
     updateMutation.mutate({ id: levelId, data: { title, map: runtimeMap, config } });
@@ -201,22 +220,24 @@ export function EditorPage({ levelId }: EditorPageProps) {
               className="rounded-full bg-slate-900 px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800"
               onClick={handleSave}
             >
-              儲存草稿
+              {mode === "admin" ? "儲存關卡" : "儲存草稿"}
             </button>
-            <div className="flex flex-col items-end gap-1">
-              <button
-                className="rounded-full bg-teal-500 px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-teal-400 disabled:cursor-not-allowed disabled:opacity-50"
-                onClick={handlePublish}
-                disabled={!playtestPassed}
-              >
-                提交發布
-              </button>
-              {!playtestPassed && (
-                <span className="text-xs text-slate-500">
-                  需要先在測試頁面完成過關才可以發佈
-                </span>
-              )}
-            </div>
+            {mode === "designer" && (
+              <div className="flex flex-col items-end gap-1">
+                <button
+                  className="rounded-full bg-teal-500 px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-teal-400 disabled:cursor-not-allowed disabled:opacity-50"
+                  onClick={handlePublish}
+                  disabled={!playtestPassed}
+                >
+                  提交發布
+                </button>
+                {!playtestPassed && (
+                  <span className="text-xs text-slate-500">
+                    需要先在測試頁面完成過關才可以發佈
+                  </span>
+                )}
+              </div>
+            )}
           </div>
         </div>
 
@@ -273,14 +294,18 @@ export function EditorPage({ levelId }: EditorPageProps) {
           title={playtestPayload.title}
           mapData={playtestPayload.map}
           config={playtestPayload.config}
-          canPublish={playtestPassed && !!playtestSolution}
+          canPublish={mode === "designer" && playtestPassed && !!playtestSolution}
           playtestPassed={playtestPassed}
-          publishHint="需要先在測試頁面完成過關才可以發佈"
+          publishHint={
+            mode === "designer"
+              ? "需要先在測試頁面完成過關才可以發佈"
+              : "管理模式不提供發布功能"
+          }
           onClose={() => {
             setIsPlaytestOpen(false);
             setPlaytestPayload(null);
           }}
-          onPublish={handlePublish}
+          onPublish={mode === "designer" ? handlePublish : () => {}}
           onSuccess={(solution) => {
             setPlaytestPassed(true);
             setPlaytestSolution(solution);
