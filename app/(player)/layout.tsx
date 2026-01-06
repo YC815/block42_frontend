@@ -5,6 +5,7 @@
 
 import { Navbar } from "@/components/layout/navbar";
 import { ProtectedRoute } from "@/components/layout/protected-route";
+import { NavbarProvider } from "@/components/layout/navbar-context";
 
 export default function PlayerLayout({
   children,
@@ -13,10 +14,12 @@ export default function PlayerLayout({
 }) {
   return (
     <ProtectedRoute>
-      <div className="flex min-h-screen flex-col">
-        <Navbar />
-        <main className="flex-1">{children}</main>
-      </div>
+      <NavbarProvider>
+        <div className="flex min-h-screen flex-col">
+          <Navbar />
+          <main className="flex-1">{children}</main>
+        </div>
+      </NavbarProvider>
     </ProtectedRoute>
   );
 }

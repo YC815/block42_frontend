@@ -16,9 +16,11 @@ import {
 } from "@/components/ui/popover";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
+import { useNavbar } from "@/components/layout/navbar-context";
 
 export function Navbar() {
   const { user, isAuthenticated, logout } = useAuth();
+  const { levelInfo } = useNavbar();
 
   const handleLogout = () => {
     logout();
@@ -28,7 +30,7 @@ export function Navbar() {
   return (
     <nav className="border-b bg-white">
       <div className="container mx-auto px-4">
-        <div className="flex h-16 items-center justify-between">
+        <div className="flex h-16 items-center justify-between gap-4">
           {/* Logo */}
           <Link href="/" className="flex items-center space-x-2">
             <div className="h-8 w-8 rounded bg-blue-600 flex items-center justify-center">
@@ -36,6 +38,19 @@ export function Navbar() {
             </div>
             <span className="text-xl font-bold">Block42</span>
           </Link>
+
+          {levelInfo && (
+            <div className="flex min-w-0 flex-1 items-center justify-center">
+              <div className="max-w-[320px] rounded-full border border-slate-200/70 bg-slate-50 px-4 py-2 text-center">
+                <div className="text-[10px] font-semibold uppercase tracking-[0.3em] text-slate-500">
+                  {levelInfo.label}
+                </div>
+                <div className="truncate text-sm font-semibold text-slate-900">
+                  {levelInfo.title}
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Navigation Links */}
           <div className="flex items-center space-x-6">

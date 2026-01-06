@@ -3,148 +3,144 @@
  * Shows command tracks for f0/f1/f2.
  */
 
-import type { LevelConfig, CommandType, TileColor } from "@/types/api";
-import type { Command, CommandSet } from "@/lib/game-engine/types";
-import { Button } from "@/components/ui/button";
+import type { LevelConfig, CommandType } from "@/types/api";
+import type { CommandSlot, SelectedSlot, SlotSet, TrackKey } from "@/lib/hooks/use-game-state";
 
 interface ProgrammingWorkspaceProps {
   config: LevelConfig;
-  commandSet: CommandSet;
-  selectedTrack: "f0" | "f1" | "f2";
-  onSelectTrack: (track: "f0" | "f1" | "f2") => void;
-  onRemoveCommand: (track: "f0" | "f1" | "f2", index: number) => void;
-  onClearTrack: (track: "f0" | "f1" | "f2") => void;
+  slots: SlotSet;
+  selectedSlot: SelectedSlot;
+  onSelectSlot: (track: TrackKey, index: number) => void;
+  onClearTrack: (track: TrackKey) => void;
 }
 
-const COMMAND_LABELS: Record<CommandType, string> = {
-  move: "前進",
-  turn_left: "左轉",
-  turn_right: "右轉",
-  paint_red: "噴紅",
-  paint_green: "噴綠",
-  paint_blue: "噴藍",
-  f1: "f1",
-  f2: "f2",
+const COMMAND_ICONS: Record<CommandType, { label: string; bg?: string }> = {
+  move: { label: "↑" },
+  turn_left: { label: "↶" },
+  turn_right: { label: "↷" },
+  paint_red: { label: "", bg: "bg-rose-500" },
+  paint_green: { label: "", bg: "bg-emerald-500" },
+  paint_blue: { label: "", bg: "bg-sky-500" },
+  f0: { label: "f0" },
+  f1: { label: "f1" },
+  f2: { label: "f2" },
 };
-
-function conditionBadge(condition?: TileColor) {
-  if (!condition) return null;
-  const bg =
-    condition === "R"
-      ? "bg-rose-500"
-      : condition === "G"
-        ? "bg-emerald-500"
-        : "bg-sky-500";
-  return <span className={`ml-2 inline-block h-2 w-2 rounded-full ${bg}`} />;
-}
 
 function TrackRow({
   label,
   trackKey,
   capacity,
-  commands,
-  selected,
-  onSelect,
-  onRemove,
+  slots,
+  selectedIndex,
+  onSelectSlot,
   onClear,
 }: {
   label: string;
-  trackKey: "f0" | "f1" | "f2";
+  trackKey: TrackKey;
   capacity: number;
-  commands: Command[];
-  selected: boolean;
-  onSelect: () => void;
-  onRemove: (index: number) => void;
+  slots: CommandSlot[];
+  selectedIndex: number | null;
+  onSelectSlot: (index: number) => void;
   onClear: () => void;
 }) {
   return (
-    <div
-      className={`rounded-xl border p-3 ${
-        selected ? "border-blue-500 bg-blue-50" : "border-gray-200"
-      }`}
-      onClick={onSelect}
-    >
-      <div className="flex items-center justify-between">
-        <div className="text-sm font-semibold text-gray-700">{label}</div>
-        <Button variant="ghost" size="sm" onClick={onClear}>
-          清空
-        </Button>
+    <div className="flex items-center gap-3 rounded-xl border border-slate-200/80 bg-white px-3 py-2">
+      <div className="w-10 text-xs font-semibold text-slate-500">
+        {label}
       </div>
-      <div className="mt-2 grid grid-cols-10 gap-2">
+      <div className="flex flex-1 items-center gap-1 overflow-x-auto pb-1">
         {Array.from({ length: capacity }).map((_, index) => {
-          const command = commands[index];
+          const slot = slots[index];
+          const command = slot?.type ?? null;
+          const condition = slot?.condition ?? null;
+          const isSelected = selectedIndex === index;
+          const conditionBg =
+            condition === "R"
+              ? "bg-rose-500/80 text-white"
+              : condition === "G"
+                ? "bg-emerald-500/80 text-white"
+                : condition === "B"
+                  ? "bg-sky-500/80 text-white"
+                  : "";
           return (
             <div
               key={`${trackKey}-${index}`}
-              className={`flex h-10 items-center justify-center rounded-lg border text-xs ${
-                command ? "bg-white shadow-sm" : "bg-slate-100"
-              }`}
-              onClick={(event) => {
-                event.stopPropagation();
-                if (command) {
-                  onRemove(index);
-                }
-              }}
+              className={`relative flex h-9 w-9 items-center justify-center rounded border text-xs transition ${
+                conditionBg
+                  ? `${conditionBg} border-transparent`
+                  : command
+                    ? "border-slate-200/80 bg-white text-slate-700"
+                    : "border-slate-100 bg-slate-50 text-slate-400"
+              } ${isSelected ? "ring-2 ring-slate-900/70 ring-offset-1 ring-offset-white" : ""}`}
+              onClick={() => onSelectSlot(index)}
             >
               {command ? (
-                <span className="flex items-center">
-                  {COMMAND_LABELS[command.type]}
-                  {conditionBadge(command.condition)}
+                <span
+                  className={`flex h-6 w-6 items-center justify-center rounded ${
+                    COMMAND_ICONS[command].bg ?? ""
+                  } ${COMMAND_ICONS[command].bg ? "text-white" : ""}`}
+                >
+                  {COMMAND_ICONS[command].label}
                 </span>
-              ) : (
-                <span className="text-slate-400">空</span>
-              )}
+              ) : null}
             </div>
           );
         })}
       </div>
-      <div className="mt-2 text-xs text-gray-500">
-        {commands.length}/{capacity}
-      </div>
+      <button
+        type="button"
+        className={`rounded-full border px-2 py-1 text-[10px] font-semibold ${
+          "border-slate-200 text-slate-500"
+        }`}
+        onClick={onClear}
+      >
+        清空
+      </button>
     </div>
   );
 }
 
 export function ProgrammingWorkspace({
   config,
-  commandSet,
-  selectedTrack,
-  onSelectTrack,
-  onRemoveCommand,
+  slots,
+  selectedSlot,
+  onSelectSlot,
   onClearTrack,
 }: ProgrammingWorkspaceProps) {
+  const tracks: Array<{
+    key: "f0" | "f1" | "f2";
+    label: string;
+    capacity: number;
+    slots: CommandSlot[];
+  }> = [
+    { key: "f0", label: "f0", capacity: config.f0, slots: slots.f0 },
+    ...(config.f1 > 0
+      ? [{ key: "f1" as const, label: "f1", capacity: config.f1, slots: slots.f1 }]
+      : []),
+    ...(config.f2 > 0
+      ? [{ key: "f2" as const, label: "f2", capacity: config.f2, slots: slots.f2 }]
+      : []),
+  ];
+
   return (
-    <div className="flex h-full flex-col gap-3">
-      <TrackRow
-        label="主程式 f0"
-        trackKey="f0"
-        capacity={config.f0}
-        commands={commandSet.f0}
-        selected={selectedTrack === "f0"}
-        onSelect={() => onSelectTrack("f0")}
-        onRemove={(index) => onRemoveCommand("f0", index)}
-        onClear={() => onClearTrack("f0")}
-      />
-      <TrackRow
-        label="函式 f1"
-        trackKey="f1"
-        capacity={config.f1}
-        commands={commandSet.f1}
-        selected={selectedTrack === "f1"}
-        onSelect={() => onSelectTrack("f1")}
-        onRemove={(index) => onRemoveCommand("f1", index)}
-        onClear={() => onClearTrack("f1")}
-      />
-      <TrackRow
-        label="函式 f2"
-        trackKey="f2"
-        capacity={config.f2}
-        commands={commandSet.f2}
-        selected={selectedTrack === "f2"}
-        onSelect={() => onSelectTrack("f2")}
-        onRemove={(index) => onRemoveCommand("f2", index)}
-        onClear={() => onClearTrack("f2")}
-      />
+    <div className="flex h-full flex-col gap-2 rounded-2xl border border-slate-200/80 bg-white/85 p-3 shadow-[0_16px_40px_-32px_rgba(15,23,42,0.5)] backdrop-blur">
+      <div className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+        Functions
+      </div>
+      <div className="flex flex-1 flex-col gap-2 overflow-hidden">
+        {tracks.map((track) => (
+          <TrackRow
+            key={track.key}
+            label={track.label}
+            trackKey={track.key}
+            capacity={track.capacity}
+            slots={track.slots}
+            selectedIndex={selectedSlot?.track === track.key ? selectedSlot.index : null}
+            onSelectSlot={(index) => onSelectSlot(track.key, index)}
+            onClear={() => onClearTrack(track.key)}
+          />
+        ))}
+      </div>
     </div>
   );
 }

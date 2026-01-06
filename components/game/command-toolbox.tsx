@@ -4,92 +4,136 @@
  */
 
 import type { LevelConfig, TileColor, CommandType } from "@/types/api";
-import { Button } from "@/components/ui/button";
 
 interface CommandToolboxProps {
   config: LevelConfig;
+  activeCommand: CommandType | null;
   activeCondition: TileColor | null;
-  onConditionChange: (color: TileColor | null) => void;
-  onAddCommand: (type: CommandType) => void;
+  disabled?: boolean;
+  onSelectCommand: (type: CommandType) => void;
+  onSelectCondition: (color: TileColor | null) => void;
 }
 
-const COMMAND_LABELS: Record<CommandType, string> = {
+const COMMAND_ICONS: Record<CommandType, { label: string; bg?: string }> = {
+  move: { label: "↑" },
+  turn_left: { label: "↶" },
+  turn_right: { label: "↷" },
+  paint_red: { label: "", bg: "bg-rose-500" },
+  paint_green: { label: "", bg: "bg-emerald-500" },
+  paint_blue: { label: "", bg: "bg-sky-500" },
+  f0: { label: "f0" },
+  f1: { label: "f1" },
+  f2: { label: "f2" },
+};
+
+const COMMAND_TITLES: Record<CommandType, string> = {
   move: "前進",
   turn_left: "左轉",
   turn_right: "右轉",
   paint_red: "噴紅",
   paint_green: "噴綠",
   paint_blue: "噴藍",
+  f0: "呼叫 f0",
   f1: "呼叫 f1",
   f2: "呼叫 f2",
 };
 
 export function CommandToolbox({
   config,
+  activeCommand,
   activeCondition,
-  onConditionChange,
-  onAddCommand,
+  disabled,
+  onSelectCommand,
+  onSelectCondition,
 }: CommandToolboxProps) {
-  const actions: CommandType[] = ["move", "turn_left", "turn_right"];
+  const actions: CommandType[] = ["turn_left", "move", "turn_right"];
   const paints: CommandType[] = ["paint_red", "paint_green", "paint_blue"];
-  const functions: CommandType[] = ["f1", "f2"];
+  const functions: Array<"f0" | "f1" | "f2"> = ["f0", "f1", "f2"];
 
   return (
-    <div className="flex h-full flex-col gap-4 rounded-2xl border bg-white/90 p-4 shadow-sm">
-      <div>
-        <h3 className="text-sm font-semibold text-gray-700">指令集</h3>
-        <div className="mt-3 grid grid-cols-2 gap-2">
-          {actions.map((cmd) => (
-            <Button key={cmd} variant="secondary" onClick={() => onAddCommand(cmd)}>
-              {COMMAND_LABELS[cmd]}
-            </Button>
-          ))}
-        </div>
+    <div className="flex h-full flex-col gap-3 rounded-2xl border border-slate-200/80 bg-white/85 p-3 shadow-[0_16px_40px_-32px_rgba(15,23,42,0.5)] backdrop-blur">
+      <div className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+        Commands
       </div>
-
-      <div>
-        <h4 className="text-xs font-semibold text-gray-500">噴漆</h4>
-        <div className="mt-2 grid grid-cols-2 gap-2">
+      <div className="flex items-start gap-3">
+        <div className="grid grid-cols-3 gap-2">
+          {actions.map((cmd) => (
+            <button
+              key={cmd}
+              type="button"
+              disabled={disabled}
+              className={`flex h-11 w-11 items-center justify-center rounded-lg border text-lg shadow-sm transition ${
+                disabled
+                  ? "border-slate-100 bg-slate-50 text-slate-300"
+                  : activeCommand === cmd
+                    ? "border-slate-900 bg-slate-900 text-white"
+                    : "border-slate-200/80 bg-white text-slate-700 hover:border-slate-300"
+              }`}
+              aria-label={COMMAND_TITLES[cmd]}
+              onClick={() => onSelectCommand(cmd)}
+            >
+              {COMMAND_ICONS[cmd].label}
+            </button>
+          ))}
+          {functions.map((cmd) => {
+            if (cmd !== "f0" && config[cmd] === 0) return null;
+            return (
+              <button
+                key={cmd}
+                type="button"
+                disabled={disabled}
+                className={`flex h-11 w-11 items-center justify-center rounded-lg border text-xs font-semibold shadow-sm transition ${
+                  disabled
+                    ? "border-slate-100 bg-slate-50 text-slate-300"
+                    : activeCommand === cmd
+                      ? "border-slate-900 bg-slate-900 text-white"
+                      : "border-slate-200/80 bg-white text-slate-700 hover:border-slate-300"
+                }`}
+                aria-label={COMMAND_TITLES[cmd]}
+                onClick={() => onSelectCommand(cmd)}
+              >
+                {COMMAND_ICONS[cmd].label}
+              </button>
+            );
+          })}
+        </div>
+        <div className="flex flex-col gap-2">
           {paints.map((cmd) => {
             const enabled =
               (cmd === "paint_red" && config.tools.paint_red) ||
               (cmd === "paint_green" && config.tools.paint_green) ||
               (cmd === "paint_blue" && config.tools.paint_blue);
+            const isActive = activeCommand === cmd;
             return (
-              <Button
+              <button
                 key={cmd}
-                variant={enabled ? "secondary" : "outline"}
-                disabled={!enabled}
-                onClick={() => onAddCommand(cmd)}
+                type="button"
+                className={`flex h-11 w-11 items-center justify-center rounded-lg border text-sm font-semibold shadow-sm transition ${
+                  enabled && !disabled
+                    ? isActive
+                      ? "border-slate-900 bg-slate-900"
+                      : "border-slate-200/80 bg-white hover:border-slate-300"
+                    : "border-slate-100/80 bg-slate-50 text-slate-300"
+                }`}
+                disabled={!enabled || disabled}
+                aria-label={COMMAND_TITLES[cmd]}
+                onClick={() => onSelectCommand(cmd)}
               >
-                {COMMAND_LABELS[cmd]}
-              </Button>
-            );
-          })}
-        </div>
-      </div>
-
-      <div>
-        <h4 className="text-xs font-semibold text-gray-500">函式</h4>
-        <div className="mt-2 grid grid-cols-2 gap-2">
-          {functions.map((cmd) => {
-            const enabled = cmd === "f1" ? config.f1 > 0 : config.f2 > 0;
-            return (
-              <Button
-                key={cmd}
-                variant={enabled ? "secondary" : "outline"}
-                disabled={!enabled}
-                onClick={() => onAddCommand(cmd)}
-              >
-                {enabled ? COMMAND_LABELS[cmd] : "未解鎖"}
-              </Button>
+                <span
+                  className={`h-6 w-6 rounded ${COMMAND_ICONS[cmd].bg ?? ""} ${
+                    enabled && !disabled ? "" : "opacity-40"
+                  } ${isActive ? "ring-2 ring-white/80" : ""}`}
+                />
+              </button>
             );
           })}
         </div>
       </div>
 
       <div className="mt-auto">
-        <h4 className="text-xs font-semibold text-gray-500">條件修飾</h4>
+        <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500">
+          Condition
+        </div>
         <div className="mt-2 flex items-center gap-2">
           {["R", "G", "B"].map((color) => {
             const tileColor = color as TileColor;
@@ -104,24 +148,25 @@ export function CommandToolbox({
               <button
                 key={color}
                 type="button"
+                disabled={disabled}
                 className={`h-6 w-6 rounded-full ${bg} ${
-                  isActive ? "ring-2 ring-offset-2 ring-gray-900" : "ring-0"
-                }`}
-                onClick={() => onConditionChange(isActive ? null : tileColor)}
+                  isActive ? "ring-2 ring-offset-2 ring-slate-900/70" : "ring-0"
+                } ${disabled ? "opacity-40" : ""}`}
+                onClick={() => onSelectCondition(tileColor)}
               />
             );
           })}
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => onConditionChange(null)}
+          <button
+            type="button"
+            className={`rounded-full border px-2 py-1 text-[10px] font-semibold ${
+              disabled ? "border-slate-100 text-slate-300" : "border-slate-200 text-slate-500"
+            }`}
+            disabled={disabled}
+            onClick={() => onSelectCondition(null)}
           >
             清除
-          </Button>
+          </button>
         </div>
-        <p className="mt-2 text-xs text-gray-500">
-          目前條件：{activeCondition ?? "無"}
-        </p>
       </div>
     </div>
   );

@@ -80,8 +80,10 @@ export interface LevelListItem {
  * - start 增加 dir 欄位
  * - stars 移除 color 欄位
  * - tiles.type 改為 tiles.color
+ * - 新增 gridSize 作為棋盤尺寸 (NxN)
  */
 export interface MapData {
+  gridSize: number; // 4-16
   start: {
     x: number;
     y: number;
@@ -201,6 +203,7 @@ export type CommandType =
   | 'paint_red'
   | 'paint_green'
   | 'paint_blue'
+  | 'f0'
   | 'f1'
   | 'f2';
 

@@ -1,13 +1,12 @@
 "use client";
 
 /**
- * Block42 Frontend - Play Level Page
+ * Block42 Frontend - Play preview page (no account sync).
  */
 
-import { useParams } from "next/navigation";
-import { useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { getLevelById } from "@/lib/api/levels";
+import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import type { LevelConfig, MapData } from "@/types/api";
 import { useGameState } from "@/lib/hooks/use-game-state";
 import { GameCanvas } from "@/components/game/game-canvas";
 import { CommandToolbox } from "@/components/game/command-toolbox";
@@ -16,38 +15,74 @@ import { GameControls } from "@/components/game/game-controls";
 import { ExecutionThreadBar } from "@/components/game/execution-thread";
 import { useNavbar } from "@/components/layout/navbar-context";
 
-export default function PlayLevelPage() {
-  const params = useParams();
-  const levelId = params.levelId as string;
+interface PreviewPayload {
+  title: string;
+  map: MapData;
+  config: LevelConfig;
+}
 
-  const levelQuery = useQuery({
-    queryKey: ["level", levelId],
-    queryFn: () => getLevelById(levelId),
-  });
+const STORAGE_PREFIX = "block42:play-preview:";
 
-  const { data: level } = levelQuery;
-  const gridSize = level?.map.gridSize ?? 10;
+export default function PlayPreviewPage() {
+  const searchParams = useSearchParams();
+  const previewKey = searchParams.get("key");
+  const [payload, setPayload] = useState<PreviewPayload | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const { setLevelInfo } = useNavbar();
 
+  useEffect(() => {
+    if (!previewKey) {
+      setError("找不到預覽代碼");
+      return;
+    }
+
+    const stored = localStorage.getItem(`${STORAGE_PREFIX}${previewKey}`);
+    if (!stored) {
+      setError("預覽資料已過期或不存在");
+      return;
+    }
+
+    try {
+      const parsed = JSON.parse(stored) as PreviewPayload;
+      setPayload(parsed);
+    } catch {
+      setError("預覽資料格式錯誤");
+    }
+  }, [previewKey]);
+
   const game = useGameState({
-    mapData: level?.map,
-    config: level?.config,
+    mapData: payload?.map,
+    config: payload?.config,
   });
 
   useEffect(() => {
-    if (!level) return;
-    setLevelInfo({ label: "Level", title: level.title });
+    if (!previewKey || !game.execution?.success) return;
+    if (!window.opener || window.opener.closed) return;
+    window.opener.postMessage(
+      {
+        type: "playtest-success",
+        key: previewKey,
+        solution: game.serializeSolution(),
+      },
+      window.location.origin
+    );
+  }, [game.execution?.success, previewKey]);
+
+  useEffect(() => {
+    if (!payload) return;
+    setLevelInfo({ label: "Level", title: payload.title });
     return () => setLevelInfo(null);
-  }, [level, setLevelInfo]);
+  }, [payload, setLevelInfo]);
 
-  if (levelQuery.isLoading) {
-    return <div className="p-6">載入關卡中...</div>;
+  if (error) {
+    return <div className="p-6 text-rose-600">{error}</div>;
   }
 
-  if (levelQuery.isError || !level) {
-    return <div className="p-6 text-red-500">關卡載入失敗</div>;
+  if (!payload) {
+    return <div className="p-6">載入試玩資料中...</div>;
   }
 
+  const gridSize = payload.map.gridSize ?? 10;
   const currentState = game.currentState;
   const stepCount = currentState?.steps ?? 0;
   const queueSnapshot =
@@ -62,7 +97,7 @@ export default function PlayLevelPage() {
             <div className="flex min-h-0 flex-1 flex-col gap-3 rounded-[28px] border border-slate-900/10 bg-slate-950/90 p-4 shadow-[0_30px_80px_-60px_rgba(15,23,42,0.9)]">
               <div className="relative flex min-h-0 flex-1 items-stretch">
                 <GameCanvas
-                  mapData={level.map}
+                  mapData={payload.map}
                   state={currentState}
                   gridSize={gridSize}
                   fitToContainer
@@ -91,7 +126,7 @@ export default function PlayLevelPage() {
           <div className="flex min-h-0 flex-[2] gap-3">
             <div className="w-[clamp(180px,22vw,240px)] shrink-0">
               <CommandToolbox
-                config={level.config}
+                config={payload.config}
                 activeCommand={game.selectedSlotState?.type ?? null}
                 activeCondition={game.selectedSlotState?.condition ?? null}
                 disabled={!game.selectedSlot}
@@ -101,7 +136,7 @@ export default function PlayLevelPage() {
             </div>
             <div className="flex min-h-0 flex-1 flex-col gap-2">
               <ProgrammingWorkspace
-                config={level.config}
+                config={payload.config}
                 slots={game.slots}
                 selectedSlot={game.selectedSlot}
                 onSelectSlot={game.selectSlot}

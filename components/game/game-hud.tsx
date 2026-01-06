@@ -12,6 +12,7 @@ interface GameHUDProps {
   collectedStars: number;
   totalStars: number;
   status?: "idle" | "running" | "success" | "failure";
+  boardSize?: number;
 }
 
 export function GameHUD({
@@ -21,30 +22,46 @@ export function GameHUD({
   collectedStars,
   totalStars,
   status,
+  boardSize,
 }: GameHUDProps) {
+  const statusLabel =
+    status === "success" ? "通關" : status === "failure" ? "失敗" : null;
+  const statusClass =
+    status === "success"
+      ? "bg-emerald-500 text-white"
+      : status === "failure"
+        ? "bg-rose-500 text-white"
+        : "";
+
   return (
-    <div className="flex items-center justify-between px-4 py-3">
+    <div className="flex flex-wrap items-center justify-between gap-4 rounded-[28px] border border-white/70 bg-white/80 px-5 py-4 shadow-[0_20px_50px_-40px_rgba(15,23,42,0.45)] backdrop-blur">
       <div>
-        <h1 className="text-lg font-semibold text-gray-900">{title}</h1>
-        <div className="mt-1 flex items-center gap-2 text-sm text-gray-600">
-          <span>星星</span>
-          <span className="font-medium">
-            {collectedStars}/{totalStars}
+        <div className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">
+          Level
+        </div>
+        <h1 className="mt-1 text-2xl font-semibold text-slate-900">{title}</h1>
+        <div className="mt-3 flex flex-wrap items-center gap-2 text-sm text-slate-600">
+          <span className="rounded-full border border-slate-200/70 bg-white/80 px-3 py-1">
+            ⭐ {collectedStars}/{totalStars}
           </span>
-          {status === "success" && (
-            <Badge className="bg-green-600 text-white">通關</Badge>
+          {boardSize && (
+            <span className="rounded-full border border-slate-200/70 bg-white/80 px-3 py-1 text-xs font-semibold text-slate-500">
+              棋盤 {boardSize}x{boardSize}
+            </span>
           )}
-          {status === "failure" && (
-            <Badge className="bg-red-600 text-white">失敗</Badge>
+          {statusLabel && (
+            <Badge className={statusClass}>{statusLabel}</Badge>
           )}
         </div>
       </div>
-      <div className="text-right">
-        <div className="text-sm text-gray-500">步數</div>
-        <div className="text-lg font-semibold text-gray-900">
+      <div className="min-w-[160px] text-right">
+        <div className="text-xs uppercase tracking-[0.3em] text-slate-400">
+          Steps
+        </div>
+        <div className="mt-2 text-2xl font-semibold text-slate-900">
           {steps}
-          <span className="text-sm text-gray-400"> / </span>
-          <span className="text-sm text-gray-400">
+          <span className="text-base font-medium text-slate-400"> / </span>
+          <span className="text-base font-medium text-slate-400">
             {bestSteps ?? "--"}
           </span>
         </div>

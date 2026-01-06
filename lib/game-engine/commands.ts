@@ -13,6 +13,7 @@ export const BASE_COMMANDS: CommandType[] = [
   "paint_red",
   "paint_green",
   "paint_blue",
+  "f0",
   "f1",
   "f2",
 ];
@@ -24,6 +25,7 @@ export function getAvailableCommands(config: LevelConfig): CommandType[] {
   if (config.tools.paint_green) commands.push("paint_green");
   if (config.tools.paint_blue) commands.push("paint_blue");
 
+  if (config.f0 > 0) commands.push("f0");
   if (config.f1 > 0) commands.push("f1");
   if (config.f2 > 0) commands.push("f2");
 

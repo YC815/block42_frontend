@@ -58,6 +58,9 @@ export interface ExecutionResult {
   // 每一步的狀態快照
   states: GameState[];
 
+  // 每一步的待執行指令序列（用於執行緒條）
+  queueSnapshots: Command[][];
+
   // 最終狀態
   finalState: GameState;
 

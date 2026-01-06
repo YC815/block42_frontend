@@ -2,29 +2,92 @@
 
 /**
  * Block42 Frontend - Game state hook
- * Handles command sets, execution, and playback controls.
+ * Handles command slots, execution, and playback controls.
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { LevelConfig, MapData, TileColor, CommandType } from "@/types/api";
 import type { Command, CommandSet, ExecutionResult, GameState } from "@/lib/game-engine/types";
-import { createInitialState, executeCommands } from "@/lib/game-engine/simulator";
-import { createEmptyCommandSet, serializeCommands } from "@/lib/game-engine/commands";
+import {
+  buildExecutionQueueSnapshots,
+  createInitialState,
+  executeCommands,
+} from "@/lib/game-engine/simulator";
+import { serializeCommands } from "@/lib/game-engine/commands";
 
 const DEFAULT_SPEED = 1;
 const SPEED_UNIT_MS = 700;
 
 export type TrackKey = "f0" | "f1" | "f2";
 
+export interface CommandSlot {
+  type: CommandType | null;
+  condition: TileColor | null;
+}
+
+export type SlotSet = Record<TrackKey, CommandSlot[]>;
+export type SelectedSlot = { track: TrackKey; index: number } | null;
+
 interface GameStateOptions {
   mapData?: MapData;
   config?: LevelConfig;
 }
 
+const EMPTY_SLOT: CommandSlot = { type: null, condition: null };
+
+function createSlots(config?: LevelConfig): SlotSet {
+  if (!config) {
+    return { f0: [], f1: [], f2: [] };
+  }
+  return {
+    f0: Array.from({ length: config.f0 }, () => ({ ...EMPTY_SLOT })),
+    f1: Array.from({ length: config.f1 }, () => ({ ...EMPTY_SLOT })),
+    f2: Array.from({ length: config.f2 }, () => ({ ...EMPTY_SLOT })),
+  };
+}
+
+function resizeSlots(prev: SlotSet, config: LevelConfig): SlotSet {
+  const resizeTrack = (track: TrackKey, size: number) => {
+    const current = prev[track] ?? [];
+    if (current.length === size) return current;
+    if (current.length > size) return current.slice(0, size);
+    const extra = Array.from({ length: size - current.length }, () => ({ ...EMPTY_SLOT }));
+    return [...current, ...extra];
+  };
+
+  return {
+    f0: resizeTrack("f0", config.f0),
+    f1: resizeTrack("f1", config.f1),
+    f2: resizeTrack("f2", config.f2),
+  };
+}
+
+function toCommandSet(slots: SlotSet): CommandSet {
+  const toCommands = (trackSlots: CommandSlot[]) =>
+    trackSlots
+      .filter((slot) => slot.type)
+      .map((slot) => ({
+        type: slot.type!,
+        condition: slot.condition ?? undefined,
+      }));
+
+  return {
+    f0: toCommands(slots.f0),
+    f1: toCommands(slots.f1),
+    f2: toCommands(slots.f2),
+  };
+}
+
+function getFirstAvailableSlot(config: LevelConfig): SelectedSlot {
+  if (config.f0 > 0) return { track: "f0", index: 0 };
+  if (config.f1 > 0) return { track: "f1", index: 0 };
+  if (config.f2 > 0) return { track: "f2", index: 0 };
+  return null;
+}
+
 export function useGameState({ mapData, config }: GameStateOptions) {
-  const [commandSet, setCommandSet] = useState<CommandSet>(createEmptyCommandSet());
-  const [selectedTrack, setSelectedTrack] = useState<TrackKey>("f0");
-  const [condition, setCondition] = useState<TileColor | null>(null);
+  const [slots, setSlots] = useState<SlotSet>(() => createSlots(config));
+  const [selectedSlot, setSelectedSlot] = useState<SelectedSlot>(null);
 
   const [execution, setExecution] = useState<ExecutionResult | null>(null);
   const [isRunning, setIsRunning] = useState(false);
@@ -36,6 +99,13 @@ export function useGameState({ mapData, config }: GameStateOptions) {
   const initialState = useMemo(() => {
     return mapData ? createInitialState(mapData) : null;
   }, [mapData]);
+
+  const commandSet = useMemo(() => toCommandSet(slots), [slots]);
+
+  const selectedSlotState = useMemo(() => {
+    if (!selectedSlot) return null;
+    return slots[selectedSlot.track]?.[selectedSlot.index] ?? null;
+  }, [slots, selectedSlot]);
 
   const currentState: GameState | null = useMemo(() => {
     if (!execution) return initialState;
@@ -79,6 +149,19 @@ export function useGameState({ mapData, config }: GameStateOptions) {
   }, [resetPlayback]);
 
   useEffect(() => {
+    if (!config) return;
+    setSlots((prev) => resizeSlots(prev, config));
+    setSelectedSlot((prev) => {
+      const fallback = getFirstAvailableSlot(config);
+      if (!prev) return fallback;
+      if (!fallback) return null;
+      if (config[prev.track] === 0) return fallback;
+      if (prev.index >= config[prev.track]) return fallback;
+      return prev;
+    });
+  }, [config]);
+
+  useEffect(() => {
     resetPlayback();
   }, [commandSet, mapData, config, resetPlayback]);
 
@@ -109,49 +192,57 @@ export function useGameState({ mapData, config }: GameStateOptions) {
     };
   }, [isRunning, execution, speed]);
 
-  const addCommand = useCallback(
-    (track: TrackKey, type: CommandType) => {
-      if (!config) return;
-      const capacity = config[track];
-
-      setCommandSet((prev) => {
-        const list = prev[track];
-        if (capacity <= list.length) return prev;
-
-        const newCommand: Command = {
-          type,
-          condition: condition || undefined,
-        };
-
-        return {
-          ...prev,
-          [track]: [...list, newCommand],
-        };
-      });
-    },
-    [config, condition]
-  );
-
-  const removeCommand = useCallback((track: TrackKey, index: number) => {
-    setCommandSet((prev) => {
-      const list = prev[track];
-      if (!list[index]) return prev;
-      const next = list.slice();
-      next.splice(index, 1);
-      return {
-        ...prev,
-        [track]: next,
-      };
-    });
+  const selectSlot = useCallback((track: TrackKey, index: number) => {
+    setSelectedSlot({ track, index });
   }, []);
 
+  const applyCommand = useCallback(
+    (type: CommandType) => {
+      if (!selectedSlot) return;
+      setSlots((prev) => {
+        const trackSlots = prev[selectedSlot.track] ?? [];
+        const slot = trackSlots[selectedSlot.index];
+        if (!slot) return prev;
+        const nextSlot: CommandSlot =
+          slot.type === type ? { ...slot, type: null } : { ...slot, type };
+        const nextTrack = trackSlots.slice();
+        nextTrack[selectedSlot.index] = nextSlot;
+        return { ...prev, [selectedSlot.track]: nextTrack };
+      });
+    },
+    [selectedSlot]
+  );
+
+  const applyCondition = useCallback(
+    (color: TileColor | null) => {
+      if (!selectedSlot) return;
+      setSlots((prev) => {
+        const trackSlots = prev[selectedSlot.track] ?? [];
+        const slot = trackSlots[selectedSlot.index];
+        if (!slot) return prev;
+        const nextSlot: CommandSlot = !color
+          ? { ...slot, condition: null }
+          : slot.condition === color
+            ? { ...slot, condition: null }
+            : { ...slot, condition: color };
+        const nextTrack = trackSlots.slice();
+        nextTrack[selectedSlot.index] = nextSlot;
+        return { ...prev, [selectedSlot.track]: nextTrack };
+      });
+    },
+    [selectedSlot]
+  );
+
   const clearTrack = useCallback((track: TrackKey) => {
-    setCommandSet((prev) => ({ ...prev, [track]: [] }));
+    setSlots((prev) => ({
+      ...prev,
+      [track]: prev[track].map(() => ({ ...EMPTY_SLOT })),
+    }));
   }, []);
 
   const clearAll = useCallback(() => {
-    setCommandSet(createEmptyCommandSet());
-  }, []);
+    setSlots(createSlots(config));
+  }, [config]);
 
   const serializeSolution = useCallback(() => {
     return {
@@ -162,13 +253,24 @@ export function useGameState({ mapData, config }: GameStateOptions) {
     };
   }, [commandSet, execution]);
 
+  const queueSnapshots = useMemo(() => {
+    if (!config) return [];
+    if (execution?.queueSnapshots?.length) {
+      return execution.queueSnapshots;
+    }
+    return buildExecutionQueueSnapshots(commandSet, config, 0);
+  }, [commandSet, config, execution]);
+
   return {
     commandSet,
-    selectedTrack,
-    setSelectedTrack,
-    condition,
-    setCondition,
+    slots,
+    selectedSlot,
+    selectedSlotState,
+    selectSlot,
+    applyCommand,
+    applyCondition,
     currentState,
+    queueSnapshots,
     execution,
     isRunning,
     speed,
@@ -176,8 +278,6 @@ export function useGameState({ mapData, config }: GameStateOptions) {
     run,
     step,
     reset,
-    addCommand,
-    removeCommand,
     clearTrack,
     clearAll,
     serializeSolution,

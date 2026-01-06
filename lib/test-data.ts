@@ -38,6 +38,7 @@ export const TEST_ACCOUNTS: {
  */
 export const TEST_LEVEL_DATA = {
   map: {
+    gridSize: 5,
     start: { x: 0, y: 0, dir: 1 }, // 朝右
     stars: [{ x: 4, y: 4 }],
     tiles: [
@@ -94,6 +95,7 @@ export const TEST_LEVEL_DATA = {
  */
 export const TEST_LEVEL_MULTICOLOR = {
   map: {
+    gridSize: 4,
     start: { x: 0, y: 0, dir: 1 }, // 朝右
     stars: [{ x: 2, y: 2 }],
     tiles: [

@@ -23,6 +23,73 @@ import {
   hasStar,
 } from "./types";
 
+const MAX_DEPTH = 100;
+const MAX_STEPS = 1000;
+
+type FunctionKey = "f0" | "f1" | "f2";
+
+function isFunctionCommand(command: Command): command is Command & { type: FunctionKey } {
+  return command.type === "f0" || command.type === "f1" || command.type === "f2";
+}
+
+function canCallFunction(key: FunctionKey, config: LevelConfig, commands: CommandSet) {
+  return config[key] > 0 && commands[key].length > 0;
+}
+
+function flattenFrames(frames: Array<{ commands: Command[]; index: number }>) {
+  const queue: Command[] = [];
+  for (let i = frames.length - 1; i >= 0; i -= 1) {
+    const frame = frames[i];
+    if (frame.index < frame.commands.length) {
+      queue.push(...frame.commands.slice(frame.index));
+    }
+  }
+  return queue;
+}
+
+export function buildExecutionQueueSnapshots(
+  commands: CommandSet,
+  config: LevelConfig,
+  stepsLimit?: number
+): Command[][] {
+  const snapshots: Command[][] = [];
+  const frames: Array<{ commands: Command[]; index: number }> = [
+    { commands: commands.f0, index: 0 },
+  ];
+
+  snapshots.push(flattenFrames(frames));
+
+  let executedSteps = 0;
+  while (frames.length > 0 && (stepsLimit === undefined || executedSteps < stepsLimit)) {
+    const frame = frames[frames.length - 1];
+    if (!frame) break;
+
+    if (frame.index >= frame.commands.length) {
+      frames.pop();
+      continue;
+    }
+
+    const command = frame.commands[frame.index];
+    frame.index += 1;
+
+    if (isFunctionCommand(command)) {
+      const key = command.type;
+      if (canCallFunction(key, config, commands)) {
+        if (frames.length >= MAX_DEPTH + 1) {
+          break;
+        }
+        frames.push({ commands: commands[key], index: 0 });
+      }
+      continue;
+    }
+
+    executedSteps += 1;
+    snapshots.push(flattenFrames(frames));
+  }
+
+  return snapshots;
+}
+
 /**
  * 建立初始遊戲狀態
  */
@@ -101,6 +168,7 @@ function executeCommand(
     case "paint_blue":
       return executePaint(newState, "B", config);
 
+    case "f0":
     case "f1":
     case "f2":
       // 函數呼叫標記，由外層處理
@@ -209,6 +277,7 @@ export function executeCommands(
 
   return {
     states,
+    queueSnapshots: buildExecutionQueueSnapshots(commands, config, currentState.steps),
     finalState: currentState,
     success,
     totalSteps: currentState.steps,
@@ -228,9 +297,6 @@ function executeCommandList(
   depth: number = 0
 ): GameState {
   // 防止無限遞迴
-  const MAX_DEPTH = 100;
-  const MAX_STEPS = 1000;
-
   if (depth > MAX_DEPTH) {
     state.status = "failure";
     state.error = "函數呼叫層級過深！";
@@ -250,6 +316,21 @@ function executeCommandList(
     }
 
     // 處理函數呼叫
+    if (command.type === "f0") {
+      if (config.f0 > 0 && allCommands.f0.length > 0) {
+        state = executeCommandList(
+          state,
+          allCommands.f0,
+          allCommands,
+          mapData,
+          config,
+          states,
+          depth + 1
+        );
+      }
+      continue;
+    }
+
     if (command.type === "f1") {
       if (config.f1 > 0 && allCommands.f1.length > 0) {
         state = executeCommandList(

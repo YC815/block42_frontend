@@ -4,6 +4,7 @@
  */
 
 import { Navbar } from "@/components/layout/navbar";
+import { NavbarProvider } from "@/components/layout/navbar-context";
 
 export default function PublicLayout({
   children,
@@ -11,9 +12,11 @@ export default function PublicLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex min-h-screen flex-col">
-      <Navbar />
-      <main className="flex-1">{children}</main>
-    </div>
+    <NavbarProvider>
+      <div className="flex min-h-screen flex-col">
+        <Navbar />
+        <main className="flex-1">{children}</main>
+      </div>
+    </NavbarProvider>
   );
 }
