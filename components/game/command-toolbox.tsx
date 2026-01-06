@@ -4,6 +4,7 @@
  */
 
 import type { LevelConfig, TileColor, CommandType } from "@/types/api";
+import { ArrowBigUp, CornerUpLeft, CornerUpRight, PaintBucket } from "lucide-react";
 
 interface CommandToolboxProps {
   config: LevelConfig;
@@ -14,10 +15,10 @@ interface CommandToolboxProps {
   onSelectCondition: (color: TileColor | null) => void;
 }
 
-const COMMAND_ICONS: Record<CommandType, { label: string; bg?: string }> = {
-  move: { label: "↑" },
-  turn_left: { label: "↶" },
-  turn_right: { label: "↷" },
+const COMMAND_ICONS: Record<CommandType, { label?: string; icon?: "move" | "turn_left" | "turn_right"; bg?: string }> = {
+  move: { icon: "move" },
+  turn_left: { icon: "turn_left" },
+  turn_right: { icon: "turn_right" },
   paint_red: { label: "", bg: "bg-rose-500" },
   paint_green: { label: "", bg: "bg-emerald-500" },
   paint_blue: { label: "", bg: "bg-sky-500" },
@@ -38,23 +39,6 @@ const COMMAND_TITLES: Record<CommandType, string> = {
   f2: "呼叫 f2",
 };
 
-function BrushIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      aria-hidden="true"
-      className={className}
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M15.5 4.5l4 4-9 9h-4v-4l9-9z" />
-      <path d="M4 20c3 0 4-1 4-3 0-1.1.9-2 2-2h4c1.1 0 2 .9 2 2 0 2-1 3-4 3H4z" />
-    </svg>
-  );
-}
 
 export function CommandToolbox({
   config,
@@ -78,25 +62,36 @@ export function CommandToolbox({
       </div>
       <div className="flex items-start gap-3">
         <div className="grid grid-cols-3 gap-2">
-          {actions.map((cmd) => (
-            <button
-              key={cmd}
-              type="button"
-              disabled={disabled}
-              className={`flex h-11 w-11 items-center justify-center rounded-lg border text-lg shadow-sm transition ${
-                disabled
-                  ? "border-slate-100 bg-slate-50 text-slate-300"
-                  : activeCommand === cmd
-                    ? "border-slate-900 bg-slate-900 text-white"
-                    : "border-slate-200/80 bg-white text-slate-700 hover:border-slate-300"
-              }`}
-              aria-label={COMMAND_TITLES[cmd]}
-              data-tour-id={`command-${cmd}`}
-              onClick={() => onSelectCommand(cmd)}
-            >
-              {COMMAND_ICONS[cmd].label}
-            </button>
-          ))}
+          {actions.map((cmd) => {
+            const iconDef = COMMAND_ICONS[cmd];
+            return (
+              <button
+                key={cmd}
+                type="button"
+                disabled={disabled}
+                className={`flex h-11 w-11 items-center justify-center rounded-lg border text-lg shadow-sm transition ${
+                  disabled
+                    ? "border-slate-100 bg-slate-50 text-slate-300"
+                    : activeCommand === cmd
+                      ? "border-slate-900 bg-slate-900 text-white"
+                      : "border-slate-200/80 bg-white text-slate-700 hover:border-slate-300"
+                }`}
+                aria-label={COMMAND_TITLES[cmd]}
+                data-tour-id={`command-${cmd}`}
+                onClick={() => onSelectCommand(cmd)}
+              >
+                {iconDef.icon === "move" ? (
+                  <ArrowBigUp className="h-6 w-6" strokeWidth={2} />
+                ) : iconDef.icon === "turn_left" ? (
+                  <CornerUpLeft className="h-5 w-5" strokeWidth={2.5} />
+                ) : iconDef.icon === "turn_right" ? (
+                  <CornerUpRight className="h-5 w-5" strokeWidth={2.5} />
+                ) : (
+                  <span>{iconDef.label}</span>
+                )}
+              </button>
+            );
+          })}
           {functions.map((cmd) => {
             if (cmd !== "f0" && config[cmd] === 0) return null;
             return (
@@ -126,7 +121,6 @@ export function CommandToolbox({
               (cmd === "paint_red" && config.tools.paint_red) ||
               (cmd === "paint_green" && config.tools.paint_green) ||
               (cmd === "paint_blue" && config.tools.paint_blue);
-            if (!enabled) return null;
             const isActive = activeCommand === cmd;
             const squareColor =
               cmd === "paint_red"
@@ -134,22 +128,25 @@ export function CommandToolbox({
                 : cmd === "paint_green"
                   ? "bg-[#38A169]"
                   : "bg-[#3182CE]";
+            const isDisabled = disabled || !enabled;
             return (
               <button
                 key={cmd}
                 type="button"
                 className={`flex h-11 w-11 items-center justify-center rounded-lg border shadow-sm transition ${
-                  isActive
-                    ? "border-slate-900 bg-slate-100"
-                    : "border-slate-200/80 bg-white hover:border-slate-300"
+                  isDisabled
+                    ? "border-slate-100 bg-slate-50 opacity-40"
+                    : isActive
+                      ? "border-slate-900 bg-slate-100"
+                      : "border-slate-200/80 bg-white hover:border-slate-300"
                 }`}
-                disabled={disabled}
+                disabled={isDisabled}
                 aria-label={COMMAND_TITLES[cmd]}
                 data-tour-id={`brush-${cmd.replace("paint_", "")}`}
                 onClick={() => onSelectCommand(cmd)}
               >
                 <div className={`flex h-8 w-8 items-center justify-center rounded-full ${squareColor}`}>
-                  <BrushIcon className="h-4 w-4 text-white/95" />
+                  <PaintBucket className="h-4 w-4 text-white/95" strokeWidth={2.5} />
                 </div>
               </button>
             );
@@ -159,7 +156,7 @@ export function CommandToolbox({
 
       <div className="mt-auto">
         <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500">
-          Condition
+          Condition 條件過濾
         </div>
         <div className="mt-2 flex items-center gap-2">
           {["R", "G", "B"].map((color) => {

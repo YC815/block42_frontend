@@ -6,15 +6,15 @@
 import type { Command } from "@/lib/game-engine/types";
 import type { CommandType, TileColor } from "@/types/api";
 import type { ReactNode } from "react";
-import { Paintbrush } from "lucide-react";
+import { ArrowBigUp, CornerUpLeft, CornerUpRight } from "lucide-react";
 
-const COMMAND_ICONS: Record<CommandType, { label: string; icon?: "paintbrush"; color?: string }> = {
-  move: { label: "↑" },
-  turn_left: { label: "↶" },
-  turn_right: { label: "↷" },
-  paint_red: { label: "", icon: "paintbrush", color: "text-rose-500" },
-  paint_green: { label: "", icon: "paintbrush", color: "text-emerald-500" },
-  paint_blue: { label: "", icon: "paintbrush", color: "text-sky-500" },
+const COMMAND_ICONS: Record<CommandType, { label?: string; icon?: "move" | "turn_left" | "turn_right" }> = {
+  move: { icon: "move" },
+  turn_left: { icon: "turn_left" },
+  turn_right: { icon: "turn_right" },
+  paint_red: { label: "" },
+  paint_green: { label: "" },
+  paint_blue: { label: "" },
   f0: { label: "f0" },
   f1: { label: "f1" },
   f2: { label: "f2" },
@@ -67,8 +67,12 @@ export function ExecutionThreadBar({ queue, actions, embedded }: ExecutionThread
                     : "border-slate-200/80 bg-white text-slate-700"
                 }`}
               >
-                {iconDef.icon === "paintbrush" ? (
-                  <Paintbrush className={`h-4 w-4 ${iconDef.color ?? ""}`} strokeWidth={2.5} />
+                {iconDef.icon === "move" ? (
+                  <ArrowBigUp className="h-5 w-5" strokeWidth={2} />
+                ) : iconDef.icon === "turn_left" ? (
+                  <CornerUpLeft className="h-4 w-4" strokeWidth={2.5} />
+                ) : iconDef.icon === "turn_right" ? (
+                  <CornerUpRight className="h-4 w-4" strokeWidth={2.5} />
                 ) : (
                   <span>{iconDef.label}</span>
                 )}
