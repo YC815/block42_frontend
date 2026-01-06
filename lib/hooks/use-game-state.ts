@@ -272,6 +272,7 @@ export function useGameState({ mapData, config }: GameStateOptions) {
     currentState,
     queueSnapshots,
     execution,
+    timelineIndex: stepIndex,
     isRunning,
     speed,
     setSpeed,

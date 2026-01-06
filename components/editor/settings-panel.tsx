@@ -3,14 +3,18 @@
  */
 
 import type { LevelConfig } from "@/types/api";
+import type { BoundsWithSize } from "@/lib/map-utils";
+import { MAX_PADDING } from "@/lib/map-utils";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 interface SettingsPanelProps {
   title: string;
   config: LevelConfig;
-  gridSize: number;
-  onGridSizeChange: (value: number) => void;
+  padding: number;
+  contentBounds: BoundsWithSize;
+  renderBounds: BoundsWithSize;
+  onPaddingChange: (value: number) => void;
   onTitleChange: (value: string) => void;
   onConfigChange: (config: LevelConfig) => void;
 }
@@ -18,13 +22,14 @@ interface SettingsPanelProps {
 export function SettingsPanel({
   title,
   config,
-  gridSize,
-  onGridSizeChange,
+  padding,
+  contentBounds,
+  renderBounds,
+  onPaddingChange,
   onTitleChange,
   onConfigChange,
 }: SettingsPanelProps) {
-  const minGridSize = 4;
-  const maxGridSize = 16;
+  const clampPadding = (value: number) => Math.max(0, Math.min(MAX_PADDING, value));
 
   const handleSlotsChange = (key: "f0" | "f1" | "f2", value: number) => {
     onConfigChange({ ...config, [key]: value });
@@ -61,35 +66,55 @@ export function SettingsPanel({
 
       <div>
         <div className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
-          棋盤設定
+          地圖框架
         </div>
         <div className="mt-3">
           <Label className="text-xs uppercase tracking-[0.18em] text-slate-500">
-            格數
+            預留空氣（Padding）
           </Label>
           <div className="mt-3 flex items-center gap-3">
             <input
               type="range"
-              min={minGridSize}
-              max={maxGridSize}
+              min={0}
+              max={MAX_PADDING}
               step={1}
-              value={gridSize}
-              onChange={(event) => onGridSizeChange(Number(event.target.value))}
+              value={padding}
+              onChange={(event) => onPaddingChange(clampPadding(Number(event.target.value)))}
               className="w-full accent-teal-500"
             />
             <Input
               type="number"
-              min={minGridSize}
-              max={maxGridSize}
+              min={0}
+              max={MAX_PADDING}
               step={1}
-              value={gridSize}
-              onChange={(event) => onGridSizeChange(Number(event.target.value))}
+              value={padding}
+              onChange={(event) => onPaddingChange(clampPadding(Number(event.target.value)))}
               className="w-16 bg-white/80 text-sm font-semibold text-slate-700"
             />
           </div>
           <p className="mt-2 text-xs text-slate-500">
-            調整棋盤大小會自動移除超出範圍的方塊。
+            渲染時會自動平移原點並在四周留下空白，方便動態載入。
           </p>
+          <div className="mt-3 space-y-2 rounded-2xl border border-slate-200 bg-slate-50/80 p-3 text-xs text-slate-700">
+            <div className="flex items-center justify-between">
+              <span>編輯範圍</span>
+              <span className="font-semibold">
+                {contentBounds.width} x {contentBounds.height}
+              </span>
+            </div>
+            <div className="flex items-center justify-between text-[11px] text-slate-500">
+              <span>座標</span>
+              <span>
+                x: {contentBounds.minX}~{contentBounds.maxX}, y: {contentBounds.minY}~{contentBounds.maxY}
+              </span>
+            </div>
+            <div className="flex items-center justify-between pt-2">
+              <span>渲染範圍（含空氣）</span>
+              <span className="font-semibold">
+                {renderBounds.width} x {renderBounds.height}
+              </span>
+            </div>
+          </div>
         </div>
       </div>
 

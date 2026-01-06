@@ -82,11 +82,11 @@ export default function PlayPreviewPage() {
     return <div className="p-6">載入試玩資料中...</div>;
   }
 
-  const gridSize = payload.map.gridSize ?? 10;
   const currentState = game.currentState;
-  const stepCount = currentState?.steps ?? 0;
   const queueSnapshot =
-    game.queueSnapshots[Math.min(stepCount, Math.max(0, game.queueSnapshots.length - 1))] ??
+    game.queueSnapshots[
+      Math.min(game.timelineIndex, Math.max(0, game.queueSnapshots.length - 1))
+    ] ??
     [];
 
   return (
@@ -99,7 +99,6 @@ export default function PlayPreviewPage() {
                 <GameCanvas
                   mapData={payload.map}
                   state={currentState}
-                  gridSize={gridSize}
                   fitToContainer
                 />
                 <div className="pointer-events-none absolute inset-0 rounded-[24px] ring-1 ring-white/10" />

@@ -4,7 +4,7 @@
  * Block42 Frontend - Shared editor page logic
  */
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import type { LevelConfig, MapData, Solution } from "@/types/api";
@@ -14,9 +14,17 @@ import { toast } from "sonner";
 import { EditorToolbar } from "@/components/editor/editor-toolbar";
 import { EditorCanvas } from "@/components/editor/editor-canvas";
 import { SettingsPanel } from "@/components/editor/settings-panel";
+import {
+  compileMapData,
+  computeContentBounds,
+  DEFAULT_PADDING,
+  ensureStartFloor,
+  MAX_RENDER_SIZE,
+  validateRenderSize,
+} from "@/lib/map-utils";
 
 const DEFAULT_MAP: MapData = {
-  gridSize: 10,
+  padding: DEFAULT_PADDING,
   start: { x: 0, y: 0, dir: 1 },
   stars: [],
   tiles: [{ x: 0, y: 0, color: "R" }],
@@ -33,47 +41,6 @@ const DEFAULT_CONFIG: LevelConfig = {
   },
 };
 
-const GRID_MIN = 4;
-const GRID_MAX = 16;
-
-function clampGridSize(value: number) {
-  if (!Number.isFinite(value)) {
-    return GRID_MIN;
-  }
-  return Math.min(GRID_MAX, Math.max(GRID_MIN, value));
-}
-
-function normalizeMapData(mapData: MapData, nextGridSize: number): MapData {
-  const maxIndex = nextGridSize - 1;
-  const tiles = mapData.tiles.filter(
-    (tile) => tile.x <= maxIndex && tile.y <= maxIndex
-  );
-  const stars = mapData.stars.filter(
-    (star) => star.x <= maxIndex && star.y <= maxIndex
-  );
-  let start = mapData.start;
-
-  if (start.x > maxIndex || start.y > maxIndex) {
-    start = { ...start, x: 0, y: 0 };
-  }
-
-  let nextTiles = tiles;
-  const hasStartTile = nextTiles.some(
-    (tile) => tile.x === start.x && tile.y === start.y
-  );
-  if (!hasStartTile) {
-    nextTiles = [...nextTiles, { x: start.x, y: start.y, color: "R" }];
-  }
-
-  return {
-    ...mapData,
-    gridSize: nextGridSize,
-    tiles: nextTiles,
-    stars,
-    start,
-  };
-}
-
 interface EditorPageProps {
   levelId?: string;
 }
@@ -81,13 +48,20 @@ interface EditorPageProps {
 export function EditorPage({ levelId }: EditorPageProps) {
   const router = useRouter();
   const [title, setTitle] = useState("未命名關卡");
-  const [mapData, setMapData] = useState<MapData>(DEFAULT_MAP);
+  const [mapData, setMapData] = useState<MapData>(() => ensureStartFloor(DEFAULT_MAP));
   const [config, setConfig] = useState<LevelConfig>(DEFAULT_CONFIG);
   const [tool, setTool] = useState<"paint" | "erase" | "start" | "star">("paint");
   const [paintColor, setPaintColor] = useState<"R" | "G" | "B">("R");
   const [playtestPassed, setPlaytestPassed] = useState(false);
   const [playtestSolution, setPlaytestSolution] = useState<Solution | null>(null);
   const [activePreviewKey, setActivePreviewKey] = useState<string | null>(null);
+
+  const compiledMap = useMemo(() => compileMapData(mapData), [mapData]);
+  const contentBounds = useMemo(() => computeContentBounds(mapData), [mapData]);
+  const sizeCheck = useMemo(
+    () => validateRenderSize(compiledMap, MAX_RENDER_SIZE),
+    [compiledMap]
+  );
 
   const PREVIEW_STORAGE_PREFIX = "block42:play-preview:";
 
@@ -99,17 +73,12 @@ export function EditorPage({ levelId }: EditorPageProps) {
 
   useEffect(() => {
     if (levelQuery.data) {
-      const incomingMap = levelQuery.data.map;
-      const resolvedGridSize = clampGridSize(
-        incomingMap.gridSize ?? DEFAULT_MAP.gridSize
-      );
+      const incomingMap = ensureStartFloor({
+        ...levelQuery.data.map,
+        padding: levelQuery.data.map.padding ?? DEFAULT_MAP.padding,
+      });
       setTitle(levelQuery.data.title);
-      setMapData(
-        normalizeMapData(
-          { ...incomingMap, gridSize: resolvedGridSize },
-          resolvedGridSize
-        )
-      );
+      setMapData(incomingMap);
       setConfig(levelQuery.data.config);
     }
   }, [levelQuery.data]);
@@ -165,16 +134,26 @@ export function EditorPage({ levelId }: EditorPageProps) {
     return () => window.removeEventListener("message", handleMessage);
   }, [activePreviewKey]);
 
+  const ensureMapWithinLimit = () => {
+    if (sizeCheck.ok) return true;
+    toast.error(
+      `地圖尺寸過大 (${sizeCheck.width}x${sizeCheck.height})，上限為 ${MAX_RENDER_SIZE}x${MAX_RENDER_SIZE}`
+    );
+    return false;
+  };
+
   const handleSave = () => {
     if (!title.trim()) {
       toast.error("請輸入關卡名稱");
       return;
     }
+    if (!ensureMapWithinLimit()) return;
+    const runtimeMap = compileMapData(mapData);
     if (!levelId) {
-      createMutation.mutate({ title, map: mapData, config });
+      createMutation.mutate({ title, map: runtimeMap, config });
       return;
     }
-    updateMutation.mutate({ id: levelId, data: { title, map: mapData, config } });
+    updateMutation.mutate({ id: levelId, data: { title, map: runtimeMap, config } });
   };
 
   const handlePublish = () => {
@@ -182,6 +161,7 @@ export function EditorPage({ levelId }: EditorPageProps) {
       toast.error("請先儲存關卡");
       return;
     }
+    if (!ensureMapWithinLimit()) return;
     if (!playtestPassed) {
       toast.error("請先試玩通關");
       return;
@@ -194,16 +174,12 @@ export function EditorPage({ levelId }: EditorPageProps) {
   };
 
   const handlePlaytest = () => {
+    if (!ensureMapWithinLimit()) return;
     const previewKey = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-    const payload = { title, map: mapData, config };
+    const payload = { title, map: compileMapData(mapData), config };
     localStorage.setItem(`${PREVIEW_STORAGE_PREFIX}${previewKey}`, JSON.stringify(payload));
     setActivePreviewKey(previewKey);
     window.open(`/studio/play-preview?key=${previewKey}`, "_blank");
-  };
-
-  const handleGridSizeChange = (value: number) => {
-    const nextSize = clampGridSize(value);
-    setMapData((current) => normalizeMapData(current, nextSize));
   };
 
   if (levelId && levelQuery.isLoading) {
@@ -251,11 +227,21 @@ export function EditorPage({ levelId }: EditorPageProps) {
         </div>
 
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="text-xs text-slate-500">
-            目前棋盤：{mapData.gridSize} x {mapData.gridSize}
+          <div className="text-xs text-slate-500 space-x-2">
+            <span>
+              編輯範圍：{contentBounds.width} x {contentBounds.height}
+            </span>
+            <span className="text-slate-400">
+              x: {contentBounds.minX}~{contentBounds.maxX}, y: {contentBounds.minY}~{contentBounds.maxY}
+            </span>
           </div>
-          <div className="text-xs text-slate-500">
-            試玩驗證：{playtestPassed ? "已通過" : "尚未通過"}
+          <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500">
+            <span className={sizeCheck.ok ? "" : "text-rose-600"}>
+              渲染框（含空氣）：{compiledMap.bounds.width} x {compiledMap.bounds.height}
+            </span>
+            <span className="text-xs text-slate-500">
+              試玩驗證：{playtestPassed ? "已通過" : "尚未通過"}
+            </span>
           </div>
         </div>
 
@@ -276,8 +262,12 @@ export function EditorPage({ levelId }: EditorPageProps) {
             <SettingsPanel
               title={title}
               config={config}
-              gridSize={mapData.gridSize}
-              onGridSizeChange={handleGridSizeChange}
+              padding={mapData.padding ?? DEFAULT_PADDING}
+              contentBounds={contentBounds}
+              renderBounds={compiledMap.bounds}
+              onPaddingChange={(value) =>
+                setMapData((current) => ({ ...current, padding: value }))
+              }
               onTitleChange={setTitle}
               onConfigChange={setConfig}
             />

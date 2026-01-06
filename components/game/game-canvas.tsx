@@ -8,45 +8,22 @@
 import type { MapData, TileColor } from "@/types/api";
 import type { GameState } from "@/lib/game-engine/types";
 import { coordToKey } from "@/lib/game-engine/types";
+import { computeRenderBounds } from "@/lib/map-utils";
 import { useEffect, useRef, useState } from "react";
 
 interface GameCanvasProps {
   mapData: MapData;
   state: GameState | null;
-  gridSize?: number;
   cellSize?: number;
   fitToContainer?: boolean;
 }
 
-const GRID_LIMIT = 16;
 const MIN_CELL_SIZE = 18;
 const MAX_CELL_SIZE = 52;
 const GAP_RATIO = 0.12;
 
 function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value));
-}
-
-function getBounds(mapData: MapData) {
-  const xs = [mapData.start.x];
-  const ys = [mapData.start.y];
-
-  for (const tile of mapData.tiles) {
-    xs.push(tile.x);
-    ys.push(tile.y);
-  }
-  for (const star of mapData.stars) {
-    xs.push(star.x);
-    ys.push(star.y);
-  }
-
-  const maxX = xs.length ? Math.max(...xs) : 9;
-  const maxY = ys.length ? Math.max(...ys) : 9;
-
-  return {
-    width: Math.max(1, maxX + 1),
-    height: Math.max(1, maxY + 1),
-  };
 }
 
 function getGridPixelSize(gridSize: number, cellSize: number) {
@@ -102,16 +79,14 @@ function directionRotation(dir: number) {
 export function GameCanvas({
   mapData,
   state,
-  gridSize,
   cellSize,
   fitToContainer = false,
 }: GameCanvasProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
-  const bounds = getBounds(mapData);
-  const baseGridSize =
-    gridSize ?? mapData.gridSize ?? Math.max(bounds.width, bounds.height);
-  const resolvedGridSize = clamp(Math.floor(baseGridSize), 4, GRID_LIMIT);
+  const bounds = computeRenderBounds(mapData);
+  const columns = bounds.width;
+  const rows = bounds.height;
 
   useEffect(() => {
     if (!fitToContainer) return;
@@ -147,13 +122,22 @@ export function GameCanvas({
     MIN_CELL_SIZE,
     MAX_CELL_SIZE
   );
-  const availableSize = Math.min(containerSize.width, containerSize.height);
+  const availableWidth = containerSize.width;
+  const availableHeight = containerSize.height;
   const resolvedCellSize = fitToContainer
-    ? getFittedCellSize(
-        availableSize,
-        resolvedGridSize,
-        MIN_CELL_SIZE,
-        maxCellSize
+    ? Math.min(
+        getFittedCellSize(
+          availableWidth,
+          columns,
+          MIN_CELL_SIZE,
+          maxCellSize
+        ),
+        getFittedCellSize(
+          availableHeight,
+          rows,
+          MIN_CELL_SIZE,
+          maxCellSize
+        )
       )
     : fallbackCellSize;
   const gridGap = Math.max(2, Math.round(resolvedCellSize * GAP_RATIO));
@@ -167,8 +151,8 @@ export function GameCanvas({
   const collected = state?.collectedStars ?? new Set<string>();
 
   const cells = [] as Array<{ x: number; y: number; key: string }>; // y-major
-  for (let y = 0; y < resolvedGridSize; y += 1) {
-    for (let x = 0; x < resolvedGridSize; x += 1) {
+  for (let y = bounds.minY; y <= bounds.maxY; y += 1) {
+    for (let x = bounds.minX; x <= bounds.maxX; x += 1) {
       cells.push({ x, y, key: coordToKey(x, y) });
     }
   }
@@ -188,8 +172,8 @@ export function GameCanvas({
           <div
             className="mx-auto grid"
             style={{
-              gridTemplateColumns: `repeat(${resolvedGridSize}, ${resolvedCellSize}px)`,
-              gridTemplateRows: `repeat(${resolvedGridSize}, ${resolvedCellSize}px)`,
+              gridTemplateColumns: `repeat(${columns}, ${resolvedCellSize}px)`,
+              gridTemplateRows: `repeat(${rows}, ${resolvedCellSize}px)`,
               gap: `${gridGap}px`,
             }}
           >

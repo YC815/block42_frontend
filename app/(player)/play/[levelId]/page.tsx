@@ -26,7 +26,6 @@ export default function PlayLevelPage() {
   });
 
   const { data: level } = levelQuery;
-  const gridSize = level?.map.gridSize ?? 10;
   const { setLevelInfo } = useNavbar();
 
   const game = useGameState({
@@ -49,9 +48,10 @@ export default function PlayLevelPage() {
   }
 
   const currentState = game.currentState;
-  const stepCount = currentState?.steps ?? 0;
   const queueSnapshot =
-    game.queueSnapshots[Math.min(stepCount, Math.max(0, game.queueSnapshots.length - 1))] ??
+    game.queueSnapshots[
+      Math.min(game.timelineIndex, Math.max(0, game.queueSnapshots.length - 1))
+    ] ??
     [];
 
   return (
@@ -64,7 +64,6 @@ export default function PlayLevelPage() {
                 <GameCanvas
                   mapData={level.map}
                   state={currentState}
-                  gridSize={gridSize}
                   fitToContainer
                 />
                 <div className="pointer-events-none absolute inset-0 rounded-[24px] ring-1 ring-white/10" />

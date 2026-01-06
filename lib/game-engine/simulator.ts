@@ -36,58 +36,13 @@ function canCallFunction(key: FunctionKey, config: LevelConfig, commands: Comman
   return config[key] > 0 && commands[key].length > 0;
 }
 
-function flattenFrames(frames: Array<{ commands: Command[]; index: number }>) {
-  const queue: Command[] = [];
-  for (let i = frames.length - 1; i >= 0; i -= 1) {
-    const frame = frames[i];
-    if (frame.index < frame.commands.length) {
-      queue.push(...frame.commands.slice(frame.index));
-    }
-  }
-  return queue;
-}
-
 export function buildExecutionQueueSnapshots(
   commands: CommandSet,
-  config: LevelConfig,
-  stepsLimit?: number
+  _config: LevelConfig,
+  _stepsLimit?: number
 ): Command[][] {
-  const snapshots: Command[][] = [];
-  const frames: Array<{ commands: Command[]; index: number }> = [
-    { commands: commands.f0, index: 0 },
-  ];
-
-  snapshots.push(flattenFrames(frames));
-
-  let executedSteps = 0;
-  while (frames.length > 0 && (stepsLimit === undefined || executedSteps < stepsLimit)) {
-    const frame = frames[frames.length - 1];
-    if (!frame) break;
-
-    if (frame.index >= frame.commands.length) {
-      frames.pop();
-      continue;
-    }
-
-    const command = frame.commands[frame.index];
-    frame.index += 1;
-
-    if (isFunctionCommand(command)) {
-      const key = command.type;
-      if (canCallFunction(key, config, commands)) {
-        if (frames.length >= MAX_DEPTH + 1) {
-          break;
-        }
-        frames.push({ commands: commands[key], index: 0 });
-      }
-      continue;
-    }
-
-    executedSteps += 1;
-    snapshots.push(flattenFrames(frames));
-  }
-
-  return snapshots;
+  // 在未執行前的顯示需求：只顯示 f0 剩餘命令（保留函式佔位符），不預先展開
+  return [commands.f0.slice()];
 }
 
 /**
@@ -128,56 +83,55 @@ function executeCommand(
   command: Command,
   mapData: MapData,
   config: LevelConfig
-): GameState {
+): { next: GameState; executed: boolean } {
+  // 條件不符時直接略過，不消耗步數
+  if (command.condition) {
+    const currentColor = getTileColor(
+      state.position.x,
+      state.position.y,
+      mapData,
+      state.paintedTiles
+    );
+    if (currentColor !== command.condition) {
+      return { next: state, executed: false };
+    }
+  }
+
   const newState = cloneState(state);
   newState.steps++;
 
   // 檢查條件修飾
-  if (command.condition) {
-    const currentColor = getTileColor(
-      newState.position.x,
-      newState.position.y,
-      mapData,
-      newState.paintedTiles
-    );
-
-    // 條件不符合，跳過此命令
-    if (currentColor !== command.condition) {
-      return newState;
-    }
-  }
-
   switch (command.type) {
     case "move":
-      return executeMove(newState, mapData);
+      return { next: executeMove(newState, mapData), executed: true };
 
     case "turn_left":
       newState.direction = ((newState.direction + 3) % 4) as 0 | 1 | 2 | 3;
-      return newState;
+      return { next: newState, executed: true };
 
     case "turn_right":
       newState.direction = ((newState.direction + 1) % 4) as 0 | 1 | 2 | 3;
-      return newState;
+      return { next: newState, executed: true };
 
     case "paint_red":
-      return executePaint(newState, "R", config);
+      return { next: executePaint(newState, "R", config), executed: true };
 
     case "paint_green":
-      return executePaint(newState, "G", config);
+      return { next: executePaint(newState, "G", config), executed: true };
 
     case "paint_blue":
-      return executePaint(newState, "B", config);
+      return { next: executePaint(newState, "B", config), executed: true };
 
     case "f0":
     case "f1":
     case "f2":
       // 函數呼叫標記，由外層處理
-      return newState;
+      return { next: newState, executed: false };
 
     default:
       newState.status = "failure";
       newState.error = `未知命令: ${command.type}`;
-      return newState;
+      return { next: newState, executed: true };
   }
 }
 
@@ -245,22 +199,118 @@ export function executeCommands(
   commands: CommandSet
 ): ExecutionResult {
   const states: GameState[] = [];
+  const queueSnapshots: Command[][] = [];
   let currentState = createInitialState(mapData);
+  const frames: Array<{ commands: Command[]; index: number }> = [
+    { commands: commands.f0, index: 0 },
+  ];
 
-  // 記錄初始狀態
-  states.push(cloneState(currentState));
+  const snapshotQueue = () => {
+    const queue: Command[] = [];
+    for (let i = frames.length - 1; i >= 0; i -= 1) {
+      const frame = frames[i];
+      if (frame.index < frame.commands.length) {
+        queue.push(...frame.commands.slice(frame.index));
+      }
+    }
+    queueSnapshots.push(queue);
+  };
 
-  // 執行主函數 f0
-  currentState = executeCommandList(
-    currentState,
-    commands.f0,
-    commands,
-    mapData,
-    config,
-    states
-  );
+  const replaceQueueSnapshot = () => {
+    const queue: Command[] = [];
+    for (let i = frames.length - 1; i >= 0; i -= 1) {
+      const frame = frames[i];
+      if (frame.index < frame.commands.length) {
+        queue.push(...frame.commands.slice(frame.index));
+      }
+    }
+    if (queueSnapshots.length === 0) {
+      queueSnapshots.push(queue);
+      return;
+    }
+    queueSnapshots[queueSnapshots.length - 1] = queue;
+  };
 
-  // 檢查是否成功
+  const pushTimeline = () => {
+    states.push(cloneState(currentState));
+    snapshotQueue();
+  };
+
+  // 初始狀態與 queue
+  pushTimeline();
+
+  let guard = 0;
+  while (frames.length > 0 && guard < MAX_STEPS + MAX_DEPTH * 10) {
+    guard += 1;
+    if (currentState.status === "failure") break;
+
+    const frame = frames[frames.length - 1];
+    if (!frame) break;
+
+    if (frame.index >= frame.commands.length) {
+      frames.pop();
+      continue;
+    }
+
+    const command = frame.commands[frame.index];
+    frame.index += 1;
+
+    if (isFunctionCommand(command)) {
+      // 條件不符的函式呼叫應該被略過，不展開、不耗費時間
+      if (command.condition) {
+        const currentColor = getTileColor(
+          currentState.position.x,
+          currentState.position.y,
+          mapData,
+          currentState.paintedTiles
+        );
+        if (currentColor !== command.condition) {
+          // 條件不符：消耗時間軸並移除佔位符，但狀態不變
+          pushTimeline();
+          continue;
+        }
+      }
+
+      const key = command.type;
+      if (canCallFunction(key, config, commands)) {
+        if (frames.length >= MAX_DEPTH + 1) {
+          currentState.status = "failure";
+          currentState.error = "函數呼叫層級過深！";
+          pushTimeline();
+          break;
+        }
+        frames.push({ commands: commands[key], index: 0 });
+        // 函式展開佔用一個時間點（狀態不變，queue 更新）
+        pushTimeline();
+      }
+      // 函式呼叫本身消耗掉，若不可呼叫則僅更新隊列
+      if (!canCallFunction(key, config, commands)) {
+        pushTimeline();
+      }
+      continue;
+    }
+
+    const result = executeCommand(currentState, command, mapData, config);
+    currentState = result.next;
+
+    if (!result.executed) {
+      // 條件不符，消耗一拍：狀態不變但隊列前進
+      pushTimeline();
+      continue;
+    }
+
+    if (currentState.steps > MAX_STEPS) {
+      currentState.status = "failure";
+      currentState.error = "步數超過上限！";
+    }
+
+    pushTimeline();
+
+    if (currentState.status === "failure") {
+      break;
+    }
+  }
+
   const success =
     currentState.status !== "failure" &&
     currentState.collectedStars.size === mapData.stars.length;
@@ -272,101 +322,18 @@ export function executeCommands(
     currentState.error = currentState.error || "未收集所有星星";
   }
 
-  // 記錄最終狀態
-  states.push(cloneState(currentState));
+  // 確保終點有對應的 queue snapshot
+  if (queueSnapshots.length < states.length) {
+    snapshotQueue();
+  }
 
   return {
     states,
-    queueSnapshots: buildExecutionQueueSnapshots(commands, config, currentState.steps),
+    queueSnapshots,
     finalState: currentState,
     success,
     totalSteps: currentState.steps,
   };
-}
-
-/**
- * 執行命令列表（處理遞迴函數呼叫）
- */
-function executeCommandList(
-  state: GameState,
-  commandList: Command[],
-  allCommands: CommandSet,
-  mapData: MapData,
-  config: LevelConfig,
-  states: GameState[],
-  depth: number = 0
-): GameState {
-  // 防止無限遞迴
-  if (depth > MAX_DEPTH) {
-    state.status = "failure";
-    state.error = "函數呼叫層級過深！";
-    return state;
-  }
-
-  if (state.steps > MAX_STEPS) {
-    state.status = "failure";
-    state.error = "步數超過上限！";
-    return state;
-  }
-
-  for (const command of commandList) {
-    // 如果已經失敗，停止執行
-    if (state.status === "failure") {
-      break;
-    }
-
-    // 處理函數呼叫
-    if (command.type === "f0") {
-      if (config.f0 > 0 && allCommands.f0.length > 0) {
-        state = executeCommandList(
-          state,
-          allCommands.f0,
-          allCommands,
-          mapData,
-          config,
-          states,
-          depth + 1
-        );
-      }
-      continue;
-    }
-
-    if (command.type === "f1") {
-      if (config.f1 > 0 && allCommands.f1.length > 0) {
-        state = executeCommandList(
-          state,
-          allCommands.f1,
-          allCommands,
-          mapData,
-          config,
-          states,
-          depth + 1
-        );
-      }
-      continue;
-    }
-
-    if (command.type === "f2") {
-      if (config.f2 > 0 && allCommands.f2.length > 0) {
-        state = executeCommandList(
-          state,
-          allCommands.f2,
-          allCommands,
-          mapData,
-          config,
-          states,
-          depth + 1
-        );
-      }
-      continue;
-    }
-
-    // 執行普通命令
-    state = executeCommand(state, command, mapData, config);
-    states.push(cloneState(state));
-  }
-
-  return state;
 }
 
 /**

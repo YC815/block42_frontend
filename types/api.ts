@@ -76,14 +76,20 @@ export interface LevelListItem {
  * 地圖資料結構
  *
  * 重要變更：
- * - 移除 width, height（後端不使用）
+ * - 支援動態棋盤：不再由使用者決定 gridSize，而是依內容 + padding 自動計算
+ * - 可使用負座標進行編輯，後端會在驗證時平移原點
  * - start 增加 dir 欄位
  * - stars 移除 color 欄位
  * - tiles.type 改為 tiles.color
- * - 新增 gridSize 作為棋盤尺寸 (NxN)
  */
+export interface MapBounds {
+  minX: number;
+  minY: number;
+  maxX: number;
+  maxY: number;
+}
+
 export interface MapData {
-  gridSize: number; // 4-16
   start: {
     x: number;
     y: number;
@@ -98,6 +104,10 @@ export interface MapData {
     y: number;
     color: 'R' | 'G' | 'B';
   }>;
+  // 自動渲染資訊（可選，後端會計算並回填）
+  gridSize?: number;
+  padding?: number;
+  bounds?: MapBounds;
 }
 
 /**
