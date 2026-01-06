@@ -15,6 +15,7 @@ export default function StudioDashboardPage() {
   const levelsQuery = useQuery({
     queryKey: ["designer", "levels"],
     queryFn: getMyLevels,
+    refetchOnMount: "always",
   });
 
   const deleteMutation = useMutation({

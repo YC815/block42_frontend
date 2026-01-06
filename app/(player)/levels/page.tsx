@@ -36,17 +36,20 @@ export default function LevelsPage() {
   const officialQuery = useQuery({
     queryKey: ["levels", "official"],
     queryFn: getOfficialLevels,
+    refetchOnMount: "always",
   });
 
   const communityQuery = useQuery({
     queryKey: ["levels", "community"],
     queryFn: getCommunityLevels,
+    refetchOnMount: "always",
   });
 
   const progressQuery = useQuery({
     queryKey: ["levels", "progress"],
     queryFn: getLevelProgress,
     enabled: isAuthenticated,
+    refetchOnMount: "always",
   });
 
   const progressMap = useMemo(() => {

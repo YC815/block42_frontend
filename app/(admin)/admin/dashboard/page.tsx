@@ -62,14 +62,17 @@ export default function AdminDashboardPage() {
   const queueQuery = useQuery({
     queryKey: ["admin", "queue"],
     queryFn: getReviewQueue,
+    refetchOnMount: "always",
   });
   const levelsQuery = useQuery({
     queryKey: ["admin", "levels"],
     queryFn: getAllLevels,
+    refetchOnMount: "always",
   });
   const usersQuery = useQuery({
     queryKey: ["admin", "users"],
     queryFn: getAllUsers,
+    refetchOnMount: "always",
   });
   const [drafts, setDrafts] = useState<Record<string, AdminLevelUpdate>>({});
   const [userDrafts, setUserDrafts] = useState<Record<number, AdminUserUpdate>>({});
