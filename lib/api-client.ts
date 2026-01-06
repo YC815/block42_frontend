@@ -14,6 +14,11 @@ interface ApiOptions {
   tokenOverride?: string;
 }
 
+interface ApiErrorResponse {
+  detail?: string;
+  message?: string;
+}
+
 /**
  * 統一的 API 請求函數
  * @template T - 預期的回應資料類型
@@ -51,9 +56,9 @@ export async function apiClient<T>(options: ApiOptions): Promise<T> {
     if (!response.ok) {
       // 嘗試解析錯誤訊息
       let errorMessage = `HTTP ${response.status}`;
-      let errorData: unknown = null;
+      let errorData: ApiErrorResponse | null = null;
       try {
-        errorData = await response.json();
+        errorData = await response.json() as ApiErrorResponse;
         errorMessage = errorData.detail || errorData.message || errorMessage;
       } catch {
         // JSON 解析失敗，使用預設錯誤訊息

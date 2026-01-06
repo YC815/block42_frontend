@@ -5,7 +5,6 @@
  */
 
 import { useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
 import type { LevelConfig, MapData } from "@/types/api";
 import { useGameState } from "@/lib/hooks/use-game-state";
 import { GameCanvas } from "@/components/game/game-canvas";
@@ -25,11 +24,15 @@ interface PreviewPayload {
 const STORAGE_PREFIX = "block42:play-preview:";
 
 export default function PlayPreviewPage() {
-  const searchParams = useSearchParams();
-  const previewKey = searchParams.get("key");
+  const [previewKey, setPreviewKey] = useState<string | null>(null);
   const [payload, setPayload] = useState<PreviewPayload | null>(null);
   const [error, setError] = useState<string | null>(null);
   const { setLevelInfo } = useNavbar();
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    setPreviewKey(params.get("key"));
+  }, []);
 
   useEffect(() => {
     if (!previewKey) {

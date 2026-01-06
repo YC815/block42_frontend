@@ -6,7 +6,8 @@
  */
 
 import Link from "next/link";
-import { usePathname, useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -23,11 +24,19 @@ export function Navbar() {
   const { user, isAuthenticated, logout } = useAuth();
   const { levelInfo } = useNavbar();
   const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const tabParam = searchParams.get("tab");
+  const [tabParam, setTabParam] = useState<string | null>(null);
   const isLevelsPage = pathname === "/levels";
   const isOfficialActive = isLevelsPage && (tabParam === "official" || !tabParam);
   const isCommunityActive = isLevelsPage && tabParam === "community";
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+    const params = new URLSearchParams(window.location.search);
+    const nextTab = params.get("tab");
+    setTabParam((prev) => (prev === nextTab ? prev : nextTab));
+  });
 
   const navLinkClass = (active: boolean) =>
     [

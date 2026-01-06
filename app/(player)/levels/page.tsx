@@ -5,7 +5,7 @@
  */
 
 import { useEffect, useMemo, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { getOfficialLevels, getCommunityLevels, getLevelProgress } from "@/lib/api/levels";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -18,20 +18,25 @@ import type { LevelProgress } from "@/types/api";
 export default function LevelsPage() {
   const { isAuthenticated } = useAuth();
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const tabParam = searchParams.get("tab");
-  const [activeTab, setActiveTab] = useState(
-    tabParam === "community" ? "community" : "official"
-  );
+  const [activeTab, setActiveTab] = useState<"official" | "community">("official");
   const [filter, setFilter] = useState<"all" | "completed" | "incomplete">(
     "all"
   );
 
   useEffect(() => {
-    if (tabParam === "community" || tabParam === "official") {
-      setActiveTab(tabParam);
-    }
-  }, [tabParam]);
+    const syncTab = () => {
+      const params = new URLSearchParams(window.location.search);
+      const tab = params.get("tab");
+      if (tab === "community" || tab === "official") {
+        setActiveTab(tab);
+      } else {
+        setActiveTab("official");
+      }
+    };
+    syncTab();
+    window.addEventListener("popstate", syncTab);
+    return () => window.removeEventListener("popstate", syncTab);
+  }, []);
 
   const officialQuery = useQuery({
     queryKey: ["levels", "official"],
@@ -92,10 +97,14 @@ export default function LevelsPage() {
   }, [activeTab, officialQuery.data, communityQuery.data, progressMap]);
 
   const handleTabChange = (value: string) => {
-    setActiveTab(value);
-    const params = new URLSearchParams(searchParams.toString());
-    params.set("tab", value);
-    router.replace(`/levels?${params.toString()}`);
+    const nextTab = value === "community" ? "community" : "official";
+    setActiveTab(nextTab);
+    if (typeof window === "undefined") {
+      return;
+    }
+    const url = new URL(window.location.href);
+    url.searchParams.set("tab", nextTab);
+    router.replace(`${url.pathname}?${url.searchParams.toString()}`);
   };
 
   return (
