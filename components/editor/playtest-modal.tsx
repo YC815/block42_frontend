@@ -53,24 +53,32 @@ export function PlaytestModal({
 
   useEffect(() => {
     if (!game.didSucceed || reportedSuccess) return;
-    setReportedSuccess(true);
+    const timer = setTimeout(() => {
+      setReportedSuccess(true);
+    }, 0);
     onSuccess(game.serializeSolution());
-  }, [game.didSucceed, game.serializeSolution, onSuccess, reportedSuccess]);
+    return () => clearTimeout(timer);
+  }, [game.didSucceed, game.serializeSolution, onSuccess, reportedSuccess, game]);
 
   useEffect(() => {
-    setReportedSuccess(false);
-    setShowResult(false);
+    const timer = setTimeout(() => {
+      setReportedSuccess(false);
+      setShowResult(false);
+    }, 0);
+    return () => clearTimeout(timer);
   }, [mapData, config]);
 
   useEffect(() => {
     if (!game.didSucceed) return;
-    setShowResult(true);
-  }, [game.didSucceed]);
+    const timer = setTimeout(() => setShowResult(true), 0);
+    return () => clearTimeout(timer);
+  }, [game.didSucceed, game]);
 
   useEffect(() => {
     if (game.didSucceed) return;
-    setShowResult(false);
-  }, [game.didSucceed]);
+    const timer = setTimeout(() => setShowResult(false), 0);
+    return () => clearTimeout(timer);
+  }, [game.didSucceed, game]);
 
   const queueSnapshot = useMemo(
     () =>

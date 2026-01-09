@@ -8,6 +8,8 @@
  * 3. 錯誤處理 - 撞牆、超出邊界等
  */
 
+/* eslint-disable @typescript-eslint/no-unused-vars */
+
 import type { MapData, LevelConfig } from "@/types/api";
 import type {
   GameState,

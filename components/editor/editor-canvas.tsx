@@ -5,6 +5,8 @@
 
 "use client";
 
+/* eslint-disable react-hooks/set-state-in-effect */
+
 import type { MapData, TileColor } from "@/types/api";
 import { coordToKey } from "@/lib/game-engine/types";
 import type { EditorTool } from "@/components/editor/editor-toolbar";

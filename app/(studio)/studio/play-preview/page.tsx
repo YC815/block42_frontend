@@ -25,53 +25,47 @@ interface PreviewPayload {
 const STORAGE_PREFIX = "block42:play-preview:";
 
 export default function PlayPreviewPage() {
-  const [previewKey, setPreviewKey] = useState<string | null>(null);
-  const [payload, setPayload] = useState<PreviewPayload | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const { setLevelInfo } = useNavbar();
-
-  useEffect(() => {
+  const [{ key: previewKey, payload, error }] = useState(() => {
+    if (typeof window === "undefined") {
+      return { key: null as string | null, payload: null as PreviewPayload | null, error: null as string | null };
+    }
     const params = new URLSearchParams(window.location.search);
-    setPreviewKey(params.get("key"));
-  }, []);
-
-  useEffect(() => {
-    if (!previewKey) {
-      setError("找不到預覽代碼");
-      return;
+    const key = params.get("key");
+    if (!key) {
+      return { key: null, payload: null, error: "找不到預覽代碼" };
     }
-
-    const stored = localStorage.getItem(`${STORAGE_PREFIX}${previewKey}`);
+    const stored = localStorage.getItem(`${STORAGE_PREFIX}${key}`);
     if (!stored) {
-      setError("預覽資料已過期或不存在");
-      return;
+      return { key, payload: null, error: "預覽資料已過期或不存在" };
     }
-
     try {
       const parsed = JSON.parse(stored) as PreviewPayload;
-      setPayload(parsed);
+      return { key, payload: parsed, error: null };
     } catch {
-      setError("預覽資料格式錯誤");
+      return { key, payload: null, error: "預覽資料格式錯誤" };
     }
-  }, [previewKey]);
+  });
+  const { setLevelInfo } = useNavbar();
 
   const game = useGameState({
     mapData: payload?.map,
     config: payload?.config,
   });
 
+  const { didSucceed, serializeSolution } = game;
+
   useEffect(() => {
-    if (!previewKey || !game.didSucceed) return;
+    if (!previewKey || !didSucceed) return;
     if (!window.opener || window.opener.closed) return;
     window.opener.postMessage(
       {
         type: "playtest-success",
         key: previewKey,
-        solution: game.serializeSolution(),
+        solution: serializeSolution(),
       },
       window.location.origin
     );
-  }, [game.didSucceed, previewKey, game.serializeSolution]);
+  }, [didSucceed, previewKey, serializeSolution]);
 
   useEffect(() => {
     if (!payload) return;

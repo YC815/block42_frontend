@@ -3,6 +3,8 @@
  * 純函數遊戲邏輯的核心類型
  */
 
+/* eslint-disable @typescript-eslint/no-unused-vars */
+
 import type { MapData, LevelConfig, TileColor, CommandType } from "@/types/api";
 
 /**

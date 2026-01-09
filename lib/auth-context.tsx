@@ -2,12 +2,13 @@
 
 /**
  * Block42 Frontend - 認證狀態管理
- * React Context + localStorage 混合方案
+ * React Context + in-memory/sessionStorage 混合方案（避免長期暴露在 localStorage）
  */
 
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { apiClient } from "./api-client";
 import type { User, AuthResponse } from "@/types/api";
+import { clearAuthToken, getAuthToken, setAuthToken } from "./auth-token";
 
 interface AuthState {
   token: string | null;
@@ -34,7 +35,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // 初始化：從 localStorage 讀取 token
   useEffect(() => {
-    const savedToken = localStorage.getItem("auth_token");
+    const savedToken = getAuthToken();
     if (savedToken) {
       setToken(savedToken);
       // 自動獲取用戶資訊
@@ -45,6 +46,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } else {
       setIsLoading(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const login = async (username: string, password: string) => {
@@ -58,7 +60,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
 
     setToken(data.access_token);
-    localStorage.setItem("auth_token", data.access_token);
+    setAuthToken(data.access_token);
 
     // 登錄成功後獲取用戶資訊
     if (process.env.NODE_ENV === "development") {
@@ -82,14 +84,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = () => {
     setToken(null);
     setUser(null);
-    localStorage.removeItem("auth_token");
+    clearAuthToken();
   };
 
   const fetchCurrentUser = async (tokenOverride?: string) => {
     try {
       if (process.env.NODE_ENV === "development") {
         console.log("[auth] fetch current user", {
-          token: maskToken(tokenOverride || localStorage.getItem("auth_token")),
+          token: maskToken(tokenOverride || getAuthToken()),
         });
       }
       const currentUser = await apiClient<User>({

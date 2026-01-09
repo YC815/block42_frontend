@@ -3,6 +3,8 @@
  * 封裝 fetch API，提供統一的請求接口
  */
 
+import { getAuthToken } from "./auth-token";
+
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
 
@@ -34,9 +36,10 @@ export async function apiClient<T>(options: ApiOptions): Promise<T> {
     "Content-Type": "application/json",
   };
 
-  // 2. 如果需要認證，從 localStorage 讀取 token
+  // 2. 如果需要認證，從 session token store 讀取
   const resolvedToken =
-    tokenOverride || (requiresAuth ? localStorage.getItem("auth_token") : null);
+    tokenOverride ||
+    (requiresAuth && typeof window !== "undefined" ? getAuthToken() : null);
   if (resolvedToken) {
     headers["Authorization"] = `Bearer ${resolvedToken}`;
   }

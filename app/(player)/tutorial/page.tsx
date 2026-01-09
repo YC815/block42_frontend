@@ -16,25 +16,6 @@ import type { CommandSlot, SlotSet } from "@/lib/hooks/use-game-state";
 import { useNavbar } from "@/components/layout/navbar-context";
 import { TUTORIAL_LEVELS, type TutorialLevelDefinition } from "@/lib/tutorial/levels";
 import { parseCommands } from "@/lib/game-engine/simulator";
-import type { CommandType, TileColor } from "@/types/api";
-
-const COMMAND_LABELS: Record<CommandType, string> = {
-  move: "向前",
-  turn_left: "左轉",
-  turn_right: "右轉",
-  paint_red: "噴紅",
-  paint_green: "噴綠",
-  paint_blue: "噴藍",
-  f0: "呼叫 f0",
-  f1: "呼叫 f1",
-  f2: "呼叫 f2",
-};
-
-const COLOR_LABELS: Record<TileColor, string> = {
-  R: "紅色",
-  G: "綠色",
-  B: "藍色",
-};
 
 const INTERACTIVE_LEVELS = TUTORIAL_LEVELS.filter((level) => !level.sampleProgram);
 const DEMO_LEVEL = TUTORIAL_LEVELS.find((level) => level.sampleProgram) ?? null;
@@ -46,11 +27,6 @@ const TABS: Array<{ key: TabKey; label: string; type: "interactive" | "showcase"
   { key: "level-1", label: "熟悉編碼", type: "interactive", levelIndex: 1 },
   { key: "showcase", label: "認識積木", type: "showcase" },
 ];
-
-function parseCommandString(command: string): { type: CommandType; condition?: TileColor } {
-  const [type, condition] = command.split(":");
-  return { type: type as CommandType, condition: condition as TileColor | undefined };
-}
 
 type ShowcaseDemo = {
   id: string;
@@ -219,47 +195,6 @@ function programToSlots(config: TutorialLevelDefinition["config"], program: Show
   };
 }
 
-function CommandRow({
-  track,
-  commands,
-}: {
-  track: "f0" | "f1" | "f2";
-  commands: string[];
-}) {
-  if (!commands.length) return null;
-
-  return (
-    <div className="space-y-2 rounded-xl border border-slate-200/70 bg-slate-50/80 p-3">
-      <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
-        <span>{track}</span>
-        <span className="rounded-full border border-slate-200 px-2 py-0.5 text-[10px] text-slate-500">
-          {commands.length} steps
-        </span>
-      </div>
-      <div className="flex flex-wrap gap-2">
-        {commands.map((command, index) => {
-          const { type, condition } = parseCommandString(command);
-          const conditionText = condition ? `（僅在${COLOR_LABELS[condition]}）` : "";
-          return (
-            <div
-              key={`${track}-${index}-${command}`}
-              className="flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-700 shadow-sm"
-            >
-              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-slate-900 text-[11px] font-bold text-white">
-                {index + 1}
-              </span>
-              <span>
-                {COMMAND_LABELS[type]}
-                {conditionText}
-              </span>
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
 function ShowcaseCard({ demo }: { demo: ShowcaseDemo }) {
   const [seed, setSeed] = useState(0);
   const game = useGameState({
@@ -393,11 +328,14 @@ function InteractivePane({ level, levelNumber, totalLevels, onComplete, onNextLe
     ] ?? [];
 
   useEffect(() => {
-    setTourOpen(true);
-    setSeed((prev) => prev + 1);
+    const timer = setTimeout(() => {
+      setTourOpen(true);
+      setSeed((prev) => prev + 1);
+    }, 0);
     game.clearAll();
     game.reset();
-  }, [level.id, game.clearAll, game.reset]);
+    return () => clearTimeout(timer);
+  }, [level.id, game]);
 
   useEffect(() => {
     const slots: Array<{ track: "f0" | "f1" | "f2"; size: number }> = [
@@ -408,7 +346,7 @@ function InteractivePane({ level, levelNumber, totalLevels, onComplete, onNextLe
     const target = slots.find((item) => item.size > 0);
     if (!target) return;
     game.selectSlot(target.track, Math.max(0, target.size - 1));
-  }, [level.config.f0, level.config.f1, level.config.f2, game.selectSlot, seed]);
+  }, [level.config.f0, level.config.f1, level.config.f2, game, seed]);
 
   useEffect(() => {
     if (!game.didSucceed) return;

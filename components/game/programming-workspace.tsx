@@ -69,62 +69,17 @@ function TrackRow({
         {label}
       </div>
       <div className="flex flex-1 items-center gap-2 overflow-x-auto px-1 py-1">
-        {Array.from({ length: capacity }).map((_, index) => {
-          const slot = slots[index];
-          const command = slot?.type ?? null;
-          const condition = slot?.condition ?? null;
-          const isSelected = selectedIndex === index;
-          const isPaint =
-            command === "paint_red" ||
-            command === "paint_green" ||
-            command === "paint_blue";
-          const conditionBg =
-            condition === "R"
-              ? "bg-rose-500/80 text-white"
-              : condition === "G"
-                ? "bg-emerald-500/80 text-white"
-                : condition === "B"
-                  ? "bg-sky-500/80 text-white"
-                  : "";
-
-          const { setNodeRef, isOver, active } = useDroppable({
-            id: `slot-${trackKey}-${index}`,
-            data: {
-              track: trackKey,
-              index,
-            },
-            disabled,
-          });
-
-          const canDrop = !disabled && active !== null;
-          const showDropIndicator = canDrop && isOver;
-
-          return (
-            <div
-              key={`${trackKey}-${index}`}
-              ref={setNodeRef}
-              className={`relative flex h-11 w-11 items-center justify-center rounded-lg border text-xs transition ${
-                conditionBg
-                  ? `${conditionBg} border-transparent`
-                  : command
-                    ? "border-slate-200/80 bg-white text-slate-700"
-                    : "border-slate-100 bg-slate-50 text-slate-400"
-              } ${
-                isSelected ? "ring-2 ring-slate-900/70 ring-offset-1 ring-offset-white" : ""
-              } ${
-                showDropIndicator
-                  ? "ring-2 ring-slate-900 ring-offset-1"
-                  : canDrop
-                    ? "ring-2 ring-dashed ring-slate-300"
-                    : ""
-              } ${disabled ? "cursor-not-allowed opacity-60" : "cursor-pointer"}`}
-              data-tour-id={`workspace-${trackKey}-slot-${index}`}
-              onClick={disabled ? undefined : () => onSelectSlot(index)}
-            >
-              {command ? <CommandIcon command={command} /> : null}
-            </div>
-          );
-        })}
+        {Array.from({ length: capacity }).map((_, index) => (
+          <DroppableSlot
+            key={`${trackKey}-${index}`}
+            trackKey={trackKey}
+            index={index}
+            slot={slots[index]}
+            selected={selectedIndex === index}
+            disabled={disabled}
+            onSelectSlot={onSelectSlot}
+          />
+        ))}
       </div>
       <button
         type="button"
@@ -186,6 +141,70 @@ export function ProgrammingWorkspace({
           />
         ))}
       </div>
+    </div>
+  );
+}
+
+function DroppableSlot({
+  trackKey,
+  index,
+  slot,
+  selected,
+  disabled,
+  onSelectSlot,
+}: {
+  trackKey: TrackKey;
+  index: number;
+  slot: CommandSlot | undefined;
+  selected: boolean;
+  disabled?: boolean;
+  onSelectSlot: (index: number) => void;
+}) {
+  const command = slot?.type ?? null;
+  const condition = slot?.condition ?? null;
+  const conditionBg =
+    condition === "R"
+      ? "bg-rose-500/80 text-white"
+      : condition === "G"
+        ? "bg-emerald-500/80 text-white"
+        : condition === "B"
+          ? "bg-sky-500/80 text-white"
+          : "";
+
+  const { setNodeRef, isOver, active } = useDroppable({
+    id: `slot-${trackKey}-${index}`,
+    data: {
+      track: trackKey,
+      index,
+    },
+    disabled,
+  });
+
+  const canDrop = !disabled && active !== null;
+  const showDropIndicator = canDrop && isOver;
+
+  return (
+    <div
+      ref={setNodeRef}
+      className={`relative flex h-11 w-11 items-center justify-center rounded-lg border text-xs transition ${
+        conditionBg
+          ? `${conditionBg} border-transparent`
+          : command
+            ? "border-slate-200/80 bg-white text-slate-700"
+            : "border-slate-100 bg-slate-50 text-slate-400"
+      } ${
+        selected ? "ring-2 ring-slate-900/70 ring-offset-1 ring-offset-white" : ""
+      } ${
+        showDropIndicator
+          ? "ring-2 ring-slate-900 ring-offset-1"
+          : canDrop
+            ? "ring-2 ring-dashed ring-slate-300"
+            : ""
+      } ${disabled ? "cursor-not-allowed opacity-60" : "cursor-pointer"}`}
+      data-tour-id={`workspace-${trackKey}-slot-${index}`}
+      onClick={disabled ? undefined : () => onSelectSlot(index)}
+    >
+      {command ? <CommandIcon command={command} /> : null}
     </div>
   );
 }

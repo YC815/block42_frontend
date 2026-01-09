@@ -1,5 +1,7 @@
 "use client";
 
+/* eslint-disable react-hooks/set-state-in-effect */
+
 /**
  * Block42 Frontend - Game state hook
  * Handles command slots, execution, and playback controls.

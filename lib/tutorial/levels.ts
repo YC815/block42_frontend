@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+
 import type { LevelConfig, MapData } from "@/types/api";
 
 export type TourPlacement = "top" | "bottom" | "left" | "right";

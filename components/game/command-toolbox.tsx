@@ -4,6 +4,7 @@
  */
 
 import { useDraggable } from "@dnd-kit/core";
+import type { ReactNode } from "react";
 import type { LevelConfig, TileColor, CommandType } from "@/types/api";
 import { ArrowBigUp, CornerUpLeft, CornerUpRight, PaintBucket } from "lucide-react";
 
@@ -40,6 +41,50 @@ const COMMAND_TITLES: Record<CommandType, string> = {
   f2: "呼叫 f2",
 };
 
+interface DraggableButtonProps {
+  id: string;
+  data: Record<string, unknown>;
+  disabled?: boolean;
+  className: (isDragging: boolean) => string;
+  onClick?: () => void;
+  children: ReactNode;
+  ariaLabel?: string;
+  tourId?: string;
+}
+
+function DraggableButton({
+  id,
+  data,
+  disabled,
+  className,
+  onClick,
+  children,
+  ariaLabel,
+  tourId,
+}: DraggableButtonProps) {
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
+    id,
+    data,
+    disabled,
+  });
+
+  return (
+    <button
+      ref={setNodeRef}
+      {...listeners}
+      {...attributes}
+      type="button"
+      disabled={disabled}
+      className={className(isDragging)}
+      aria-label={ariaLabel}
+      data-tour-id={tourId}
+      onClick={onClick}
+    >
+      {children}
+    </button>
+  );
+}
+
 
 export function CommandToolbox({
   config,
@@ -65,32 +110,27 @@ export function CommandToolbox({
         <div className="grid grid-cols-3 gap-2">
           {actions.map((cmd) => {
             const iconDef = COMMAND_ICONS[cmd];
-            const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
-              id: `toolbox-command-${cmd}`,
-              data: {
-                source: "toolbox",
-                itemType: "command",
-                value: cmd,
-              },
-              disabled,
-            });
             return (
-              <button
+              <DraggableButton
                 key={cmd}
-                ref={setNodeRef}
-                {...listeners}
-                {...attributes}
-                type="button"
                 disabled={disabled}
-                className={`flex h-11 w-11 items-center justify-center rounded-lg border text-lg shadow-sm transition ${
-                  disabled
-                    ? "border-slate-100 bg-slate-50 text-slate-300"
-                    : activeCommand === cmd
-                      ? "border-slate-900 bg-slate-900 text-white"
-                      : "border-slate-200/80 bg-white text-slate-700 hover:border-slate-300"
-                } ${isDragging ? "opacity-50" : ""}`}
-                aria-label={COMMAND_TITLES[cmd]}
-                data-tour-id={`command-${cmd}`}
+                id={`toolbox-command-${cmd}`}
+                data={{
+                  source: "toolbox",
+                  itemType: "command",
+                  value: cmd,
+                }}
+                className={(isDragging) =>
+                  `flex h-11 w-11 items-center justify-center rounded-lg border text-lg shadow-sm transition ${
+                    disabled
+                      ? "border-slate-100 bg-slate-50 text-slate-300"
+                      : activeCommand === cmd
+                        ? "border-slate-900 bg-slate-900 text-white"
+                        : "border-slate-200/80 bg-white text-slate-700 hover:border-slate-300"
+                  } ${isDragging ? "opacity-50" : ""}`
+                }
+                ariaLabel={COMMAND_TITLES[cmd]}
+                tourId={`command-${cmd}`}
                 onClick={() => onSelectCommand(cmd)}
               >
                 {iconDef.icon === "move" ? (
@@ -102,41 +142,36 @@ export function CommandToolbox({
                 ) : (
                   <span>{iconDef.label}</span>
                 )}
-              </button>
+              </DraggableButton>
             );
           })}
           {functions.map((cmd) => {
             if (cmd !== "f0" && config[cmd] === 0) return null;
-            const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
-              id: `toolbox-command-${cmd}`,
-              data: {
-                source: "toolbox",
-                itemType: "command",
-                value: cmd,
-              },
-              disabled,
-            });
             return (
-              <button
+              <DraggableButton
                 key={cmd}
-                ref={setNodeRef}
-                {...listeners}
-                {...attributes}
-                type="button"
                 disabled={disabled}
-                className={`flex h-11 w-11 items-center justify-center rounded-lg border text-xs font-semibold shadow-sm transition ${
-                  disabled
-                    ? "border-slate-100 bg-slate-50 text-slate-300"
-                    : activeCommand === cmd
-                      ? "border-slate-900 bg-slate-900 text-white"
-                      : "border-slate-200/80 bg-white text-slate-700 hover:border-slate-300"
-                } ${isDragging ? "opacity-50" : ""}`}
-                aria-label={COMMAND_TITLES[cmd]}
-                data-tour-id={`command-${cmd}`}
+                id={`toolbox-command-${cmd}`}
+                data={{
+                  source: "toolbox",
+                  itemType: "command",
+                  value: cmd,
+                }}
+                className={(isDragging) =>
+                  `flex h-11 w-11 items-center justify-center rounded-lg border text-xs font-semibold shadow-sm transition ${
+                    disabled
+                      ? "border-slate-100 bg-slate-50 text-slate-300"
+                      : activeCommand === cmd
+                        ? "border-slate-900 bg-slate-900 text-white"
+                        : "border-slate-200/80 bg-white text-slate-700 hover:border-slate-300"
+                  } ${isDragging ? "opacity-50" : ""}`
+                }
+                ariaLabel={COMMAND_TITLES[cmd]}
+                tourId={`command-${cmd}`}
                 onClick={() => onSelectCommand(cmd)}
               >
                 {cmd}
-              </button>
+              </DraggableButton>
             );
           })}
         </div>
@@ -152,40 +187,35 @@ export function CommandToolbox({
                 ? "bg-[#E53E3E]"
                 : cmd === "paint_green"
                   ? "bg-[#38A169]"
-                  : "bg-[#3182CE]";
+                : "bg-[#3182CE]";
             const isDisabled = disabled || !enabled;
-            const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
-              id: `toolbox-command-${cmd}`,
-              data: {
-                source: "toolbox",
-                itemType: "command",
-                value: cmd,
-              },
-              disabled: isDisabled,
-            });
             return (
-              <button
+              <DraggableButton
                 key={cmd}
-                ref={setNodeRef}
-                {...listeners}
-                {...attributes}
-                type="button"
-                className={`flex h-11 w-11 items-center justify-center rounded-lg border shadow-sm transition ${
-                  isDisabled
-                    ? "border-slate-100 bg-slate-50 opacity-40"
-                    : isActive
-                      ? "border-slate-900 bg-slate-100"
-                      : "border-slate-200/80 bg-white hover:border-slate-300"
-                } ${isDragging ? "opacity-50" : ""}`}
+                id={`toolbox-command-${cmd}`}
+                data={{
+                  source: "toolbox",
+                  itemType: "command",
+                  value: cmd,
+                }}
                 disabled={isDisabled}
-                aria-label={COMMAND_TITLES[cmd]}
-                data-tour-id={`brush-${cmd.replace("paint_", "")}`}
+                className={(isDragging) =>
+                  `flex h-11 w-11 items-center justify-center rounded-lg border shadow-sm transition ${
+                    isDisabled
+                      ? "border-slate-100 bg-slate-50 opacity-40"
+                      : isActive
+                        ? "border-slate-900 bg-slate-100"
+                        : "border-slate-200/80 bg-white hover:border-slate-300"
+                  } ${isDragging ? "opacity-50" : ""}`
+                }
+                ariaLabel={COMMAND_TITLES[cmd]}
+                tourId={`brush-${cmd.replace("paint_", "")}`}
                 onClick={() => onSelectCommand(cmd)}
               >
                 <div className={`flex h-8 w-8 items-center justify-center rounded-full ${squareColor}`}>
                   <PaintBucket className="h-4 w-4 text-white/95" strokeWidth={2.5} />
                 </div>
-              </button>
+              </DraggableButton>
             );
           })}
         </div>
@@ -205,27 +235,22 @@ export function CommandToolbox({
                 : color === "G"
                   ? "bg-[#38A169]"
                   : "bg-[#3182CE]";
-            const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
-              id: `toolbox-condition-${color}`,
-              data: {
-                source: "toolbox",
-                itemType: "condition",
-                value: tileColor,
-              },
-              disabled,
-            });
             return (
-              <button
+              <DraggableButton
                 key={color}
-                ref={setNodeRef}
-                {...listeners}
-                {...attributes}
-                type="button"
+                id={`toolbox-condition-${color}`}
+                data={{
+                  source: "toolbox",
+                  itemType: "condition",
+                  value: tileColor,
+                }}
                 disabled={disabled}
-                className={`h-6 w-6 rounded-full ${bg} ${
-                  isActive ? "ring-2 ring-offset-2 ring-slate-900/70" : "ring-0"
-                } ${disabled ? "opacity-40" : ""} ${isDragging ? "opacity-50" : ""}`}
-                data-tour-id={`condition-${color === "R" ? "red" : color === "G" ? "green" : "blue"}`}
+                className={(isDragging) =>
+                  `h-6 w-6 rounded-full ${bg} ${
+                    isActive ? "ring-2 ring-offset-2 ring-slate-900/70" : "ring-0"
+                  } ${disabled ? "opacity-40" : ""} ${isDragging ? "opacity-50" : ""}`
+                }
+                tourId={`condition-${color === "R" ? "red" : color === "G" ? "green" : "blue"}`}
                 onClick={() => onSelectCondition(tileColor)}
               />
             );
