@@ -4,7 +4,7 @@
  * Block42 Frontend - Admin dashboard
  */
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import {
@@ -86,6 +86,35 @@ export default function AdminDashboardPage() {
   const [transferLevels, setTransferLevels] = useState<AdminLevelListItem[]>([]);
   const [transferAssignments, setTransferAssignments] = useState<Record<string, number>>({});
   const [bulkAssignee, setBulkAssignee] = useState<string>("");
+
+  // 排序與過濾邏輯
+  const allLevels = useMemo(() => {
+    if (!levelsQuery.data) return [];
+    return [...levelsQuery.data].sort((a, b) =>
+      new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    );
+  }, [levelsQuery.data]);
+
+  const officialLevels = useMemo(() => {
+    if (!levelsQuery.data) return [];
+    return [...levelsQuery.data]
+      .filter(level => level.is_official)
+      .sort((a, b) => a.official_order - b.official_order);
+  }, [levelsQuery.data]);
+
+  const communityLevels = useMemo(() => {
+    if (!levelsQuery.data) return [];
+    return [...levelsQuery.data]
+      .filter(level => !level.is_official)
+      .sort((a, b) =>
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      );
+  }, [levelsQuery.data]);
+
+  const nextOfficialOrder = useMemo(() => {
+    if (!officialLevels.length) return 1;
+    return Math.max(...officialLevels.map(l => l.official_order)) + 1;
+  }, [officialLevels]);
 
   const approveMutation = useMutation({
     mutationFn: (payload: { levelId: string; asOfficial: boolean; officialOrder?: number }) =>
@@ -246,6 +275,128 @@ export default function AdminDashboardPage() {
     return draft[key] as AdminLevelUpdate[K];
   };
 
+  const renderLevelTable = (levels: AdminLevelListItem[]) => (
+    <Table>
+      <TableHeader>
+        <TableRow>
+          <TableHead>ID</TableHead>
+          <TableHead>名稱</TableHead>
+          <TableHead>作者</TableHead>
+          <TableHead>狀態</TableHead>
+          <TableHead>官方</TableHead>
+          <TableHead>順序</TableHead>
+          <TableHead>更新時間</TableHead>
+          <TableHead>操作</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {levels.map((level) => {
+          const draft = drafts[level.id];
+          const hasDraft = draft && Object.keys(draft).length > 0;
+          const authorLabel = level.author_name ?? `#${level.author_id}`;
+          return (
+            <TableRow key={level.id}>
+              <TableCell className="font-mono text-xs text-slate-500">
+                {level.id}
+              </TableCell>
+              <TableCell>
+                <Input
+                  value={(getDraftValue(level, "title") as string) ?? ""}
+                  onChange={(event) =>
+                    updateDraft(level.id, { title: event.target.value })
+                  }
+                  className="h-9 w-48"
+                />
+              </TableCell>
+              <TableCell className="text-sm text-slate-600">
+                {authorLabel}
+              </TableCell>
+              <TableCell>
+                <select
+                  className="h-9 rounded-md border border-slate-200 bg-white px-2 text-sm text-slate-700"
+                  value={getDraftValue(level, "status") as string}
+                  onChange={(event) =>
+                    updateDraft(level.id, {
+                      status: event.target.value as AdminLevelUpdate["status"],
+                    })
+                  }
+                >
+                  <option value="draft">draft</option>
+                  <option value="pending">pending</option>
+                  <option value="published">published</option>
+                  <option value="rejected">rejected</option>
+                </select>
+              </TableCell>
+              <TableCell>
+                <label className="flex items-center gap-2 text-sm text-slate-600">
+                  <input
+                    type="checkbox"
+                    checked={Boolean(getDraftValue(level, "is_official"))}
+                    onChange={(event) =>
+                      updateDraft(level.id, { is_official: event.target.checked })
+                    }
+                  />
+                  官方
+                </label>
+              </TableCell>
+              <TableCell>
+                <Input
+                  type="number"
+                  min={0}
+                  value={String(getDraftValue(level, "official_order") ?? 0)}
+                  onChange={(event) =>
+                    updateDraft(level.id, {
+                      official_order: Number(event.target.value),
+                    })
+                  }
+                  className="h-9 w-24"
+                />
+              </TableCell>
+              <TableCell className="text-xs text-slate-500">
+                {new Date(level.updated_at).toLocaleDateString()}
+              </TableCell>
+              <TableCell>
+                <div className="flex items-center gap-2">
+                  <Button
+                    size="sm"
+                    onClick={() => {
+                      if (!draft || Object.keys(draft).length === 0) return;
+                      updateLevelMutation.mutate(
+                        {
+                          levelId: level.id,
+                          data: draft,
+                        },
+                        {
+                          onSuccess: () => clearDraft(level.id),
+                        }
+                      );
+                    }}
+                    disabled={!hasDraft}
+                  >
+                    儲存
+                  </Button>
+                  <Button size="sm" variant="secondary" asChild>
+                    <Link href={`/admin/levels/${level.id}`}>編輯關卡</Link>
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="destructive"
+                    onClick={() => {
+                      if (!confirm("確定要刪除這個關卡嗎？")) return;
+                      deleteLevelMutation.mutate(level.id);
+                    }}
+                  >
+                    刪除
+                  </Button>
+                </div>
+              </TableCell>
+            </TableRow>
+          );
+        })}
+      </TableBody>
+    </Table>
+  );
+
   return (
     <div className="min-h-screen bg-red-50 px-6 py-8">
       <div className="mx-auto max-w-5xl space-y-6">
@@ -282,125 +433,29 @@ export default function AdminDashboardPage() {
                 <div className="text-gray-500">目前沒有關卡</div>
               )}
               {levelsQuery.data && levelsQuery.data.length > 0 && (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>ID</TableHead>
-                      <TableHead>名稱</TableHead>
-                      <TableHead>作者</TableHead>
-                      <TableHead>狀態</TableHead>
-                      <TableHead>官方</TableHead>
-                      <TableHead>順序</TableHead>
-                      <TableHead>更新時間</TableHead>
-                      <TableHead>操作</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {levelsQuery.data.map((level) => {
-                      const draft = drafts[level.id];
-                      const hasDraft = draft && Object.keys(draft).length > 0;
-                      const authorLabel = level.author_name ?? `#${level.author_id}`;
-                      return (
-                        <TableRow key={level.id}>
-                          <TableCell className="font-mono text-xs text-slate-500">
-                            {level.id}
-                          </TableCell>
-                          <TableCell>
-                            <Input
-                              value={(getDraftValue(level, "title") as string) ?? ""}
-                              onChange={(event) =>
-                                updateDraft(level.id, { title: event.target.value })
-                              }
-                              className="h-9 w-48"
-                            />
-                          </TableCell>
-                          <TableCell className="text-sm text-slate-600">
-                            {authorLabel}
-                          </TableCell>
-                          <TableCell>
-                            <select
-                              className="h-9 rounded-md border border-slate-200 bg-white px-2 text-sm text-slate-700"
-                              value={getDraftValue(level, "status") as string}
-                              onChange={(event) =>
-                                updateDraft(level.id, {
-                                  status: event.target.value as AdminLevelUpdate["status"],
-                                })
-                              }
-                            >
-                              <option value="draft">draft</option>
-                              <option value="pending">pending</option>
-                              <option value="published">published</option>
-                              <option value="rejected">rejected</option>
-                            </select>
-                          </TableCell>
-                          <TableCell>
-                            <label className="flex items-center gap-2 text-sm text-slate-600">
-                              <input
-                                type="checkbox"
-                                checked={Boolean(getDraftValue(level, "is_official"))}
-                                onChange={(event) =>
-                                  updateDraft(level.id, { is_official: event.target.checked })
-                                }
-                              />
-                              官方
-                            </label>
-                          </TableCell>
-                          <TableCell>
-                            <Input
-                              type="number"
-                              min={0}
-                              value={String(getDraftValue(level, "official_order") ?? 0)}
-                              onChange={(event) =>
-                                updateDraft(level.id, {
-                                  official_order: Number(event.target.value),
-                                })
-                              }
-                              className="h-9 w-24"
-                            />
-                          </TableCell>
-                          <TableCell className="text-xs text-slate-500">
-                            {new Date(level.updated_at).toLocaleDateString()}
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex items-center gap-2">
-                              <Button
-                                size="sm"
-                                onClick={() => {
-                                  if (!draft || Object.keys(draft).length === 0) return;
-                                  updateLevelMutation.mutate(
-                                    {
-                                      levelId: level.id,
-                                      data: draft,
-                                    },
-                                    {
-                                      onSuccess: () => clearDraft(level.id),
-                                    }
-                                  );
-                                }}
-                                disabled={!hasDraft}
-                              >
-                                儲存
-                              </Button>
-                              <Button size="sm" variant="secondary" asChild>
-                                <Link href={`/admin/levels/${level.id}`}>編輯關卡</Link>
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="destructive"
-                                onClick={() => {
-                                  if (!confirm("確定要刪除這個關卡嗎？")) return;
-                                  deleteLevelMutation.mutate(level.id);
-                                }}
-                              >
-                                刪除
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
+                <Tabs defaultValue="all" className="space-y-4">
+                  <TabsList className="bg-white/80">
+                    <TabsTrigger value="all">全部</TabsTrigger>
+                    <TabsTrigger value="official">官方</TabsTrigger>
+                    <TabsTrigger value="community">社群</TabsTrigger>
+                  </TabsList>
+
+                  <TabsContent value="all">
+                    {renderLevelTable(allLevels)}
+                  </TabsContent>
+
+                  <TabsContent value="official">
+                    <div className="mb-4 rounded-lg bg-blue-50 px-4 py-3 text-sm text-blue-800">
+                      目前官方關卡數：<span className="font-semibold">{officialLevels.length}</span>
+                      {" "}• 下一個順序：<span className="font-semibold">{nextOfficialOrder}</span>
+                    </div>
+                    {renderLevelTable(officialLevels)}
+                  </TabsContent>
+
+                  <TabsContent value="community">
+                    {renderLevelTable(communityLevels)}
+                  </TabsContent>
+                </Tabs>
               )}
             </div>
           </TabsContent>
