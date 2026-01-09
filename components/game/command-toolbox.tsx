@@ -250,9 +250,12 @@ export function CommandToolbox({
                     isActive ? "ring-2 ring-offset-2 ring-slate-900/70" : "ring-0"
                   } ${disabled ? "opacity-40" : ""} ${isDragging ? "opacity-50" : ""}`
                 }
+                ariaLabel={`條件：${color === "R" ? "紅" : color === "G" ? "綠" : "藍"}`}
                 tourId={`condition-${color === "R" ? "red" : color === "G" ? "green" : "blue"}`}
                 onClick={() => onSelectCondition(tileColor)}
-              />
+              >
+                <span className="sr-only">{color}</span>
+              </DraggableButton>
             );
           })}
           <button
