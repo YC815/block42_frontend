@@ -87,7 +87,6 @@ export function LevelsPageClient({
 
   const handleTabChange = (value: string) => {
     const nextTab = value === "community" ? "community" : "official";
-    setActiveTab(nextTab);
     if (typeof window === "undefined") {
       return;
     }

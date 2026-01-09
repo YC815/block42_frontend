@@ -3,6 +3,7 @@
  * 關卡選擇、遊戲介面（需要認證）
  */
 
+import { Suspense } from "react";
 import { Navbar } from "@/components/layout/navbar";
 import { ProtectedRoute } from "@/components/layout/protected-route";
 import { NavbarProvider } from "@/components/layout/navbar-context";
@@ -16,7 +17,9 @@ export default function PlayerLayout({
     <ProtectedRoute>
       <NavbarProvider>
         <div className="flex min-h-screen flex-col">
-          <Navbar />
+          <Suspense fallback={<div className="h-16 border-b bg-white" />}>
+            <Navbar />
+          </Suspense>
           <main className="flex-1">{children}</main>
         </div>
       </NavbarProvider>
