@@ -3,6 +3,7 @@
  * Provides command buttons and condition modifiers.
  */
 
+import { useDraggable } from "@dnd-kit/core";
 import type { LevelConfig, TileColor, CommandType } from "@/types/api";
 import { ArrowBigUp, CornerUpLeft, CornerUpRight, PaintBucket } from "lucide-react";
 
@@ -64,9 +65,21 @@ export function CommandToolbox({
         <div className="grid grid-cols-3 gap-2">
           {actions.map((cmd) => {
             const iconDef = COMMAND_ICONS[cmd];
+            const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
+              id: `toolbox-command-${cmd}`,
+              data: {
+                source: "toolbox",
+                itemType: "command",
+                value: cmd,
+              },
+              disabled,
+            });
             return (
               <button
                 key={cmd}
+                ref={setNodeRef}
+                {...listeners}
+                {...attributes}
                 type="button"
                 disabled={disabled}
                 className={`flex h-11 w-11 items-center justify-center rounded-lg border text-lg shadow-sm transition ${
@@ -75,7 +88,7 @@ export function CommandToolbox({
                     : activeCommand === cmd
                       ? "border-slate-900 bg-slate-900 text-white"
                       : "border-slate-200/80 bg-white text-slate-700 hover:border-slate-300"
-                }`}
+                } ${isDragging ? "opacity-50" : ""}`}
                 aria-label={COMMAND_TITLES[cmd]}
                 data-tour-id={`command-${cmd}`}
                 onClick={() => onSelectCommand(cmd)}
@@ -94,9 +107,21 @@ export function CommandToolbox({
           })}
           {functions.map((cmd) => {
             if (cmd !== "f0" && config[cmd] === 0) return null;
+            const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
+              id: `toolbox-command-${cmd}`,
+              data: {
+                source: "toolbox",
+                itemType: "command",
+                value: cmd,
+              },
+              disabled,
+            });
             return (
               <button
                 key={cmd}
+                ref={setNodeRef}
+                {...listeners}
+                {...attributes}
                 type="button"
                 disabled={disabled}
                 className={`flex h-11 w-11 items-center justify-center rounded-lg border text-xs font-semibold shadow-sm transition ${
@@ -105,12 +130,12 @@ export function CommandToolbox({
                     : activeCommand === cmd
                       ? "border-slate-900 bg-slate-900 text-white"
                       : "border-slate-200/80 bg-white text-slate-700 hover:border-slate-300"
-                }`}
+                } ${isDragging ? "opacity-50" : ""}`}
                 aria-label={COMMAND_TITLES[cmd]}
                 data-tour-id={`command-${cmd}`}
                 onClick={() => onSelectCommand(cmd)}
               >
-                {COMMAND_ICONS[cmd].label}
+                {cmd}
               </button>
             );
           })}
@@ -129,9 +154,21 @@ export function CommandToolbox({
                   ? "bg-[#38A169]"
                   : "bg-[#3182CE]";
             const isDisabled = disabled || !enabled;
+            const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
+              id: `toolbox-command-${cmd}`,
+              data: {
+                source: "toolbox",
+                itemType: "command",
+                value: cmd,
+              },
+              disabled: isDisabled,
+            });
             return (
               <button
                 key={cmd}
+                ref={setNodeRef}
+                {...listeners}
+                {...attributes}
                 type="button"
                 className={`flex h-11 w-11 items-center justify-center rounded-lg border shadow-sm transition ${
                   isDisabled
@@ -139,7 +176,7 @@ export function CommandToolbox({
                     : isActive
                       ? "border-slate-900 bg-slate-100"
                       : "border-slate-200/80 bg-white hover:border-slate-300"
-                }`}
+                } ${isDragging ? "opacity-50" : ""}`}
                 disabled={isDisabled}
                 aria-label={COMMAND_TITLES[cmd]}
                 data-tour-id={`brush-${cmd.replace("paint_", "")}`}
@@ -168,14 +205,26 @@ export function CommandToolbox({
                 : color === "G"
                   ? "bg-[#38A169]"
                   : "bg-[#3182CE]";
+            const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
+              id: `toolbox-condition-${color}`,
+              data: {
+                source: "toolbox",
+                itemType: "condition",
+                value: tileColor,
+              },
+              disabled,
+            });
             return (
               <button
                 key={color}
+                ref={setNodeRef}
+                {...listeners}
+                {...attributes}
                 type="button"
                 disabled={disabled}
-                  className={`h-6 w-6 rounded-full ${bg} ${
-                    isActive ? "ring-2 ring-offset-2 ring-slate-900/70" : "ring-0"
-                  } ${disabled ? "opacity-40" : ""}`}
+                className={`h-6 w-6 rounded-full ${bg} ${
+                  isActive ? "ring-2 ring-offset-2 ring-slate-900/70" : "ring-0"
+                } ${disabled ? "opacity-40" : ""} ${isDragging ? "opacity-50" : ""}`}
                 data-tour-id={`condition-${color === "R" ? "red" : color === "G" ? "green" : "blue"}`}
                 onClick={() => onSelectCondition(tileColor)}
               />

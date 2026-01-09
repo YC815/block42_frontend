@@ -14,6 +14,7 @@ import { ProgrammingWorkspace } from "@/components/game/programming-workspace";
 import { GameControls } from "@/components/game/game-controls";
 import { ExecutionThreadBar } from "@/components/game/execution-thread";
 import { GameResultOverlay } from "@/components/game/game-result-overlay";
+import { GameDndProvider } from "@/components/game/game-dnd-provider";
 
 interface PlaytestModalProps {
   title: string;
@@ -189,31 +190,37 @@ export function PlaytestModal({
             </div>
 
             <div className="flex min-h-0 flex-[2] gap-3">
-              <div className="w-[clamp(180px,22vw,240px)] shrink-0">
-                <CommandToolbox
-                  config={config}
-                  activeCommand={game.selectedSlotState?.type ?? null}
-                  activeCondition={game.selectedSlotState?.condition ?? null}
-                  disabled={!game.selectedSlot || game.isEditingLocked}
-                  onSelectCommand={game.applyCommand}
-                  onSelectCondition={game.applyCondition}
-                />
-              </div>
-              <div className="flex min-h-0 flex-1 flex-col gap-2">
-                <ProgrammingWorkspace
-                  config={config}
-                  slots={game.slots}
-                  selectedSlot={game.selectedSlot}
-                  onSelectSlot={game.selectSlot}
-                  onClearTrack={game.clearTrack}
-                  disabled={game.isEditingLocked}
-                />
-                {game.execution?.finalState.status === "failure" && (
-                  <div className="rounded-2xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
-                    {game.execution.finalState.error}
-                  </div>
-                )}
-              </div>
+              <GameDndProvider
+                onDropCommand={game.dropCommand}
+                onDropCondition={game.dropCondition}
+                disabled={game.isEditingLocked}
+              >
+                <div className="w-[clamp(180px,22vw,240px)] shrink-0">
+                  <CommandToolbox
+                    config={config}
+                    activeCommand={game.selectedSlotState?.type ?? null}
+                    activeCondition={game.selectedSlotState?.condition ?? null}
+                    disabled={!game.selectedSlot || game.isEditingLocked}
+                    onSelectCommand={game.applyCommand}
+                    onSelectCondition={game.applyCondition}
+                  />
+                </div>
+                <div className="flex min-h-0 flex-1 flex-col gap-2">
+                  <ProgrammingWorkspace
+                    config={config}
+                    slots={game.slots}
+                    selectedSlot={game.selectedSlot}
+                    onSelectSlot={game.selectSlot}
+                    onClearTrack={game.clearTrack}
+                    disabled={game.isEditingLocked}
+                  />
+                  {game.execution?.finalState.status === "failure" && (
+                    <div className="rounded-2xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+                      {game.execution.finalState.error}
+                    </div>
+                  )}
+                </div>
+              </GameDndProvider>
             </div>
           </div>
         </div>

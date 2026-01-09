@@ -9,6 +9,7 @@ import { GameControls } from "@/components/game/game-controls";
 import { ProgrammingWorkspace } from "@/components/game/programming-workspace";
 import { CommandToolbox } from "@/components/game/command-toolbox";
 import { GameResultOverlay } from "@/components/game/game-result-overlay";
+import { GameDndProvider } from "@/components/game/game-dnd-provider";
 import { TutorialTour } from "@/components/tutorial/tutorial-tour";
 import { useGameState } from "@/lib/hooks/use-game-state";
 import type { CommandSlot, SlotSet } from "@/lib/hooks/use-game-state";
@@ -329,13 +330,19 @@ function ShowcaseCard({ demo }: { demo: ShowcaseDemo }) {
         <div className="space-y-2 rounded-2xl border border-slate-200/80 bg-slate-50/80 p-4">
           <div className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">範例程式（積木）</div>
           <div className="pointer-events-none select-none">
-            <ProgrammingWorkspace
-              config={demo.config}
-              slots={slots}
-              selectedSlot={null}
-              onSelectSlot={() => {}}
-              onClearTrack={() => {}}
-            />
+            <GameDndProvider
+              onDropCommand={() => {}}
+              onDropCondition={() => {}}
+              disabled={true}
+            >
+              <ProgrammingWorkspace
+                config={demo.config}
+                slots={slots}
+                selectedSlot={null}
+                onSelectSlot={() => {}}
+                onClearTrack={() => {}}
+              />
+            </GameDndProvider>
           </div>
           <p className="text-xs text-slate-500">介面與遊戲一致，但此區僅供觀看，無法編輯。</p>
         </div>
@@ -473,31 +480,37 @@ function InteractivePane({ level, levelNumber, totalLevels, onComplete, onNextLe
           </div>
 
           <div className="flex min-h-0 flex-[2] gap-3">
-            <div className="w-[clamp(200px,22vw,240px)] shrink-0">
-              <CommandToolbox
-                config={level.config}
-                activeCommand={game.selectedSlotState?.type ?? null}
-                activeCondition={game.selectedSlotState?.condition ?? null}
-                disabled={!game.selectedSlot || game.isEditingLocked}
-                onSelectCommand={game.applyCommand}
-                onSelectCondition={game.applyCondition}
-              />
-            </div>
-            <div className="flex min-h-0 flex-1 flex-col gap-2">
-              <ProgrammingWorkspace
-                config={level.config}
-                slots={game.slots}
-                selectedSlot={game.selectedSlot}
-                onSelectSlot={game.selectSlot}
-                onClearTrack={game.clearTrack}
-                disabled={game.isEditingLocked}
-              />
-              {game.execution?.finalState.status === "failure" && (
-                <div className="rounded-2xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
-                  {game.execution.finalState.error}
-                </div>
-              )}
-            </div>
+            <GameDndProvider
+              onDropCommand={game.dropCommand}
+              onDropCondition={game.dropCondition}
+              disabled={game.isEditingLocked}
+            >
+              <div className="w-[clamp(200px,22vw,240px)] shrink-0">
+                <CommandToolbox
+                  config={level.config}
+                  activeCommand={game.selectedSlotState?.type ?? null}
+                  activeCondition={game.selectedSlotState?.condition ?? null}
+                  disabled={!game.selectedSlot || game.isEditingLocked}
+                  onSelectCommand={game.applyCommand}
+                  onSelectCondition={game.applyCondition}
+                />
+              </div>
+              <div className="flex min-h-0 flex-1 flex-col gap-2">
+                <ProgrammingWorkspace
+                  config={level.config}
+                  slots={game.slots}
+                  selectedSlot={game.selectedSlot}
+                  onSelectSlot={game.selectSlot}
+                  onClearTrack={game.clearTrack}
+                  disabled={game.isEditingLocked}
+                />
+                {game.execution?.finalState.status === "failure" && (
+                  <div className="rounded-2xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+                    {game.execution.finalState.error}
+                  </div>
+                )}
+              </div>
+            </GameDndProvider>
           </div>
         </div>
       </div>

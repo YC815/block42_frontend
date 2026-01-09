@@ -333,6 +333,40 @@ export function useGameState({
     setSlots(createSlots(config));
   }, [config, isEditingLocked]);
 
+  const dropCommand = useCallback(
+    (track: TrackKey, index: number, type: CommandType) => {
+      if (isEditingLocked) return;
+      setSlots((prev) => {
+        const trackSlots = prev[track] ?? [];
+        const slot = trackSlots[index];
+        if (!slot) return prev;
+        const nextSlot: CommandSlot = { ...slot, type };
+        const nextTrack = trackSlots.slice();
+        nextTrack[index] = nextSlot;
+        return { ...prev, [track]: nextTrack };
+      });
+      setSelectedSlot({ track, index });
+    },
+    [isEditingLocked]
+  );
+
+  const dropCondition = useCallback(
+    (track: TrackKey, index: number, color: TileColor) => {
+      if (isEditingLocked) return;
+      setSlots((prev) => {
+        const trackSlots = prev[track] ?? [];
+        const slot = trackSlots[index];
+        if (!slot) return prev;
+        const nextSlot: CommandSlot = { ...slot, condition: color };
+        const nextTrack = trackSlots.slice();
+        nextTrack[index] = nextSlot;
+        return { ...prev, [track]: nextTrack };
+      });
+      setSelectedSlot({ track, index });
+    },
+    [isEditingLocked]
+  );
+
   const serializeSolution = useCallback(() => {
     return {
       commands_f0: serializeCommands(commandSet.f0),
@@ -358,6 +392,8 @@ export function useGameState({
     selectSlot,
     applyCommand,
     applyCondition,
+    dropCommand,
+    dropCondition,
     currentState,
     queueSnapshots,
     execution,
