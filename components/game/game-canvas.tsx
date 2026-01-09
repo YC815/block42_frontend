@@ -84,7 +84,23 @@ export function GameCanvas({
 }: GameCanvasProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
-  const bounds = computeRenderBounds(mapData);
+
+  // 計算基礎邊界
+  let bounds = computeRenderBounds(mapData);
+
+  // 如果有越界位置，擴大邊界以容納它
+  if (state?.outOfBoundsPosition) {
+    const { x, y } = state.outOfBoundsPosition;
+    bounds = {
+      minX: Math.min(bounds.minX, x),
+      minY: Math.min(bounds.minY, y),
+      maxX: Math.max(bounds.maxX, x),
+      maxY: Math.max(bounds.maxY, y),
+      width: Math.max(bounds.maxX, x) - Math.min(bounds.minX, x) + 1,
+      height: Math.max(bounds.maxY, y) - Math.min(bounds.minY, y) + 1,
+    };
+  }
+
   const columns = bounds.width;
   const rows = bounds.height;
 
@@ -184,6 +200,11 @@ export function GameCanvas({
               const hasStar = starSet.has(key);
               const isCollected = collected.has(key);
               const isRocket = rocketPos?.x === x && rocketPos?.y === y;
+              const isOutOfBounds = Boolean(
+                state?.outOfBoundsPosition &&
+                state.outOfBoundsPosition.x === x &&
+                state.outOfBoundsPosition.y === y
+              );
 
               return (
                 <div
@@ -205,13 +226,23 @@ export function GameCanvas({
                   {isRocket && (
                     <div className="absolute inset-0 flex items-center justify-center">
                       <div
-                        className={`flex items-center justify-center text-white ${directionRotation(
-                          rocketDir
-                        )}`}
+                        className={`flex items-center justify-center ${
+                          isOutOfBounds
+                            ? "text-red-600 opacity-60"
+                            : "text-white"
+                        } ${directionRotation(rocketDir)}`}
                         style={{ fontSize: tokenSize }}
                       >
                         ▲
                       </div>
+                      {isOutOfBounds && (
+                        <div
+                          className="absolute inset-0 flex items-center justify-center text-red-600"
+                          style={{ fontSize: Math.round(tokenSize * 1.3) }}
+                        >
+                          ⚠
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>

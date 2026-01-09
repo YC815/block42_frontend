@@ -22,6 +22,7 @@ import {
   getTileColor,
   hasStar,
 } from "./types";
+import { computeRenderBounds } from "@/lib/map-utils";
 
 const MAX_STEPS = 1000;
 
@@ -70,6 +71,10 @@ function cloneState(state: GameState): GameState {
     steps: state.steps,
     status: state.status,
     error: state.error,
+    outOfBoundsPosition: state.outOfBoundsPosition
+      ? { ...state.outOfBoundsPosition }
+      : undefined,
+    failedCommand: state.failedCommand,
   };
 }
 
@@ -132,18 +137,34 @@ function executeMove(state: GameState, mapData: MapData): GameState {
   const newX = state.position.x + vector.dx;
   const newY = state.position.y + vector.dy;
 
-  // 檢查是否在地板瓷磚上
-  if (!isOnTile(newX, newY, mapData)) {
+  // 第一層：檢查硬邊界（防止完全飛出渲染範圍）
+  const bounds = computeRenderBounds(mapData);
+  const exceedsHardBounds = (
+    newX < bounds.minX - 1 || newX > bounds.maxX + 1 ||
+    newY < bounds.minY - 1 || newY > bounds.maxY + 1
+  );
+
+  if (exceedsHardBounds) {
+    // 完全超出範圍，連一步都不給
     state.status = "failure";
-    state.error = "撞牆或掉落！";
+    state.error = `座標完全越界至 (${newX}, ${newY})`;
     return state;
   }
 
-  // 更新位置
+  // 第二層：先執行移動
   state.position.x = newX;
   state.position.y = newY;
 
-  // 檢查是否收集星星
+  // 第三層：檢查軟邊界（瓷磚存在性）
+  if (!isOnTile(newX, newY, mapData)) {
+    // 關鍵：已經移動了，但標記為失敗
+    state.status = "failure";
+    state.error = `移動至無效位置 (${newX}, ${newY})，該位置沒有地板瓷磚`;
+    state.outOfBoundsPosition = { x: newX, y: newY };
+    return state;
+  }
+
+  // 成功移動，檢查收集物
   if (hasStar(newX, newY, mapData)) {
     const starKey = coordToKey(newX, newY);
     state.collectedStars.add(starKey);
@@ -204,7 +225,9 @@ export function executeCommands(
   pushTimeline();
 
   while (queue.length > 0) {
-    if (currentState.status === "failure" || currentState.status === "success") break;
+    if (currentState.status === "failure" || currentState.status === "success") {
+      break;
+    }
 
     const command = queue.shift();
     if (!command) break;
@@ -220,6 +243,10 @@ export function executeCommands(
         }
       } else {
         currentState = executeCommand(currentState, command, mapData, config);
+        // 如果執行後失敗，記錄導致失敗的指令
+        if (currentState.status === "failure") {
+          currentState.failedCommand = command;
+        }
       }
     }
 

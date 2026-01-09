@@ -265,7 +265,18 @@ export default function PlayLevelPage() {
                 />
                 {game.execution?.finalState.status === "failure" && (
                   <div className="rounded-2xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
-                    {game.execution.finalState.error}
+                    {game.execution.finalState.outOfBoundsPosition ? (
+                      <div className="space-y-1">
+                        <div className="font-semibold">🚨 火箭飛出有效範圍！</div>
+                        <div>
+                          越界位置：({game.execution.finalState.outOfBoundsPosition.x},{" "}
+                          {game.execution.finalState.outOfBoundsPosition.y})
+                        </div>
+                        <div className="text-rose-600">{game.execution.finalState.error}</div>
+                      </div>
+                    ) : (
+                      game.execution.finalState.error
+                    )}
                   </div>
                 )}
               </div>

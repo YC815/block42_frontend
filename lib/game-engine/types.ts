@@ -30,6 +30,12 @@ export interface GameState {
 
   // 錯誤訊息（當 status === "failure" 時）
   error?: string;
+
+  // 越界位置（當移動到無效位置時記錄，用於視覺化）
+  outOfBoundsPosition?: { x: number; y: number };
+
+  // 導致失敗的指令（用於除錯）
+  failedCommand?: Command;
 }
 
 /**
