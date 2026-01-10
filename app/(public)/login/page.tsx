@@ -35,10 +35,12 @@ function LoginForm() {
     try {
       await login(username, password);
       toast.success("登入成功");
-      if ("credentials" in navigator && "PasswordCredential" in window) {
+      const PasswordCredentialCtor = (window as typeof window & { PasswordCredential?: any })
+        .PasswordCredential;
+      if ("credentials" in navigator && PasswordCredentialCtor) {
         try {
-          const credential = new PasswordCredential({ id: username, password });
-          await navigator.credentials.store(credential);
+          const credential = new PasswordCredentialCtor({ id: username, password });
+          await (navigator as Navigator & { credentials?: any }).credentials?.store?.(credential);
         } catch {
           // Ignore credential store failures to avoid blocking login navigation.
         }
