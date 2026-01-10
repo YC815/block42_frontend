@@ -49,23 +49,34 @@ function LoginForm() {
         <CardTitle>登入 Block42</CardTitle>
       </CardHeader>
       <CardContent>
-        <form className="space-y-4" onSubmit={handleSubmit}>
+        <form className="space-y-4" onSubmit={handleSubmit} autoComplete="on">
           <div>
-            <label className="text-sm font-medium">帳號</label>
+            <label className="text-sm font-medium" htmlFor="login-username">
+              帳號
+            </label>
             <Input
+              id="login-username"
+              name="username"
+              type="text"
               value={username}
               onChange={(event) => setUsername(event.target.value)}
               placeholder="輸入使用者名稱"
+              autoComplete="username"
               required
             />
           </div>
           <div>
-            <label className="text-sm font-medium">密碼</label>
+            <label className="text-sm font-medium" htmlFor="login-password">
+              密碼
+            </label>
             <Input
+              id="login-password"
+              name="password"
               type="password"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
               placeholder="輸入密碼"
+              autoComplete="current-password"
               required
             />
           </div>
