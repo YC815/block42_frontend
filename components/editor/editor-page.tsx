@@ -18,6 +18,7 @@ import { EditorToolbar } from "@/components/editor/editor-toolbar";
 import { EditorCanvas } from "@/components/editor/editor-canvas";
 import { SettingsPanel } from "@/components/editor/settings-panel";
 import { PlaytestModal } from "@/components/editor/playtest-modal";
+import { LevelJsonPanel } from "@/components/editor/level-json-panel";
 import {
   compileMapData,
   computeContentBounds,
@@ -305,6 +306,21 @@ export function EditorPage({ levelId, mode = "designer" }: EditorPageProps) {
               }
               onTitleChange={setTitle}
               onConfigChange={setConfig}
+            />
+            <LevelJsonPanel
+              mode={mode}
+              levelId={levelId}
+              title={title}
+              mapData={mapData}
+              config={config}
+              fallbackConfig={DEFAULT_CONFIG}
+              onImport={(payload) => {
+                if (payload.title) {
+                  setTitle(payload.title);
+                }
+                setMapData(payload.map);
+                setConfig(payload.config);
+              }}
             />
           </div>
         </div>

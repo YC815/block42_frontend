@@ -4,7 +4,7 @@
  * Block42 Frontend - Admin dashboard
  */
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef, type ChangeEvent } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import {
@@ -12,6 +12,7 @@ import {
   approveLevel,
   rejectLevel,
   getAllLevels,
+  getAdminLevelById,
   updateAdminLevel,
   deleteAdminLevel,
   getAllUsers,
@@ -25,6 +26,9 @@ import type {
   AdminLevelUpdate,
   AdminUserCreate,
   AdminUserUpdate,
+  LevelConfig,
+  LevelStatus,
+  MapData,
   User,
 } from "@/types/api";
 import { ReviewQueue } from "@/components/admin/review-queue";
@@ -56,6 +60,216 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { DEFAULT_PADDING, ensureStartFloor } from "@/lib/map-utils";
+
+const LEVEL_BATCH_VERSION = 1;
+const VALID_STATUSES: LevelStatus[] = ["draft", "pending", "published", "rejected"];
+
+type ExportScope = "all" | "official" | "community";
+
+interface ExportLevelEntry {
+  id: string;
+  title: string;
+  map: MapData;
+  config: LevelConfig;
+  status: LevelStatus;
+  is_official: boolean;
+  official_order: number;
+  author_id: number;
+  author_name?: string | null;
+}
+
+interface BatchExportPayload {
+  version: number;
+  exported_at: string;
+  scope: ExportScope;
+  levels: ExportLevelEntry[];
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
+}
+
+function toNumber(value: unknown): number | null {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string" && value.trim() !== "") {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+  return null;
+}
+
+function toInteger(value: unknown): number | null {
+  const parsed = toNumber(value);
+  if (parsed === null) return null;
+  return Number.isInteger(parsed) ? parsed : null;
+}
+
+function isTileColor(value: unknown): value is "R" | "G" | "B" {
+  return value === "R" || value === "G" || value === "B";
+}
+
+function isLevelStatus(value: unknown): value is LevelStatus {
+  return VALID_STATUSES.includes(value as LevelStatus);
+}
+
+function normalizeMapData(mapData: MapData): MapData {
+  return ensureStartFloor({
+    ...mapData,
+    padding: mapData.padding ?? DEFAULT_PADDING,
+    tiles: mapData.tiles ?? [],
+    stars: mapData.stars ?? [],
+    start: {
+      ...mapData.start,
+      dir: mapData.start.dir ?? 1,
+    },
+  });
+}
+
+function coerceMapData(value: unknown): MapData | null {
+  if (!isRecord(value)) return null;
+  const startRaw = value.start;
+  if (!isRecord(startRaw)) return null;
+  const startX = toInteger(startRaw.x);
+  const startY = toInteger(startRaw.y);
+  if (startX === null || startY === null) return null;
+  const dirRaw = toInteger(startRaw.dir);
+  const dir = dirRaw !== null && [0, 1, 2, 3].includes(dirRaw)
+    ? (dirRaw as 0 | 1 | 2 | 3)
+    : (1 as 0 | 1 | 2 | 3);
+
+  const tilesRaw = Array.isArray(value.tiles) ? value.tiles : [];
+  const tiles: MapData["tiles"] = [];
+  for (const tile of tilesRaw) {
+    if (!isRecord(tile)) return null;
+    const x = toInteger(tile.x);
+    const y = toInteger(tile.y);
+    if (x === null || y === null || !isTileColor(tile.color)) return null;
+    tiles.push({ x, y, color: tile.color });
+  }
+
+  const starsRaw = Array.isArray(value.stars) ? value.stars : [];
+  const stars: MapData["stars"] = [];
+  for (const star of starsRaw) {
+    if (!isRecord(star)) return null;
+    const x = toInteger(star.x);
+    const y = toInteger(star.y);
+    if (x === null || y === null) return null;
+    stars.push({ x, y });
+  }
+
+  const padding = toInteger(value.padding);
+  const mapData: MapData = {
+    start: { x: startX, y: startY, dir },
+    tiles,
+    stars,
+  };
+
+  if (padding !== null) {
+    mapData.padding = padding;
+  }
+
+  return normalizeMapData(mapData);
+}
+
+function coerceLevelConfig(value: unknown): LevelConfig | null {
+  if (!isRecord(value)) return null;
+  const f0 = toInteger(value.f0);
+  const f1 = toInteger(value.f1);
+  const f2 = toInteger(value.f2);
+  if (f0 === null || f1 === null || f2 === null) return null;
+  if (!isRecord(value.tools)) return null;
+  const { paint_red, paint_green, paint_blue } = value.tools;
+  if (
+    typeof paint_red !== "boolean" ||
+    typeof paint_green !== "boolean" ||
+    typeof paint_blue !== "boolean"
+  ) {
+    return null;
+  }
+  return {
+    f0,
+    f1,
+    f2,
+    tools: {
+      paint_red,
+      paint_green,
+      paint_blue,
+    },
+  };
+}
+
+function downloadJson(filename: string, content: string) {
+  const blob = new Blob([content], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}
+
+function buildExportFilename(scope: ExportScope) {
+  const date = new Date().toISOString().slice(0, 10);
+  return `levels-${scope}-${date}.json`;
+}
+
+function extractLevelId(entry: Record<string, unknown>): string | null {
+  const direct = entry.id ?? entry.level_id ?? entry.levelId;
+  if (typeof direct === "string" && direct.trim()) return direct.trim();
+  if (typeof direct === "number") return String(direct);
+  const meta = entry.meta;
+  if (isRecord(meta)) {
+    const metaId = meta.level_id ?? meta.levelId;
+    if (typeof metaId === "string" && metaId.trim()) return metaId.trim();
+    if (typeof metaId === "number") return String(metaId);
+  }
+  return null;
+}
+
+function extractImportItems(raw: unknown): unknown[] | null {
+  if (Array.isArray(raw)) return raw;
+  if (!isRecord(raw)) return null;
+  if (Array.isArray(raw.levels)) return raw.levels;
+  if (Array.isArray(raw.items)) return raw.items;
+  if (isRecord(raw.level)) return [raw.level];
+  if (raw.map && raw.config) return [raw];
+  return null;
+}
+
+function parseImportEntry(entry: unknown): { id: string; data: AdminLevelUpdate } | null {
+  if (!isRecord(entry)) return null;
+  const normalized = isRecord(entry.level) ? entry.level : entry;
+  const id = extractLevelId(normalized) ?? extractLevelId(entry);
+  if (!id) return null;
+  const mapValue = normalized.map ?? normalized.map_data ?? normalized.mapData;
+  const configValue = normalized.config ?? normalized.level_config ?? normalized.levelConfig;
+  if (!mapValue || !configValue) return null;
+  const map = coerceMapData(mapValue);
+  const config = coerceLevelConfig(configValue);
+  if (!map || !config) return null;
+
+  const payload: AdminLevelUpdate = { map, config };
+  if (typeof normalized.title === "string" && normalized.title.trim()) {
+    payload.title = normalized.title.trim();
+  }
+  if (isLevelStatus(normalized.status)) {
+    payload.status = normalized.status;
+  }
+  const isOfficial = normalized.is_official ?? normalized.isOfficial;
+  if (typeof isOfficial === "boolean") {
+    payload.is_official = isOfficial;
+  }
+  const officialOrderValue = normalized.official_order ?? normalized.officialOrder;
+  const officialOrder = toInteger(officialOrderValue);
+  if (officialOrder !== null) {
+    payload.official_order = officialOrder;
+  }
+
+  return { id, data: payload };
+}
 
 export default function AdminDashboardPage() {
   const { user: currentUser } = useAuth();
@@ -81,6 +295,9 @@ export default function AdminDashboardPage() {
     password: "",
     is_superuser: false,
   });
+  const [batchExporting, setBatchExporting] = useState(false);
+  const [batchImporting, setBatchImporting] = useState(false);
+  const importInputRef = useRef<HTMLInputElement | null>(null);
   const [transferDialogOpen, setTransferDialogOpen] = useState(false);
   const [transferUser, setTransferUser] = useState<User | null>(null);
   const [transferLevels, setTransferLevels] = useState<AdminLevelListItem[]>([]);
@@ -264,6 +481,116 @@ export default function AdminDashboardPage() {
     setTransferDialogOpen(true);
   };
 
+  const handleBatchExport = async (scope: ExportScope) => {
+    const sourceLevels =
+      scope === "official" ? officialLevels : scope === "community" ? communityLevels : allLevels;
+    if (!sourceLevels.length) {
+      toast.error("沒有可匯出的關卡");
+      return;
+    }
+
+    setBatchExporting(true);
+    try {
+      const results = await Promise.allSettled(
+        sourceLevels.map((level) => getAdminLevelById(level.id))
+      );
+      const successes = results
+        .filter(
+          (result): result is PromiseFulfilledResult<Awaited<ReturnType<typeof getAdminLevelById>>> =>
+            result.status === "fulfilled"
+        )
+        .map((result) => result.value);
+      const failedCount = results.length - successes.length;
+
+      if (!successes.length) {
+        toast.error("匯出失敗");
+        return;
+      }
+
+      const payload: BatchExportPayload = {
+        version: LEVEL_BATCH_VERSION,
+        exported_at: new Date().toISOString(),
+        scope,
+        levels: successes.map((level) => ({
+          id: level.id,
+          title: level.title,
+          map: level.map,
+          config: level.config,
+          status: level.status,
+          is_official: level.is_official,
+          official_order: level.official_order,
+          author_id: level.author_id,
+          author_name: level.author_name ?? null,
+        })),
+      };
+
+      downloadJson(buildExportFilename(scope), JSON.stringify(payload, null, 2));
+      if (failedCount > 0) {
+        toast.error(`匯出完成，但有 ${failedCount} 個關卡失敗`);
+      } else {
+        toast.success(`已匯出 ${successes.length} 個關卡`);
+      }
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "匯出失敗");
+    } finally {
+      setBatchExporting(false);
+    }
+  };
+
+  const handleBatchImport = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+
+    setBatchImporting(true);
+    try {
+      const text = await file.text();
+      const raw = JSON.parse(text) as unknown;
+      const items = extractImportItems(raw);
+      if (!items || items.length === 0) {
+        toast.error("JSON 內沒有可匯入的關卡");
+        return;
+      }
+
+      const parsed = items
+        .map(parseImportEntry)
+        .filter((item): item is { id: string; data: AdminLevelUpdate } => item !== null);
+      const skipped = items.length - parsed.length;
+
+      if (!parsed.length) {
+        toast.error("沒有有效的關卡資料");
+        return;
+      }
+
+      const confirmMessage = [
+        `即將更新 ${parsed.length} 個關卡`,
+        skipped > 0 ? `略過 ${skipped} 個項目` : null,
+      ]
+        .filter(Boolean)
+        .join("，");
+
+      if (!confirm(`${confirmMessage}。是否繼續？`)) return;
+
+      const results = await Promise.allSettled(
+        parsed.map((item) => updateAdminLevel(item.id, item.data))
+      );
+      const successCount = results.filter((result) => result.status === "fulfilled").length;
+      const failedCount = results.length - successCount;
+
+      if (successCount > 0) {
+        toast.success(`已更新 ${successCount} 個關卡`);
+        levelsQuery.refetch();
+      }
+      if (failedCount > 0) {
+        toast.error(`有 ${failedCount} 個關卡更新失敗`);
+      }
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "匯入失敗");
+    } finally {
+      setBatchImporting(false);
+    }
+  };
+
   const getDraftValue = <K extends keyof AdminLevelUpdate>(
     level: AdminLevelListItem,
     key: K
@@ -429,33 +756,87 @@ export default function AdminDashboardPage() {
             <div className="rounded-2xl border border-white/70 bg-white/80 p-4 shadow-[0_16px_40px_-32px_rgba(15,23,42,0.4)] backdrop-blur">
               {levelsQuery.isLoading && <div>載入中...</div>}
               {levelsQuery.isError && <div className="text-red-500">載入失敗</div>}
-              {levelsQuery.data && levelsQuery.data.length === 0 && (
-                <div className="text-gray-500">目前沒有關卡</div>
-              )}
-              {levelsQuery.data && levelsQuery.data.length > 0 && (
-                <Tabs defaultValue="all" className="space-y-4">
-                  <TabsList className="bg-white/80">
-                    <TabsTrigger value="all">全部</TabsTrigger>
-                    <TabsTrigger value="official">官方</TabsTrigger>
-                    <TabsTrigger value="community">社群</TabsTrigger>
-                  </TabsList>
-
-                  <TabsContent value="all">
-                    {renderLevelTable(allLevels)}
-                  </TabsContent>
-
-                  <TabsContent value="official">
-                    <div className="mb-4 rounded-lg bg-blue-50 px-4 py-3 text-sm text-blue-800">
-                      目前官方關卡數：<span className="font-semibold">{officialLevels.length}</span>
-                      {" "}• 下一個順序：<span className="font-semibold">{nextOfficialOrder}</span>
+              {levelsQuery.data && (
+                <div className="space-y-4">
+                  <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-3 text-sm text-slate-600">
+                    <div>
+                      <div className="text-sm font-semibold text-slate-700">
+                        批量匯入 / 匯出
+                      </div>
+                      <div className="mt-1 text-xs text-slate-500">
+                        匯出包含 map/config，匯入會直接覆蓋關卡內容。
+                      </div>
                     </div>
-                    {renderLevelTable(officialLevels)}
-                  </TabsContent>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        disabled={batchExporting || batchImporting}
+                        onClick={() => handleBatchExport("all")}
+                      >
+                        匯出全部
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        disabled={batchExporting || batchImporting}
+                        onClick={() => handleBatchExport("official")}
+                      >
+                        匯出官方
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        disabled={batchExporting || batchImporting}
+                        onClick={() => handleBatchExport("community")}
+                      >
+                        匯出社群
+                      </Button>
+                      <Button
+                        size="sm"
+                        disabled={batchExporting || batchImporting}
+                        onClick={() => importInputRef.current?.click()}
+                      >
+                        匯入 JSON
+                      </Button>
+                      <input
+                        ref={importInputRef}
+                        type="file"
+                        accept="application/json,.json"
+                        onChange={handleBatchImport}
+                        className="hidden"
+                      />
+                    </div>
+                  </div>
+                  {levelsQuery.data.length === 0 && (
+                    <div className="text-gray-500">目前沒有關卡</div>
+                  )}
+                  {levelsQuery.data.length > 0 && (
+                    <Tabs defaultValue="all" className="space-y-4">
+                      <TabsList className="bg-white/80">
+                        <TabsTrigger value="all">全部</TabsTrigger>
+                        <TabsTrigger value="official">官方</TabsTrigger>
+                        <TabsTrigger value="community">社群</TabsTrigger>
+                      </TabsList>
 
-                  <TabsContent value="community">
-                    {renderLevelTable(communityLevels)}
-                  </TabsContent>
-                </Tabs>
+                      <TabsContent value="all">
+                        {renderLevelTable(allLevels)}
+                      </TabsContent>
+
+                      <TabsContent value="official">
+                        <div className="mb-4 rounded-lg bg-blue-50 px-4 py-3 text-sm text-blue-800">
+                          目前官方關卡數：<span className="font-semibold">{officialLevels.length}</span>
+                          {" "}• 下一個順序：<span className="font-semibold">{nextOfficialOrder}</span>
+                        </div>
+                        {renderLevelTable(officialLevels)}
+                      </TabsContent>
+
+                      <TabsContent value="community">
+                        {renderLevelTable(communityLevels)}
+                      </TabsContent>
+                    </Tabs>
+                  )}
+                </div>
               )}
             </div>
           </TabsContent>
