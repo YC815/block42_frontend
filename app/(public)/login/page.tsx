@@ -35,7 +35,15 @@ function LoginForm() {
     try {
       await login(username, password);
       toast.success("登入成功");
-      router.push(returnUrl);
+      if ("credentials" in navigator && "PasswordCredential" in window) {
+        try {
+          const credential = new PasswordCredential({ id: username, password });
+          await navigator.credentials.store(credential);
+        } catch {
+          // Ignore credential store failures to avoid blocking login navigation.
+        }
+      }
+      window.location.assign(returnUrl);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "登入失敗");
     } finally {
