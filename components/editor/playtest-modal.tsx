@@ -4,7 +4,7 @@
  * Block42 Frontend - Fullscreen playtest modal
  */
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { XIcon } from "lucide-react";
 import type { LevelConfig, MapData, Solution } from "@/types/api";
 import { useGameState } from "@/lib/hooks/use-game-state";
@@ -79,14 +79,6 @@ export function PlaytestModal({
     const timer = setTimeout(() => setShowResult(false), 0);
     return () => clearTimeout(timer);
   }, [game.didSucceed, game]);
-
-  const queueSnapshot = useMemo(
-    () =>
-      game.queueSnapshots[
-        Math.min(game.timelineIndex, Math.max(0, game.queueSnapshots.length - 1))
-      ] ?? [],
-    [game.queueSnapshots, game.timelineIndex]
-  );
 
   const currentState = game.currentState;
   const resolvedPassed = playtestPassed || game.didSucceed;
@@ -183,7 +175,8 @@ export function PlaytestModal({
                 </div>
               </div>
               <ExecutionThreadBar
-                queue={queueSnapshot}
+                queueSnapshots={game.queueSnapshots}
+                timelineIndex={game.timelineIndex}
                 actions={
                   <GameControls
                     isRunning={game.isRunning}

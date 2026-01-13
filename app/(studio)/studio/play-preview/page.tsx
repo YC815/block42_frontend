@@ -82,11 +82,6 @@ export default function PlayPreviewPage() {
   }
 
   const currentState = game.currentState;
-  const queueSnapshot =
-    game.queueSnapshots[
-      Math.min(game.timelineIndex, Math.max(0, game.queueSnapshots.length - 1))
-    ] ??
-    [];
 
   return (
     <div className="h-[calc(100vh-4rem)] overflow-hidden bg-[radial-gradient(circle_at_top,rgba(56,189,248,0.18),transparent_45%),radial-gradient(circle_at_20%_20%,rgba(250,204,21,0.18),transparent_40%),linear-gradient(180deg,#f8fafc,#e2e8f0)]">
@@ -120,7 +115,8 @@ export default function PlayPreviewPage() {
               </div>
             </div>
             <ExecutionThreadBar
-              queue={queueSnapshot}
+              queueSnapshots={game.queueSnapshots}
+              timelineIndex={game.timelineIndex}
               actions={
                 <GameControls
                   isRunning={game.isRunning}

@@ -205,10 +205,6 @@ function ShowcaseCard({ demo }: { demo: ShowcaseDemo }) {
   });
 
   const currentState = game.currentState;
-  const queueSnapshot =
-    game.queueSnapshots[
-      Math.min(game.timelineIndex, Math.max(0, game.queueSnapshots.length - 1))
-    ] ?? [];
   const slots = useMemo(() => programToSlots(demo.config, demo.program), [demo.config, demo.program]);
 
   const handleRun = () => {
@@ -256,7 +252,8 @@ function ShowcaseCard({ demo }: { demo: ShowcaseDemo }) {
           </div>
         </div>
         <ExecutionThreadBar
-          queue={queueSnapshot}
+          queueSnapshots={game.queueSnapshots}
+          timelineIndex={game.timelineIndex}
           actions={<span className="text-xs font-semibold text-slate-500">示範播放中</span>}
         />
       </div>
@@ -325,10 +322,6 @@ function InteractivePane({ level, levelNumber, totalLevels, onComplete, onNextLe
   });
 
   const currentState = game.currentState;
-  const queueSnapshot =
-    game.queueSnapshots[
-      Math.min(game.timelineIndex, Math.max(0, game.queueSnapshots.length - 1))
-    ] ?? [];
 
   useEffect(() => {
     tourStateRef.current = tourState;
@@ -419,7 +412,8 @@ function InteractivePane({ level, levelNumber, totalLevels, onComplete, onNextLe
               </div>
             </div>
             <ExecutionThreadBar
-              queue={queueSnapshot}
+              queueSnapshots={game.queueSnapshots}
+              timelineIndex={game.timelineIndex}
               actions={
                 <GameControls
                   isRunning={game.isRunning}

@@ -188,11 +188,6 @@ export default function PlayLevelPage() {
   }
 
   const currentState = game.currentState;
-  const queueSnapshot =
-    game.queueSnapshots[
-      Math.min(game.timelineIndex, Math.max(0, game.queueSnapshots.length - 1))
-    ] ??
-    [];
 
   return (
     <div className="h-[calc(100vh-4rem)] overflow-hidden bg-slate-50">
@@ -224,7 +219,8 @@ export default function PlayLevelPage() {
               </div>
             </div>
             <ExecutionThreadBar
-              queue={queueSnapshot}
+              queueSnapshots={game.queueSnapshots}
+              timelineIndex={game.timelineIndex}
               actions={
                 <GameControls
                   isRunning={game.isRunning}
