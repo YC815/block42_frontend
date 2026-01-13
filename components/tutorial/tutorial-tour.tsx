@@ -185,7 +185,14 @@ export function TutorialTour({ steps, open, onClose }: TutorialTourProps) {
             <Button size="sm" onClick={goNext}>
               {stepIndex >= total - 1 ? "結束導覽" : "下一步"}
             </Button>
-            <Button size="sm" variant="ghost" onClick={onClose}>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={(e) => {
+                e.stopPropagation();
+                onClose?.();
+              }}
+            >
               關閉
             </Button>
           </div>

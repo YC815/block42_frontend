@@ -335,7 +335,8 @@ function InteractivePane({ level, levelNumber, totalLevels, onComplete, onNextLe
     game.clearAll();
     game.reset();
     return () => clearTimeout(timer);
-  }, [level.id, game]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [level.id]);
 
   useEffect(() => {
     const slots: Array<{ track: "f0" | "f1" | "f2"; size: number }> = [
