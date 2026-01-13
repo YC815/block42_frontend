@@ -3,6 +3,8 @@
  * Run / Step / Reset + speed slider.
  */
 
+import { Footprints } from "lucide-react";
+
 interface GameControlsProps {
   isRunning: boolean;
   speed: number;
@@ -48,7 +50,7 @@ export function GameControls({
         aria-label="單步執行"
         data-tour-id="control-step"
       >
-        ⏭
+        <Footprints className="h-4 w-4" strokeWidth={2} />
       </button>
       <button
         type="button"
