@@ -29,7 +29,7 @@ import { serializeCommands } from "@/lib/game-engine/commands";
 export default function PlayLevelPage() {
   const params = useParams();
   const router = useRouter();
-  const levelId = params.levelId as string;
+  const levelId = params?.levelId as string;
   const { isAuthenticated } = useAuth();
 
   const levelQuery = useQuery({

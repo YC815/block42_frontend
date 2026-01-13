@@ -25,7 +25,7 @@ export function LevelsPageClient({
   const searchParams = useSearchParams();
   const [filter, setFilter] = useState<"all" | "completed" | "incomplete">("all");
 
-  const tabParam = searchParams.get("tab");
+  const tabParam = searchParams?.get("tab");
   const activeTab = tabParam === "community" ? "community" : "official";
 
   const officialQuery = useQuery({

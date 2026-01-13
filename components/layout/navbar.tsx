@@ -24,7 +24,7 @@ export function Navbar() {
   const { levelInfo } = useNavbar();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const tabParam = searchParams.get("tab");
+  const tabParam = searchParams?.get("tab");
   const isLevelsPage = pathname === "/levels";
   const isTutorialPage = pathname === "/tutorial";
   const isOfficialActive = isLevelsPage && (tabParam === "official" || !tabParam);

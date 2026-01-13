@@ -5,7 +5,6 @@
  */
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,7 +12,6 @@ import { useAuth } from "@/lib/auth-context";
 import { toast } from "sonner";
 
 function LoginForm() {
-  const router = useRouter();
   const { login } = useAuth();
 
   const [username, setUsername] = useState("");
@@ -35,12 +33,14 @@ function LoginForm() {
     try {
       await login(username, password);
       toast.success("登入成功");
-      const PasswordCredentialCtor = (window as typeof window & { PasswordCredential?: any })
-        .PasswordCredential;
-      if ("credentials" in navigator && PasswordCredentialCtor) {
+      // Store credential using Credential Management API if available
+      if ("credentials" in navigator && "PasswordCredential" in window) {
         try {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const PasswordCredentialCtor = (window as any).PasswordCredential;
           const credential = new PasswordCredentialCtor({ id: username, password });
-          await (navigator as Navigator & { credentials?: any }).credentials?.store?.(credential);
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          await (navigator as any).credentials?.store?.(credential);
         } catch {
           // Ignore credential store failures to avoid blocking login navigation.
         }

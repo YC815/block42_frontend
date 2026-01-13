@@ -17,7 +17,7 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
       // 儲存當前路徑，登入後可返回
-      const returnUrl = encodeURIComponent(pathname);
+      const returnUrl = encodeURIComponent(pathname ?? "/");
       router.push(`/login?returnUrl=${returnUrl}`);
     }
   }, [isLoading, isAuthenticated, router, pathname]);
