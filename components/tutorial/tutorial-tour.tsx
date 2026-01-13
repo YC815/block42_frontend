@@ -1,13 +1,13 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import type { TutorialTourStep, TourPlacement } from "@/lib/tutorial/levels";
 
 interface TutorialTourProps {
   steps: TutorialTourStep[];
-  open: boolean;
   onClose?: () => void;
+  onComplete?: () => void;
 }
 
 interface BubblePosition {
@@ -47,7 +47,7 @@ function computeBubblePosition(rect: DOMRect, placement: TourPlacement = "bottom
   }
 }
 
-export function TutorialTour({ steps, open, onClose }: TutorialTourProps) {
+export function TutorialTour({ steps, onClose, onComplete }: TutorialTourProps) {
   const [stepIndex, setStepIndex] = useState(0);
   const [targetRect, setTargetRect] = useState<DOMRect | null>(null);
   const [bubble, setBubble] = useState<BubblePosition | null>(null);
@@ -59,17 +59,19 @@ export function TutorialTour({ steps, open, onClose }: TutorialTourProps) {
     setStepIndex(0);
   }, [steps]);
 
-  const goPrev = () => setStepIndex((prev) => Math.max(0, prev - 1));
-  const goNext = () => {
+  const goPrev = useCallback(() => {
+    setStepIndex((prev) => Math.max(0, prev - 1));
+  }, []);
+  const goNext = useCallback(() => {
     if (stepIndex >= total - 1) {
-      onClose?.();
+      onComplete?.();
       return;
     }
     setStepIndex((prev) => Math.min(total - 1, prev + 1));
-  };
+  }, [onComplete, stepIndex, total]);
 
   const updatePosition = () => {
-    if (!open || !step) {
+    if (!step) {
       setTargetRect(null);
       setBubble(null);
       return;
@@ -94,7 +96,7 @@ export function TutorialTour({ steps, open, onClose }: TutorialTourProps) {
   };
 
   useLayoutEffect(() => {
-    if (!open || !step) {
+    if (!step) {
       setTargetRect(null);
       setBubble(null);
       return;
@@ -127,23 +129,9 @@ export function TutorialTour({ steps, open, onClose }: TutorialTourProps) {
       window.removeEventListener("scroll", handleRecalc, true);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, stepIndex, step]);
+  }, [stepIndex, step]);
 
-  useEffect(() => {
-    if (!open || !step?.selector) return;
-    const selector = step.selector;
-    const handler = (event: Event) => {
-      const target = event.target as HTMLElement | null;
-      if (target && target.closest(selector)) {
-        goNext();
-      }
-    };
-    document.addEventListener("click", handler, true);
-    return () => document.removeEventListener("click", handler, true);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, stepIndex, step?.selector]);
-
-  if (!open || !step) return null;
+  if (!step) return null;
 
   const highlightStyle = targetRect
     ? {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ExecutionThreadBar } from "@/components/game/execution-thread";
@@ -310,9 +310,12 @@ interface InteractivePaneProps {
   onNextLevel?: () => void;
 }
 
+type TourState = "auto-open" | "user-dismissed" | "user-opened" | "completed";
+
 function InteractivePane({ level, levelNumber, totalLevels, onComplete, onNextLevel }: InteractivePaneProps) {
   const [seed, setSeed] = useState(0);
-  const [tourOpen, setTourOpen] = useState(true);
+  const [tourState, setTourState] = useState<TourState>("auto-open");
+  const tourStateRef = useRef<TourState>(tourState);
 
   const game = useGameState({
     mapData: level.map,
@@ -328,13 +331,20 @@ function InteractivePane({ level, levelNumber, totalLevels, onComplete, onNextLe
     ] ?? [];
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setTourOpen(true);
-      setSeed((prev) => prev + 1);
-    }, 0);
+    tourStateRef.current = tourState;
+  }, [tourState]);
+
+  const { selectSlot, selectedSlot } = game;
+
+  useEffect(() => {
     game.clearAll();
     game.reset();
-    return () => clearTimeout(timer);
+    setSeed((prev) => prev + 1);
+
+    // 保持教學關閉狀態（如果用戶已關閉）
+    if (tourStateRef.current !== "user-dismissed") {
+      setTourState("auto-open");
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [level.id]);
 
@@ -346,8 +356,13 @@ function InteractivePane({ level, levelNumber, totalLevels, onComplete, onNextLe
     ];
     const target = slots.find((item) => item.size > 0);
     if (!target) return;
-    game.selectSlot(target.track, Math.max(0, target.size - 1));
-  }, [level.config.f0, level.config.f1, level.config.f2, game, seed]);
+    const alreadyValid =
+      selectedSlot &&
+      selectedSlot.track === target.track &&
+      selectedSlot.index <= Math.max(0, target.size - 1);
+    if (alreadyValid) return;
+    selectSlot(target.track, Math.max(0, target.size - 1));
+  }, [level.config.f0, level.config.f1, level.config.f2, selectSlot, selectedSlot, seed]);
 
   useEffect(() => {
     if (!game.didSucceed) return;
@@ -358,7 +373,7 @@ function InteractivePane({ level, levelNumber, totalLevels, onComplete, onNextLe
     setSeed((prev) => prev + 1);
     game.clearAll();
     game.reset();
-    setTourOpen(true);
+    setTourState("auto-open");
   };
 
   return (
@@ -482,16 +497,27 @@ function InteractivePane({ level, levelNumber, totalLevels, onComplete, onNextLe
             <Button size="sm" variant="secondary" onClick={handleReset}>
               重置程式碼
             </Button>
-            <Button size="sm" variant="ghost" onClick={() => setTourOpen(true)}>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => setTourState("user-opened")}
+            >
               展開導覽
             </Button>
           </div>
         </div>
       </aside>
 
-      {level.tour ? (
-        <TutorialTour steps={level.tour} open={tourOpen} onClose={() => setTourOpen(false)} />
-      ) : null}
+      {tourState !== "user-dismissed" &&
+        tourState !== "completed" &&
+        level.tour &&
+        level.tour.length > 0 && (
+          <TutorialTour
+            steps={level.tour}
+            onClose={() => setTourState("user-dismissed")}
+            onComplete={() => setTourState("completed")}
+          />
+        )}
     </div>
   );
 }
