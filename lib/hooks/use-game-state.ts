@@ -280,13 +280,32 @@ export function useGameState({
 
   const selectSlot = useCallback((track: TrackKey, index: number) => {
     if (isEditingLocked) return;
+
+    // 如果點擊已聚焦的格子 → 清空該格
+    if (selectedSlot?.track === track && selectedSlot?.index === index) {
+      setSlots((prev) => {
+        const trackSlots = prev[track];
+        const nextTrack = trackSlots.slice();
+        nextTrack[index] = { ...EMPTY_SLOT };
+        return { ...prev, [track]: nextTrack };
+      });
+      return;
+    }
+
+    // 否則 → 正常聚焦
     setSelectedSlot({ track, index });
-  }, [isEditingLocked]);
+  }, [isEditingLocked, selectedSlot]);
 
   const applyCommand = useCallback(
     (type: CommandType) => {
       if (isEditingLocked) return;
       if (!selectedSlot) return;
+      if (!config) return;
+
+      // Determine if we are adding or clearing a command
+      const currentSlot = slots[selectedSlot.track][selectedSlot.index];
+      const isAdding = currentSlot?.type !== type;
+
       setSlots((prev) => {
         const trackSlots = prev[selectedSlot.track] ?? [];
         const slot = trackSlots[selectedSlot.index];
@@ -297,8 +316,20 @@ export function useGameState({
         nextTrack[selectedSlot.index] = nextSlot;
         return { ...prev, [selectedSlot.track]: nextTrack };
       });
+
+      // Auto-focus next slot only when adding a command
+      if (isAdding) {
+        const trackCapacity = config[selectedSlot.track];
+        const isLastSlot = selectedSlot.index >= trackCapacity - 1;
+        if (!isLastSlot) {
+          setSelectedSlot({
+            track: selectedSlot.track,
+            index: selectedSlot.index + 1,
+          });
+        }
+      }
     },
-    [selectedSlot, isEditingLocked]
+    [selectedSlot, isEditingLocked, config, slots]
   );
 
   const applyCondition = useCallback(
