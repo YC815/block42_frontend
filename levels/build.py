@@ -125,6 +125,7 @@ def parse_source(text: str) -> list[dict]:
             for key in ("f0", "f1", "f2")
         }
         levels.append({
+            "id": fields["id"],
             "number": number,
             "title": title.strip(),
             "chapter": fields["chapter"],
@@ -150,7 +151,7 @@ def build() -> dict:
         if not chapters or chapters[-1]["title"] != level["chapter"]:
             chapters.append({"id": f"chapter-{len(chapters) + 1}", "title": level["chapter"]})
         output_levels.append({
-            "id": f"official-{order:02d}",
+            "id": level["id"],
             "order": order,
             "number": level["number"],
             "chapter_id": chapters[-1]["id"],
@@ -162,8 +163,12 @@ def build() -> dict:
             "solution": level["solution"],
             "solution_steps": result.steps,
         })
+    ids = [level["id"] for level in output_levels]
+    duplicated = {i for i in ids if ids.count(i) > 1}
+    if duplicated:
+        errors.append(f"id 重複：{', '.join(sorted(duplicated))}")
     if errors:
-        raise SystemExit("參考解驗證失敗：\n" + "\n".join(errors))
+        raise SystemExit("建置失敗：\n" + "\n".join(errors))
     return {"chapters": chapters, "levels": output_levels}
 
 

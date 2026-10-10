@@ -1836,9 +1836,120 @@
       "order": 16,
       "number": "4-1",
       "chapter_id": "chapter-4",
+      "title": "看到綠色就右轉",
+      "goal": "走到綠色地板時右轉，繼續往下走。",
+      "hint": "指令可以加上顏色條件：選好格子，再點下方的顏色。加了綠色條件的「右轉」，只有站在綠色地板上才會做。",
+      "config": {
+        "f0": 3,
+        "f1": 0,
+        "f2": 0,
+        "tools": {
+          "paint_red": false,
+          "paint_green": false,
+          "paint_blue": false
+        }
+      },
+      "map": {
+        "gridSize": 9,
+        "padding": 1,
+        "bounds": {
+          "minX": 0,
+          "minY": 0,
+          "maxX": 8,
+          "maxY": 6
+        },
+        "start": {
+          "x": 1,
+          "y": 1,
+          "dir": 1
+        },
+        "stars": [
+          {
+            "x": 7,
+            "y": 1
+          },
+          {
+            "x": 7,
+            "y": 5
+          }
+        ],
+        "tiles": [
+          {
+            "x": 1,
+            "y": 1,
+            "color": "R"
+          },
+          {
+            "x": 2,
+            "y": 1,
+            "color": "R"
+          },
+          {
+            "x": 3,
+            "y": 1,
+            "color": "R"
+          },
+          {
+            "x": 4,
+            "y": 1,
+            "color": "R"
+          },
+          {
+            "x": 5,
+            "y": 1,
+            "color": "R"
+          },
+          {
+            "x": 6,
+            "y": 1,
+            "color": "R"
+          },
+          {
+            "x": 7,
+            "y": 1,
+            "color": "G"
+          },
+          {
+            "x": 7,
+            "y": 2,
+            "color": "R"
+          },
+          {
+            "x": 7,
+            "y": 3,
+            "color": "R"
+          },
+          {
+            "x": 7,
+            "y": 4,
+            "color": "R"
+          },
+          {
+            "x": 7,
+            "y": 5,
+            "color": "R"
+          }
+        ]
+      },
+      "solution": {
+        "f0": [
+          "move",
+          "turn_right:G",
+          "f0"
+        ],
+        "f1": [],
+        "f2": []
+      },
+      "solution_steps": 28
+    },
+    {
+      "id": "official-17",
+      "order": 17,
+      "number": "4-2",
+      "chapter_id": "chapter-4",
       "title": "綠色轉彎",
       "goal": "沿著螺旋一路走到中心。",
-      "hint": "指令可以加上顏色條件，只在那個顏色的地板上才執行。所有轉角都是綠色。",
+      "hint": "規則跟上一關一樣，只是轉角變多了。所有轉角都是綠色。",
       "config": {
         "f0": 3,
         "f1": 0,
@@ -2059,9 +2170,9 @@
       "solution_steps": 88
     },
     {
-      "id": "official-17",
-      "order": 17,
-      "number": "4-2",
+      "id": "official-18",
+      "order": 18,
+      "number": "4-3",
       "chapter_id": "chapter-4",
       "title": "左轉右轉",
       "goal": "綠色右轉、藍色左轉。",
@@ -2239,9 +2350,9 @@
       "solution_steps": 85
     },
     {
-      "id": "official-18",
-      "order": 18,
-      "number": "4-3",
+      "id": "official-19",
+      "order": 19,
+      "number": "4-4",
       "chapter_id": "chapter-4",
       "title": "田字",
       "goal": "四個房間共用中間的十字路口，把每個房間都繞一圈。",
@@ -2408,9 +2519,9 @@
       "solution_steps": 82
     },
     {
-      "id": "official-19",
-      "order": 19,
-      "number": "4-4",
+      "id": "official-20",
+      "order": 20,
+      "number": "4-5",
       "chapter_id": "chapter-4",
       "title": "支線探索",
       "goal": "每個藍色路口上方都有一顆星星。",
@@ -2572,9 +2683,9 @@
       "solution_steps": 60
     },
     {
-      "id": "official-20",
-      "order": 20,
-      "number": "4-5",
+      "id": "official-21",
+      "order": 21,
+      "number": "4-6",
       "chapter_id": "chapter-4",
       "title": "來回掃描",
       "goal": "像掃地機器人一樣，一排一排掃過去。",
@@ -2779,9 +2890,9 @@
       "solution_steps": 93
     },
     {
-      "id": "official-21",
-      "order": 21,
-      "number": "4-6",
+      "id": "official-22",
+      "order": 22,
+      "number": "4-7",
       "chapter_id": "chapter-4",
       "title": "螺旋寶庫",
       "goal": "螺旋的轉角是綠色，藍色路口外面藏著星星。",
@@ -3039,13 +3150,149 @@
       "solution_steps": 147
     },
     {
-      "id": "official-22",
-      "order": 22,
+      "id": "official-23",
+      "order": 23,
       "number": "5-1",
+      "chapter_id": "chapter-5",
+      "title": "走過就塗掉",
+      "goal": "繞一圈之後，從右上角直直走出去。",
+      "hint": "機器人可以改變地板的顏色，塗色也能加顏色條件。轉過的轉角塗成紅色，下次經過就不會再轉。",
+      "config": {
+        "f0": 4,
+        "f1": 0,
+        "f2": 0,
+        "tools": {
+          "paint_red": true,
+          "paint_green": false,
+          "paint_blue": false
+        }
+      },
+      "map": {
+        "gridSize": 9,
+        "padding": 1,
+        "bounds": {
+          "minX": 0,
+          "minY": 0,
+          "maxX": 8,
+          "maxY": 5
+        },
+        "start": {
+          "x": 1,
+          "y": 1,
+          "dir": 1
+        },
+        "stars": [
+          {
+            "x": 7,
+            "y": 1
+          },
+          {
+            "x": 1,
+            "y": 3
+          },
+          {
+            "x": 4,
+            "y": 3
+          }
+        ],
+        "tiles": [
+          {
+            "x": 1,
+            "y": 1,
+            "color": "G"
+          },
+          {
+            "x": 2,
+            "y": 1,
+            "color": "R"
+          },
+          {
+            "x": 3,
+            "y": 1,
+            "color": "R"
+          },
+          {
+            "x": 4,
+            "y": 1,
+            "color": "G"
+          },
+          {
+            "x": 5,
+            "y": 1,
+            "color": "R"
+          },
+          {
+            "x": 6,
+            "y": 1,
+            "color": "R"
+          },
+          {
+            "x": 7,
+            "y": 1,
+            "color": "R"
+          },
+          {
+            "x": 1,
+            "y": 2,
+            "color": "R"
+          },
+          {
+            "x": 4,
+            "y": 2,
+            "color": "R"
+          },
+          {
+            "x": 1,
+            "y": 3,
+            "color": "R"
+          },
+          {
+            "x": 4,
+            "y": 3,
+            "color": "R"
+          },
+          {
+            "x": 1,
+            "y": 4,
+            "color": "G"
+          },
+          {
+            "x": 2,
+            "y": 4,
+            "color": "R"
+          },
+          {
+            "x": 3,
+            "y": 4,
+            "color": "R"
+          },
+          {
+            "x": 4,
+            "y": 4,
+            "color": "G"
+          }
+        ]
+      },
+      "solution": {
+        "f0": [
+          "move",
+          "turn_right:G",
+          "paint_red:G",
+          "f0"
+        ],
+        "f1": [],
+        "f2": []
+      },
+      "solution_steps": 69
+    },
+    {
+      "id": "official-24",
+      "order": 24,
+      "number": "5-2",
       "chapter_id": "chapter-5",
       "title": "塗掉轉角",
       "goal": "繞完一圈後，要從右下角直走出去。",
-      "hint": "機器人可以改變地板的顏色。轉過的轉角，下一次經過時還要轉嗎？",
+      "hint": "這次轉角要左轉。「轉彎再塗色」兩個動作可以包進 F1，用一個條件呼叫。",
       "config": {
         "f0": 3,
         "f1": 2,
@@ -3196,9 +3443,9 @@
       "solution_steps": 66
     },
     {
-      "id": "official-23",
-      "order": 23,
-      "number": "5-2",
+      "id": "official-25",
+      "order": 25,
+      "number": "5-3",
       "chapter_id": "chapter-5",
       "title": "T 字路口",
       "goal": "先走上面的死路，再回頭走下面那條。",
@@ -3299,9 +3546,9 @@
       "solution_steps": 37
     },
     {
-      "id": "official-24",
-      "order": 24,
-      "number": "5-3",
+      "id": "official-26",
+      "order": 26,
+      "number": "5-4",
       "chapter_id": "chapter-5",
       "title": "第二圈",
       "goal": "中間的星星要繞到第二圈才能拿。",
@@ -3454,9 +3701,9 @@
       "solution_steps": 105
     },
     {
-      "id": "official-25",
-      "order": 25,
-      "number": "5-4",
+      "id": "official-27",
+      "order": 27,
+      "number": "5-5",
       "chapter_id": "chapter-5",
       "title": "兩個環",
       "goal": "繞完右邊的環，再繞左邊的環，最後走到出口。",
@@ -3792,8 +4039,8 @@
       "solution_steps": 191
     },
     {
-      "id": "official-26",
-      "order": 26,
+      "id": "official-28",
+      "order": 28,
       "number": "6-1",
       "chapter_id": "chapter-6",
       "title": "原路折返",
@@ -3916,8 +4163,8 @@
       "solution_steps": 26
     },
     {
-      "id": "official-27",
-      "order": 27,
+      "id": "official-29",
+      "order": 29,
       "number": "6-2",
       "chapter_id": "chapter-6",
       "title": "等距",
@@ -4043,8 +4290,8 @@
       "solution_steps": 20
     },
     {
-      "id": "official-28",
-      "order": 28,
+      "id": "official-30",
+      "order": 30,
       "number": "6-3",
       "chapter_id": "chapter-6",
       "title": "金字塔",
@@ -4230,8 +4477,8 @@
       "solution_steps": 43
     },
     {
-      "id": "official-29",
-      "order": 29,
+      "id": "official-31",
+      "order": 31,
       "number": "6-4",
       "chapter_id": "chapter-6",
       "title": "兩倍遠",
@@ -4368,8 +4615,8 @@
       "solution_steps": 19
     },
     {
-      "id": "official-30",
-      "order": 30,
+      "id": "official-32",
+      "order": 32,
       "number": "6-5",
       "chapter_id": "chapter-6",
       "title": "最終關",

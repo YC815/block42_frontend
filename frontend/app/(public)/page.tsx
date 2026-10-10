@@ -72,7 +72,7 @@ export default function HomePage() {
       <section className="border-y border-line bg-white">
         <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6">
           <h2 className="text-2xl font-bold text-ink">六個章節，一次學一個概念</h2>
-          <p className="mt-2 text-ink-soft">每一章四到六關，後面的關卡會用到前面學過的東西。</p>
+          <p className="mt-2 text-ink-soft">每一章五到七關，後面的關卡會用到前面學過的東西。</p>
           <ol className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {OFFICIAL_CHAPTERS.map((chapter, index) => {
               const levels = getChapterLevels(chapter.id);

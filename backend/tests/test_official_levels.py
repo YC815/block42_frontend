@@ -18,10 +18,10 @@ def load_levels():
     return json.loads(CANONICAL.read_text(encoding="utf-8"))["levels"]
 
 
-def test_thirty_levels_with_unique_ids():
+def test_level_ids_unique():
     levels = load_levels()
-    assert len(levels) == 30
-    assert len({level["id"] for level in levels}) == 30
+    assert len(levels) >= 30
+    assert len({level["id"] for level in levels}) == len(levels)
 
 
 @pytest.mark.parametrize("level", load_levels() if CANONICAL.exists() else [], ids=lambda lv: lv["number"])
