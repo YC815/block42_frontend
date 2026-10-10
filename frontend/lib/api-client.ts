@@ -16,9 +16,57 @@ interface ApiOptions {
   tokenOverride?: string;
 }
 
+/** 伺服器有回應但狀態碼不是 2xx */
+export class ApiError extends Error {
+  constructor(message: string, readonly status: number) {
+    super(message);
+    this.name = "ApiError";
+  }
+}
+
+interface ValidationIssue {
+  type?: string;
+  loc?: Array<string | number>;
+  msg?: string;
+  ctx?: Record<string, unknown>;
+}
+
 interface ApiErrorResponse {
-  detail?: string;
+  detail?: string | ValidationIssue[];
   message?: string;
+}
+
+const FIELD_NAMES: Record<string, string> = {
+  username: "帳號",
+  password: "密碼",
+  title: "關卡名稱",
+  reason: "理由",
+};
+
+/** 把 FastAPI 的 422 驗證錯誤轉成一句中文 */
+function describeValidationIssue(issue: ValidationIssue): string {
+  const field = String(issue.loc?.[issue.loc.length - 1] ?? "");
+  const name = FIELD_NAMES[field] ?? "輸入內容";
+  switch (issue.type) {
+    case "string_too_short":
+      return `${name}至少要 ${issue.ctx?.min_length} 個字`;
+    case "string_too_long":
+      return `${name}最多 ${issue.ctx?.max_length} 個字`;
+    case "string_pattern_mismatch":
+      return field === "username" ? "帳號只能使用中英文、數字、底線或連字號" : `${name}格式不正確`;
+    case "missing":
+      return `請填寫${name}`;
+    default:
+      return issue.msg?.replace(/^Value error, /, "") ?? `${name}格式不正確`;
+  }
+}
+
+function errorMessageFrom(data: ApiErrorResponse | null, fallback: string) {
+  if (!data) return fallback;
+  if (Array.isArray(data.detail)) {
+    return data.detail.length > 0 ? describeValidationIssue(data.detail[0]) : fallback;
+  }
+  return data.detail || data.message || fallback;
 }
 
 /**
@@ -58,18 +106,19 @@ export async function apiClient<T>(options: ApiOptions): Promise<T> {
     // 5. 處理錯誤回應
     if (!response.ok) {
       // 嘗試解析錯誤訊息
-      let errorMessage = `HTTP ${response.status}`;
+      let errorMessage =
+        response.status === 429 ? "嘗試次數太多，請稍後再試" : `伺服器回應錯誤（${response.status}）`;
       let errorData: ApiErrorResponse | null = null;
       try {
         errorData = await response.json() as ApiErrorResponse;
-        errorMessage = errorData.detail || errorData.message || errorMessage;
+        errorMessage = errorMessageFrom(errorData, errorMessage);
       } catch {
         // JSON 解析失敗，使用預設錯誤訊息
       }
       if (process.env.NODE_ENV === "development") {
         console.warn("[api]", method, url, "->", response.status, errorData);
       }
-      throw new Error(errorMessage);
+      throw new ApiError(errorMessage, response.status);
     }
 
     // 6. 解析並返回回應資料（支援 204 No Content）
@@ -91,6 +140,9 @@ export async function apiClient<T>(options: ApiOptions): Promise<T> {
     return rawText as T;
   } catch (error) {
     // 7. 統一錯誤處理
+    if (error instanceof TypeError) {
+      throw new Error("連不上伺服器，請檢查網路後再試一次");
+    }
     if (error instanceof Error) {
       throw error;
     }

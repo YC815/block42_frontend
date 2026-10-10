@@ -27,8 +27,8 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
     return (
       <div className="flex h-screen items-center justify-center">
         <div className="text-center">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-300 border-t-blue-600 mx-auto"></div>
-          <p className="mt-4 text-sm text-gray-600">載入中...</p>
+          <div className="mx-auto h-7 w-7 animate-spin rounded-full border-[3px] border-line border-t-ink" />
+          <p className="mt-4 text-sm text-ink-soft">載入中…</p>
         </div>
       </div>
     );

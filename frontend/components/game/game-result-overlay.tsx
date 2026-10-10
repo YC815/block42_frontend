@@ -5,10 +5,11 @@
  */
 
 import type { ReactNode } from "react";
+import { Check, X } from "lucide-react";
 
 interface GameResultOverlayProps {
   title: string;
-  description?: string;
+  description?: ReactNode;
   tone?: "success" | "failure";
   primaryAction?: ReactNode;
   secondaryAction?: ReactNode;
@@ -21,23 +22,24 @@ export function GameResultOverlay({
   primaryAction,
   secondaryAction,
 }: GameResultOverlayProps) {
-  const accent =
-    tone === "success"
-      ? "bg-emerald-100 text-emerald-600"
-      : "bg-rose-100 text-rose-600";
-
   return (
-    <div className="absolute inset-0 z-30 flex items-center justify-center bg-slate-950/30 backdrop-blur-sm">
-      <div className="w-[min(420px,92%)] rounded-[28px] border border-white/70 bg-white/95 p-6 text-center shadow-[0_24px_60px_-40px_rgba(15,23,42,0.6)]">
-        <div className={`mx-auto flex h-14 w-14 items-center justify-center rounded-full text-2xl ${accent}`}>
-          {tone === "success" ? "✓" : "!"}
+    <div className="absolute inset-0 z-30 flex items-center justify-center rounded-2xl bg-paper/70 backdrop-blur-[2px]">
+      <div
+        role="dialog"
+        aria-live="polite"
+        className="animate-rise-in w-[min(360px,92%)] rounded-2xl border border-line bg-white p-6 text-center shadow-xl shadow-ink/10"
+      >
+        <div
+          className={`mx-auto flex h-12 w-12 items-center justify-center rounded-full ${
+            tone === "success" ? "bg-success/10 text-success" : "bg-destructive/10 text-destructive"
+          }`}
+        >
+          {tone === "success" ? <Check className="h-6 w-6" strokeWidth={3} /> : <X className="h-6 w-6" strokeWidth={3} />}
         </div>
-        <h2 className="mt-4 text-2xl font-semibold text-slate-900">{title}</h2>
-        {description && (
-          <p className="mt-2 text-sm text-slate-500">{description}</p>
-        )}
+        <h2 className="mt-3 text-xl font-bold text-ink">{title}</h2>
+        {description && <div className="mt-1.5 text-sm text-ink-soft">{description}</div>}
         {(primaryAction || secondaryAction) && (
-          <div className="mt-6 flex flex-wrap justify-center gap-3">
+          <div className="mt-5 flex flex-wrap justify-center gap-2">
             {primaryAction}
             {secondaryAction}
           </div>

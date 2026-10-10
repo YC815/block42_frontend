@@ -1,12 +1,18 @@
 /**
  * Block42 Frontend - Command Toolbox
- * Provides command buttons and condition modifiers.
+ * 指令面板：點一下放進目前選取的格子，或直接拖曳到格子上。
  */
 
 import { useDraggable } from "@dnd-kit/core";
 import type { ReactNode } from "react";
+import { Ban } from "lucide-react";
 import type { LevelConfig, TileColor, CommandType } from "@/types/api";
-import { ArrowBigUp, CornerUpLeft, CornerUpRight, PaintBucket } from "lucide-react";
+import {
+  COMMAND_LABELS,
+  CommandGlyph,
+  TILE_COLORS,
+  describeCommand,
+} from "@/components/game/game-icons";
 
 interface CommandToolboxProps {
   config: LevelConfig;
@@ -17,38 +23,14 @@ interface CommandToolboxProps {
   onSelectCondition: (color: TileColor | null) => void;
 }
 
-const COMMAND_ICONS: Record<CommandType, { label?: string; icon?: "move" | "turn_left" | "turn_right"; bg?: string }> = {
-  move: { icon: "move" },
-  turn_left: { icon: "turn_left" },
-  turn_right: { icon: "turn_right" },
-  paint_red: { label: "", bg: "bg-rose-500" },
-  paint_green: { label: "", bg: "bg-emerald-500" },
-  paint_blue: { label: "", bg: "bg-sky-500" },
-  f0: { label: "f0" },
-  f1: { label: "f1" },
-  f2: { label: "f2" },
-};
-
-const COMMAND_TITLES: Record<CommandType, string> = {
-  move: "前進",
-  turn_left: "左轉",
-  turn_right: "右轉",
-  paint_red: "噴紅",
-  paint_green: "噴綠",
-  paint_blue: "噴藍",
-  f0: "呼叫 f0",
-  f1: "呼叫 f1",
-  f2: "呼叫 f2",
-};
-
 interface DraggableButtonProps {
   id: string;
   data: Record<string, unknown>;
   disabled?: boolean;
-  className: (isDragging: boolean) => string;
+  active?: boolean;
   onClick?: () => void;
   children: ReactNode;
-  ariaLabel?: string;
+  ariaLabel: string;
   tourId?: string;
 }
 
@@ -56,17 +38,13 @@ function DraggableButton({
   id,
   data,
   disabled,
-  className,
+  active,
   onClick,
   children,
   ariaLabel,
   tourId,
 }: DraggableButtonProps) {
-  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
-    id,
-    data,
-    disabled,
-  });
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id, data, disabled });
 
   return (
     <button
@@ -75,16 +53,32 @@ function DraggableButton({
       {...attributes}
       type="button"
       disabled={disabled}
-      className={className(isDragging)}
       aria-label={ariaLabel}
+      aria-pressed={active}
+      title={ariaLabel}
       data-tour-id={tourId}
       onClick={onClick}
+      className={`group flex min-w-0 flex-col items-center gap-1 rounded-xl border px-1 pb-1.5 pt-2 text-[11px] font-medium transition ${
+        disabled
+          ? "border-transparent text-ink-faint opacity-50"
+          : active
+            ? "border-ink bg-ink text-white"
+            : "border-line bg-white text-ink-soft hover:-translate-y-px hover:border-ink/40 hover:text-ink"
+      } ${isDragging ? "opacity-40" : ""}`}
     >
       {children}
     </button>
   );
 }
 
+function Group({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <div>
+      <div className="mb-1.5 text-xs font-semibold text-ink-soft">{title}</div>
+      <div className="grid grid-cols-3 gap-1.5">{children}</div>
+    </div>
+  );
+}
 
 export function CommandToolbox({
   config,
@@ -94,179 +88,82 @@ export function CommandToolbox({
   onSelectCommand,
   onSelectCondition,
 }: CommandToolboxProps) {
-  const actions: CommandType[] = ["turn_left", "move", "turn_right"];
-  const paints: CommandType[] = ["paint_red", "paint_green", "paint_blue"];
-  const functions: Array<"f0" | "f1" | "f2"> = ["f0", "f1", "f2"];
+  const actions: CommandType[] = ["move", "turn_left", "turn_right"];
+  const paints = (["paint_red", "paint_green", "paint_blue"] as const).filter(
+    (cmd) => config.tools[cmd]
+  );
+  const functions = (["f0", "f1", "f2"] as const).filter((key) => config[key] > 0);
+
+  const commandButton = (cmd: CommandType, tourId?: string) => (
+    <DraggableButton
+      key={cmd}
+      id={`toolbox-command-${cmd}`}
+      data={{ source: "toolbox", itemType: "command", value: cmd }}
+      disabled={disabled}
+      active={activeCommand === cmd}
+      ariaLabel={describeCommand(cmd)}
+      tourId={tourId ?? `command-${cmd}`}
+      onClick={() => onSelectCommand(cmd)}
+    >
+      <span className="flex h-7 items-center justify-center text-base">
+        <CommandGlyph type={cmd} className="h-5 w-5" />
+      </span>
+      {cmd.startsWith("f") ? `呼叫 ${COMMAND_LABELS[cmd]}` : COMMAND_LABELS[cmd]}
+    </DraggableButton>
+  );
 
   return (
     <div
-      className="flex h-full flex-col gap-3 rounded-2xl border border-slate-200/80 bg-white/85 p-3 shadow-[0_16px_40px_-32px_rgba(15,23,42,0.5)] backdrop-blur"
+      className="flex flex-col gap-4 rounded-2xl border border-line bg-white p-3"
       data-tour-id="command-toolbox"
     >
-      <div className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
-        Commands
-      </div>
-      <div className="flex items-start gap-3">
-        <div className="grid grid-cols-3 gap-2">
-          {actions.map((cmd) => {
-            const iconDef = COMMAND_ICONS[cmd];
-            return (
-              <DraggableButton
-                key={cmd}
-                disabled={disabled}
-                id={`toolbox-command-${cmd}`}
-                data={{
-                  source: "toolbox",
-                  itemType: "command",
-                  value: cmd,
-                }}
-                className={(isDragging) =>
-                  `flex h-11 w-11 items-center justify-center rounded-lg border text-lg shadow-sm transition ${
-                    disabled
-                      ? "border-slate-100 bg-slate-50 text-slate-300"
-                      : activeCommand === cmd
-                        ? "border-slate-900 bg-slate-900 text-white"
-                        : "border-slate-200/80 bg-white text-slate-700 hover:border-slate-300"
-                  } ${isDragging ? "opacity-50" : ""}`
-                }
-                ariaLabel={COMMAND_TITLES[cmd]}
-                tourId={`command-${cmd}`}
-                onClick={() => onSelectCommand(cmd)}
-              >
-                {iconDef.icon === "move" ? (
-                  <ArrowBigUp className="h-6 w-6" strokeWidth={2} />
-                ) : iconDef.icon === "turn_left" ? (
-                  <CornerUpLeft className="h-5 w-5" strokeWidth={2.5} />
-                ) : iconDef.icon === "turn_right" ? (
-                  <CornerUpRight className="h-5 w-5" strokeWidth={2.5} />
-                ) : (
-                  <span>{iconDef.label}</span>
-                )}
-              </DraggableButton>
-            );
-          })}
-          {functions.map((cmd) => {
-            if (cmd !== "f0" && config[cmd] === 0) return null;
-            return (
-              <DraggableButton
-                key={cmd}
-                disabled={disabled}
-                id={`toolbox-command-${cmd}`}
-                data={{
-                  source: "toolbox",
-                  itemType: "command",
-                  value: cmd,
-                }}
-                className={(isDragging) =>
-                  `flex h-11 w-11 items-center justify-center rounded-lg border text-xs font-semibold shadow-sm transition ${
-                    disabled
-                      ? "border-slate-100 bg-slate-50 text-slate-300"
-                      : activeCommand === cmd
-                        ? "border-slate-900 bg-slate-900 text-white"
-                        : "border-slate-200/80 bg-white text-slate-700 hover:border-slate-300"
-                  } ${isDragging ? "opacity-50" : ""}`
-                }
-                ariaLabel={COMMAND_TITLES[cmd]}
-                tourId={`command-${cmd}`}
-                onClick={() => onSelectCommand(cmd)}
-              >
-                {cmd}
-              </DraggableButton>
-            );
-          })}
-        </div>
-        <div className="flex flex-col gap-2">
-          {paints.map((cmd) => {
-            const enabled =
-              (cmd === "paint_red" && config.tools.paint_red) ||
-              (cmd === "paint_green" && config.tools.paint_green) ||
-              (cmd === "paint_blue" && config.tools.paint_blue);
-            const isActive = activeCommand === cmd;
-            const squareColor =
-              cmd === "paint_red"
-                ? "bg-[#E53E3E]"
-                : cmd === "paint_green"
-                  ? "bg-[#38A169]"
-                : "bg-[#3182CE]";
-            const isDisabled = disabled || !enabled;
-            return (
-              <DraggableButton
-                key={cmd}
-                id={`toolbox-command-${cmd}`}
-                data={{
-                  source: "toolbox",
-                  itemType: "command",
-                  value: cmd,
-                }}
-                disabled={isDisabled}
-                className={(isDragging) =>
-                  `flex h-11 w-11 items-center justify-center rounded-lg border shadow-sm transition ${
-                    isDisabled
-                      ? "border-slate-100 bg-slate-50 opacity-40"
-                      : isActive
-                        ? "border-slate-900 bg-slate-100"
-                        : "border-slate-200/80 bg-white hover:border-slate-300"
-                  } ${isDragging ? "opacity-50" : ""}`
-                }
-                ariaLabel={COMMAND_TITLES[cmd]}
-                tourId={`brush-${cmd.replace("paint_", "")}`}
-                onClick={() => onSelectCommand(cmd)}
-              >
-                <div className={`flex h-8 w-8 items-center justify-center rounded-full ${squareColor}`}>
-                  <PaintBucket className="h-4 w-4 text-white/95" strokeWidth={2.5} />
-                </div>
-              </DraggableButton>
-            );
-          })}
-        </div>
-      </div>
+      <Group title="動作">{actions.map((cmd) => commandButton(cmd))}</Group>
+      {paints.length > 0 && (
+        <Group title="塗色">
+          {paints.map((cmd) => commandButton(cmd, `brush-${cmd.replace("paint_", "")}`))}
+        </Group>
+      )}
+      <Group title="呼叫函式">{functions.map((cmd) => commandButton(cmd))}</Group>
 
-      <div className="mt-auto">
-        <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500">
-          Condition 條件過濾
+      <div>
+        <div className="mb-1.5 text-xs font-semibold text-ink-soft">
+          顏色條件 <span className="font-normal text-ink-faint">只在該色地板上才執行</span>
         </div>
-        <div className="mt-2 flex items-center gap-2">
-          {["R", "G", "B"].map((color) => {
-            const tileColor = color as TileColor;
-            const isActive = activeCondition === tileColor;
-            const bg =
-              color === "R"
-                ? "bg-[#E53E3E]"
-                : color === "G"
-                  ? "bg-[#38A169]"
-                  : "bg-[#3182CE]";
+        <div className="flex items-center gap-1.5">
+          {(["R", "G", "B"] as const).map((color) => {
+            const isActive = activeCondition === color;
             return (
               <DraggableButton
                 key={color}
                 id={`toolbox-condition-${color}`}
-                data={{
-                  source: "toolbox",
-                  itemType: "condition",
-                  value: tileColor,
-                }}
+                data={{ source: "toolbox", itemType: "condition", value: color }}
                 disabled={disabled}
-                className={(isDragging) =>
-                  `h-6 w-6 rounded-full ${bg} ${
-                    isActive ? "ring-2 ring-offset-2 ring-slate-900/70" : "ring-0"
-                  } ${disabled ? "opacity-40" : ""} ${isDragging ? "opacity-50" : ""}`
-                }
-                ariaLabel={`條件：${color === "R" ? "紅" : color === "G" ? "綠" : "藍"}`}
+                active={isActive}
+                ariaLabel={`條件：只在${TILE_COLORS[color].name}色地板上執行`}
                 tourId={`condition-${color === "R" ? "red" : color === "G" ? "green" : "blue"}`}
-                onClick={() => onSelectCondition(tileColor)}
+                onClick={() => onSelectCondition(color)}
               >
-                <span className="sr-only">{color}</span>
+                <span
+                  className="h-6 w-6 rounded-md"
+                  style={{
+                    background: TILE_COLORS[color].fill,
+                    boxShadow: `inset 0 -3px 0 ${TILE_COLORS[color].deep}`,
+                  }}
+                />
+                {TILE_COLORS[color].name}
               </DraggableButton>
             );
           })}
           <button
             type="button"
-            className={`rounded-full border px-2 py-1 text-[10px] font-semibold ${
-              disabled ? "border-slate-100 text-slate-300" : "border-slate-200 text-slate-500"
-            }`}
             disabled={disabled}
             onClick={() => onSelectCondition(null)}
+            aria-label="取消條件"
+            title="取消條件"
+            className="flex flex-col items-center gap-1 rounded-xl border border-line bg-white px-2 pb-1.5 pt-2 text-[11px] font-medium text-ink-soft transition hover:border-ink/40 hover:text-ink disabled:opacity-50"
           >
-            清除
+            <Ban className="h-6 w-6 p-0.5" strokeWidth={2} />
+            無
           </button>
         </div>
       </div>

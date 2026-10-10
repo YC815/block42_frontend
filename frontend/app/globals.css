@@ -5,9 +5,24 @@
 
 @theme inline {
   --color-background: var(--background);
+  --color-paper: var(--paper);
+  --color-paper-deep: var(--paper-deep);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-ink-faint: var(--ink-faint);
+  --color-line: var(--line);
+  --color-tile-r: var(--tile-r);
+  --color-tile-r-deep: var(--tile-r-deep);
+  --color-tile-g: var(--tile-g);
+  --color-tile-g-deep: var(--tile-g-deep);
+  --color-tile-b: var(--tile-b);
+  --color-tile-b-deep: var(--tile-b-deep);
+  --color-star: var(--star);
+  --color-star-deep: var(--star-deep);
+  --color-success: var(--success);
   --color-foreground: var(--foreground);
-  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", "Noto Sans",
-    "PingFang TC", "Microsoft JhengHei", sans-serif;
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", "PingFang TC",
+    "Noto Sans TC", "Microsoft JhengHei", sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
     "Liberation Mono", "Courier New", monospace;
   --color-sidebar-ring: var(--sidebar-ring);
@@ -49,72 +64,56 @@
 }
 
 :root {
-  --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
-}
+  /* Block42 色彩：紙張底色 + 墨色文字，遊戲色只出現在地板與指令上 */
+  --radius: 0.75rem;
+  --paper: #f6f4ef;
+  --paper-deep: #eceae3;
+  --ink: #1d2433;
+  --ink-soft: #545b6b;
+  --ink-faint: #8a8f9c;
+  --line: #e2ded5;
 
-.dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --tile-r: #e5484d;
+  --tile-r-deep: #b8333a;
+  --tile-g: #2f9e5e;
+  --tile-g-deep: #22744a;
+  --tile-b: #3a6fd8;
+  --tile-b-deep: #2a52a8;
+  --star: #f5b301;
+  --star-deep: #c98a00;
+
+  --background: var(--paper);
+  --foreground: var(--ink);
+  --card: #ffffff;
+  --card-foreground: var(--ink);
+  --popover: #ffffff;
+  --popover-foreground: var(--ink);
+  --primary: var(--ink);
+  --primary-foreground: #ffffff;
+  --secondary: var(--paper-deep);
+  --secondary-foreground: var(--ink);
+  --muted: var(--paper-deep);
+  --muted-foreground: var(--ink-soft);
+  --accent: var(--paper-deep);
+  --accent-foreground: var(--ink);
+  --destructive: #c8302f;
+  --success: #22744a;
+  --border: var(--line);
+  --input: var(--line);
+  --ring: #3a6fd8;
+  --chart-1: var(--tile-r);
+  --chart-2: var(--tile-g);
+  --chart-3: var(--tile-b);
+  --chart-4: var(--star);
+  --chart-5: var(--ink-soft);
+  --sidebar: #ffffff;
+  --sidebar-foreground: var(--ink);
+  --sidebar-primary: var(--ink);
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: var(--paper-deep);
+  --sidebar-accent-foreground: var(--ink);
+  --sidebar-border: var(--line);
+  --sidebar-ring: #3a6fd8;
 }
 
 @layer base {
@@ -123,81 +122,48 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-feature-settings: "palt" 1;
+  }
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
   }
 }
 
 @layer utilities {
-  @keyframes landing-float {
-    0%,
-    100% {
-      transform: translate3d(0, 0, 0);
-    }
-    50% {
-      transform: translate3d(0, -14px, 0);
-    }
+  /* 方格紙背景：用在地圖區，空格看得出是「沒有地板」 */
+  .bg-grid-paper {
+    background-color: #fbfaf7;
+    background-image: radial-gradient(circle, rgba(29, 36, 51, 0.13) 1px, transparent 1.2px);
+    background-size: 18px 18px;
   }
 
-  @keyframes landing-shimmer {
-    0% {
-      background-position: 0% 50%;
-    }
-    50% {
-      background-position: 100% 50%;
-    }
-    100% {
-      background-position: 0% 50%;
-    }
+  @keyframes robot-bump {
+    0%, 100% { translate: 0 0; }
+    25% { translate: -3px 0; }
+    75% { translate: 3px 0; }
   }
 
-  @keyframes landing-marquee {
-    0% {
-      transform: translateX(0);
-    }
-    100% {
-      transform: translateX(-50%);
-    }
+  @keyframes star-pop {
+    0% { scale: 1; }
+    40% { scale: 1.35; }
+    100% { scale: 0.6; }
   }
 
-  .landing-float {
-    animation: landing-float 8s ease-in-out infinite;
+  @keyframes rise-in {
+    from { opacity: 0; translate: 0 8px; }
+    to { opacity: 1; translate: 0 0; }
   }
 
-  .landing-float-slow {
-    animation: landing-float 12s ease-in-out infinite;
-  }
-
-  .landing-shimmer {
-    background-size: 220% 220%;
-    animation: landing-shimmer 14s ease infinite;
-  }
-
-  .landing-marquee {
-    animation: landing-marquee 22s linear infinite;
-    will-change: transform;
-  }
-
-  .landing-grid {
-    background-image: linear-gradient(
-        to right,
-        rgba(15, 23, 42, 0.08) 1px,
-        transparent 1px
-      ),
-      linear-gradient(
-        to bottom,
-        rgba(15, 23, 42, 0.08) 1px,
-        transparent 1px
-      );
-    background-size: 42px 42px;
-    mask-image: radial-gradient(circle at top, black 40%, transparent 75%);
-  }
+  .animate-robot-bump { animation: robot-bump 0.32s ease-in-out 2; }
+  .animate-star-pop { animation: star-pop 0.35s ease-out forwards; }
+  .animate-rise-in { animation: rise-in 0.25s ease-out both; }
 
   @media (prefers-reduced-motion: reduce) {
-    .landing-float,
-    .landing-float-slow,
-    .landing-shimmer,
-    .landing-marquee {
+    .animate-robot-bump,
+    .animate-star-pop,
+    .animate-rise-in {
       animation: none;
     }
   }
-
 }

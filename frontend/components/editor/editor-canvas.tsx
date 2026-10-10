@@ -12,6 +12,7 @@ import { coordToKey } from "@/lib/game-engine/types";
 import type { EditorTool } from "@/components/editor/editor-toolbar";
 import { computeContentBounds, MAX_GRID_SIZE } from "@/lib/map-utils";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { RobotIcon, StarIcon, TILE_COLORS } from "@/components/game/game-icons";
 
 interface EditorCanvasProps {
   mapData: MapData;
@@ -29,34 +30,6 @@ const MAX_ZOOM = 2.2;
 
 function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value));
-}
-
-function tileColorClass(color: TileColor) {
-  switch (color) {
-    case "R":
-      return "bg-gradient-to-br from-rose-500/95 via-rose-500/80 to-rose-300/70";
-    case "G":
-      return "bg-gradient-to-br from-emerald-500/95 via-emerald-500/80 to-emerald-300/70";
-    case "B":
-      return "bg-gradient-to-br from-sky-500/95 via-sky-500/80 to-sky-300/70";
-    default:
-      return "bg-slate-500";
-  }
-}
-
-function directionRotation(dir: number) {
-  switch (dir) {
-    case 0:
-      return "rotate-0";
-    case 1:
-      return "rotate-90";
-    case 2:
-      return "rotate-180";
-    case 3:
-      return "-rotate-90";
-    default:
-      return "rotate-0";
-  }
 }
 
 export function EditorCanvas({ mapData, tool, color, onChange }: EditorCanvasProps) {
@@ -93,7 +66,6 @@ export function EditorCanvas({ mapData, tool, color, onChange }: EditorCanvasPro
   const cellSize = clamp(BASE_CELL_SIZE * zoom, MIN_CELL_SIZE, MAX_CELL_SIZE);
   const gridGap = Math.max(2, Math.round(cellSize * GAP_RATIO));
   const step = cellSize + gridGap;
-  const tokenSize = Math.max(12, Math.round(cellSize * 0.58));
 
   useEffect(() => {
     const element = containerRef.current;
@@ -217,14 +189,10 @@ export function EditorCanvas({ mapData, tool, color, onChange }: EditorCanvasPro
   };
 
   return (
-    <div className="relative flex min-h-[420px] flex-col overflow-hidden rounded-[28px] border border-slate-900/10 bg-slate-950/90 p-4 shadow-[0_30px_80px_-60px_rgba(15,23,42,0.9)]">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(56,189,248,0.16),transparent_40%),linear-gradient(180deg,rgba(15,23,42,0.8),rgba(2,6,23,0.95))]" />
-
-      <div className="absolute left-5 top-4 z-20 flex flex-wrap items-center gap-3 rounded-full border border-white/15 bg-white/80 px-4 py-2 text-xs text-slate-700 shadow-lg backdrop-blur">
+    <div className="relative flex min-h-[420px] flex-col overflow-hidden rounded-2xl border border-line bg-white p-3">
+      <div className="z-20 mb-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-ink-soft">
         <div className="flex items-center gap-2">
-          <span className="tracking-[0.18em] text-[11px] uppercase text-slate-500">
-            Zoom
-          </span>
+          <span>縮放</span>
           <input
             type="range"
             min={MIN_ZOOM}
@@ -232,48 +200,49 @@ export function EditorCanvas({ mapData, tool, color, onChange }: EditorCanvasPro
             step={0.05}
             value={zoom}
             onChange={(event) => setZoom(Number(event.target.value))}
-            className="w-28 accent-slate-900"
+            className="w-28 accent-[var(--ink)]"
           />
-          <span className="w-12 text-right font-semibold">{Math.round(zoom * 100)}%</span>
+          <span className="w-10 text-right tabular-nums text-ink">{Math.round(zoom * 100)}%</span>
         </div>
         <div className="flex items-center gap-2">
           <button
             type="button"
-            className="rounded-full bg-slate-900 px-3 py-1 text-[11px] font-semibold text-white shadow-sm transition hover:bg-slate-800"
+            className="rounded-lg border border-line bg-white px-2.5 py-1 font-medium text-ink transition hover:border-ink/40"
             onClick={() => setZoom(1)}
           >
-            重設縮放
+            原始大小
           </button>
           <button
             type="button"
-            className="rounded-full border border-slate-200 bg-white px-3 py-1 text-[11px] font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50"
+            className="rounded-lg border border-line bg-white px-2.5 py-1 font-medium text-ink transition hover:border-ink/40"
             onClick={() => setCamera(contentCenter)}
           >
             對齊內容
           </button>
           <button
             type="button"
-            className="rounded-full border border-slate-200 bg-white px-3 py-1 text-[11px] font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50"
+            className="rounded-lg border border-line bg-white px-2.5 py-1 font-medium text-ink transition hover:border-ink/40"
             onClick={() => setCamera({ x: mapData.start.x, y: mapData.start.y })}
           >
             回到起點
           </button>
           <button
             type="button"
-            className={`rounded-full px-3 py-1 text-[11px] font-semibold shadow-sm transition ${
+            aria-pressed={handMode}
+            className={`rounded-lg border px-2.5 py-1 font-medium transition ${
               handMode
-                ? "bg-amber-500 text-white hover:bg-amber-400"
-                : "border border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+                ? "border-ink bg-ink text-white"
+                : "border-line bg-white text-ink hover:border-ink/40"
             }`}
             onClick={() => setHandMode((prev) => !prev)}
           >
-            拖曳視角
+            移動畫面
           </button>
         </div>
       </div>
 
       <div
-        className="relative z-10 flex flex-1 overflow-hidden rounded-[20px] border border-white/10 bg-slate-950/60"
+        className="relative z-10 flex flex-1 overflow-hidden rounded-xl bg-grid-paper"
         onWheel={(event) => {
           if (event.ctrlKey || event.metaKey) {
             event.preventDefault();
@@ -303,13 +272,6 @@ export function EditorCanvas({ mapData, tool, color, onChange }: EditorCanvasPro
         onContextMenu={(event) => event.preventDefault()}
       >
         <div ref={containerRef} className="relative h-full w-full">
-          <div
-            className="absolute inset-0"
-            style={{
-              backgroundImage:
-                "radial-gradient(circle at 25% 25%, rgba(255,255,255,0.08) 0, rgba(255,255,255,0) 35%)",
-            }}
-          />
           <div className="absolute inset-0">
             {(() => {
               const horizontalCells = Math.ceil((containerSize.width || 0) / step) + 6;
@@ -337,7 +299,7 @@ export function EditorCanvas({ mapData, tool, color, onChange }: EditorCanvasPro
               return (
                 <>
                   <div
-                    className="absolute rounded-[14px] border border-emerald-300/40 bg-emerald-200/5"
+                    className="absolute rounded-[14px] border border-dashed border-ink/25"
                     style={{
                       left: rectTopLeftX,
                       top: rectTopLeftY,
@@ -345,15 +307,10 @@ export function EditorCanvas({ mapData, tool, color, onChange }: EditorCanvasPro
                       height: rectHeight,
                     }}
                   />
-                  <div className="absolute left-1/2 top-1/2 h-full w-[1px] -translate-x-1/2 bg-white/5" />
-                  <div className="absolute left-0 top-1/2 h-[1px] w-full -translate-y-1/2 bg-white/5" />
                   {cells.map(({ x, y, key }) => {
                     const tileColor = tileMap.get(key);
                     const hasStar = stars.has(key);
                     const isStart = mapData.start.x === x && mapData.start.y === y;
-                    const cellColor = tileColor
-                      ? tileColorClass(tileColor)
-                      : "bg-slate-900/70";
 
                     const left =
                       containerSize.width / 2 + (x - camera.x) * step - cellSize / 2;
@@ -364,30 +321,30 @@ export function EditorCanvas({ mapData, tool, color, onChange }: EditorCanvasPro
                       <button
                         key={key}
                         type="button"
-                        className={`absolute flex items-center justify-center rounded-[10px] border border-white/10 shadow-[inset_0_0_0_1px_rgba(15,23,42,0.8)] transition hover:border-white/30 ${cellColor}`}
+                        aria-label={`(${x}, ${y})`}
+                        className={`absolute flex items-center justify-center rounded-[22%] transition ${
+                          tileColor ? "" : "bg-ink/[0.04] hover:bg-ink/[0.12]"
+                        }`}
                         style={{
                           width: cellSize,
                           height: cellSize,
                           transform: `translate(${left}px, ${top}px)`,
+                          ...(tileColor
+                            ? {
+                                background: TILE_COLORS[tileColor].fill,
+                                boxShadow: `inset 0 -${Math.max(2, Math.round(cellSize * 0.08))}px 0 ${TILE_COLORS[tileColor].deep}`,
+                              }
+                            : {}),
                         }}
                         onClick={() => handleCellClick(x, y)}
                       >
-                        {hasStar && (
-                          <span
-                            className="absolute inset-0 flex items-center justify-center"
-                            style={{ fontSize: tokenSize }}
-                          >
-                            ⭐
-                          </span>
-                        )}
+                        {hasStar && <StarIcon className="absolute h-[62%] w-[62%]" />}
                         {isStart && (
                           <span
-                            className={`absolute inset-0 flex items-center justify-center text-white ${directionRotation(
-                              mapData.start.dir
-                            )}`}
-                            style={{ fontSize: tokenSize }}
+                            className="absolute inset-0 flex items-center justify-center"
+                            style={{ rotate: `${mapData.start.dir * 90}deg` }}
                           >
-                            ▲
+                            <RobotIcon className="h-[78%] w-[78%]" />
                           </span>
                         )}
                       </button>
@@ -400,8 +357,8 @@ export function EditorCanvas({ mapData, tool, color, onChange }: EditorCanvasPro
         </div>
       </div>
 
-      <p className="relative mt-3 text-xs text-slate-200/80">
-        左鍵編輯，Alt/右鍵或拖曳模式可平移，Ctrl/⌘ + 滑鼠滾輪可縮放，起點再次點擊可旋轉方向。
+      <p className="relative mt-2 text-xs text-ink-faint">
+        點格子編輯。按住 Alt 或右鍵拖曳可以移動畫面，Ctrl／⌘＋滾輪可以縮放。起點再點一次會轉向。
       </p>
     </div>
   );

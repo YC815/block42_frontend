@@ -239,26 +239,26 @@ export function LevelJsonPanel({
   };
 
   return (
-    <div className="space-y-4 rounded-3xl border border-white/70 bg-white/85 p-4 shadow-[0_18px_45px_-40px_rgba(15,23,42,0.5)] backdrop-blur">
+    <div className="space-y-4 rounded-2xl border border-line bg-white p-4">
       <div>
-        <div className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+        <div className="text-sm font-semibold text-ink">
           JSON 工具
         </div>
-        <p className="mt-2 text-sm text-slate-600">
+        <p className="mt-2 text-sm text-ink-soft">
           匯出備份或匯入 JSON，快速複製關卡配置與地圖內容。
         </p>
       </div>
       <div className="flex flex-wrap items-center gap-2">
         <button
           type="button"
-          className="h-9 rounded-full border border-slate-200 bg-white px-4 text-xs font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50"
+          className="h-9 rounded-lg border border-line bg-white px-3 text-sm font-medium text-ink transition hover:border-ink/40"
           onClick={handleExport}
         >
           匯出 JSON
         </button>
         <button
           type="button"
-          className="h-9 rounded-full bg-slate-900 px-4 text-xs font-semibold text-white shadow-sm transition hover:bg-slate-800"
+          className="h-9 rounded-lg bg-ink px-3 text-sm font-semibold text-white transition hover:bg-ink/85"
           onClick={() => fileInputRef.current?.click()}
         >
           匯入 JSON
@@ -271,8 +271,8 @@ export function LevelJsonPanel({
           className="hidden"
         />
       </div>
-      <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-3 text-xs text-slate-600">
-        <div className="font-semibold text-slate-700">檔案內容</div>
+      <div className="rounded-2xl border border-line bg-paper p-3 text-xs text-ink-soft">
+        <div className="font-semibold text-ink">檔案內容</div>
         <p className="mt-1">包含 title / map / config，匯入會覆蓋目前編輯內容。</p>
       </div>
     </div>

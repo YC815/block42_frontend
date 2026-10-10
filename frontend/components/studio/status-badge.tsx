@@ -1,21 +1,21 @@
 /**
- * Block42 Frontend - Status badge for level status.
+ * Block42 Frontend - Level status badge
  */
 
-import { Badge } from "@/components/ui/badge";
 import type { LevelStatus } from "@/types/api";
 
+const STYLES: Record<LevelStatus, { label: string; className: string }> = {
+  draft: { label: "草稿", className: "bg-paper-deep text-ink-soft" },
+  pending: { label: "審核中", className: "bg-star/15 text-star-deep" },
+  published: { label: "已公開", className: "bg-success/10 text-success" },
+  rejected: { label: "需修改", className: "bg-destructive/10 text-destructive" },
+};
+
 export function StatusBadge({ status }: { status: LevelStatus }) {
-  switch (status) {
-    case "draft":
-      return <Badge className="bg-gray-400 text-white">草稿</Badge>;
-    case "pending":
-      return <Badge className="bg-yellow-500 text-white">審核中</Badge>;
-    case "published":
-      return <Badge className="bg-green-600 text-white">已發布</Badge>;
-    case "rejected":
-      return <Badge className="bg-red-600 text-white">需修改</Badge>;
-    default:
-      return <Badge variant="secondary">未知</Badge>;
-  }
+  const style = STYLES[status] ?? { label: "未知", className: "bg-paper-deep text-ink-soft" };
+  return (
+    <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${style.className}`}>
+      {style.label}
+    </span>
+  );
 }

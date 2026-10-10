@@ -1,12 +1,13 @@
 /**
  * Block42 Frontend - Programming Workspace
- * Shows command tracks for f0/f1/f2.
+ * F0／F1／F2 三條指令列。點選格子後再從指令面板選指令；再點一次已選取的格子會清除它。
  */
 
 import { useDroppable } from "@dnd-kit/core";
-import { ArrowBigUp, CornerUpLeft, CornerUpRight, PaintBucket } from "lucide-react";
-import type { LevelConfig, CommandType } from "@/types/api";
+import { Eraser } from "lucide-react";
+import type { LevelConfig } from "@/types/api";
 import type { CommandSlot, SelectedSlot, SlotSet, TrackKey } from "@/lib/hooks/use-game-state";
+import { CommandGlyph, TILE_COLORS, describeCommand } from "@/components/game/game-icons";
 
 interface ProgrammingWorkspaceProps {
   config: LevelConfig;
@@ -17,35 +18,13 @@ interface ProgrammingWorkspaceProps {
   disabled?: boolean;
 }
 
-function CommandIcon({ command }: { command: CommandType }) {
-  if (command === "move") {
-    return <ArrowBigUp className="h-4 w-4" strokeWidth={2} />;
-  }
-  if (command === "turn_left") {
-    return <CornerUpLeft className="h-3.5 w-3.5" strokeWidth={2.5} />;
-  }
-  if (command === "turn_right") {
-    return <CornerUpRight className="h-3.5 w-3.5" strokeWidth={2.5} />;
-  }
-  if (command === "paint_red" || command === "paint_green" || command === "paint_blue") {
-    const bg =
-      command === "paint_red"
-        ? "bg-rose-500"
-        : command === "paint_green"
-          ? "bg-emerald-500"
-          : "bg-sky-500";
-    return (
-      <span className={`flex h-6 w-6 items-center justify-center rounded ${bg}`}>
-        <PaintBucket className="h-3.5 w-3.5 text-white/95" strokeWidth={2.5} />
-      </span>
-    );
-  }
-  // Functions (f0, f1, f2)
-  return <span className="text-[10px] font-semibold">{command}</span>;
-}
+const TRACK_HINT: Record<TrackKey, string> = {
+  f0: "主程式，按執行時從這裡開始",
+  f1: "函式",
+  f2: "函式",
+};
 
 function TrackRow({
-  label,
   trackKey,
   capacity,
   slots,
@@ -54,7 +33,6 @@ function TrackRow({
   onClear,
   disabled,
 }: {
-  label: string;
   trackKey: TrackKey;
   capacity: number;
   slots: CommandSlot[];
@@ -63,12 +41,29 @@ function TrackRow({
   onClear: () => void;
   disabled?: boolean;
 }) {
+  const used = slots.filter((slot) => slot.type).length;
   return (
-    <div className="flex items-center gap-3 rounded-xl border border-slate-200/80 bg-white px-4 py-3">
-      <div className="w-10 text-xs font-semibold text-slate-500">
-        {label}
+    <div className="rounded-xl border border-line bg-paper/60 px-3 py-2.5">
+      <div className="mb-2 flex items-center gap-2">
+        <span className="rounded-md bg-ink px-1.5 py-0.5 font-mono text-xs font-bold text-white">
+          {trackKey.toUpperCase()}
+        </span>
+        <span className="truncate text-xs text-ink-soft">{TRACK_HINT[trackKey]}</span>
+        <span className="ml-auto shrink-0 text-xs tabular-nums text-ink-faint">
+          {used}/{capacity}
+        </span>
+        <button
+          type="button"
+          className="shrink-0 rounded-md p-1 text-ink-faint transition hover:bg-paper-deep hover:text-ink disabled:opacity-40"
+          disabled={disabled || used === 0}
+          onClick={onClear}
+          aria-label={`清空 ${trackKey.toUpperCase()}`}
+          title={`清空 ${trackKey.toUpperCase()}`}
+        >
+          <Eraser className="h-4 w-4" />
+        </button>
       </div>
-      <div className="flex flex-1 items-center gap-2 overflow-x-auto px-1 py-1">
+      <div className="flex flex-wrap gap-1.5">
         {Array.from({ length: capacity }).map((_, index) => (
           <DroppableSlot
             key={`${trackKey}-${index}`}
@@ -81,16 +76,6 @@ function TrackRow({
           />
         ))}
       </div>
-      <button
-        type="button"
-        className={`shrink-0 rounded-full border px-3 py-1.5 text-[10px] font-semibold ${
-          disabled ? "border-slate-100 text-slate-300" : "border-slate-200 text-slate-500"
-        }`}
-        disabled={disabled}
-        onClick={onClear}
-      >
-        清空
-      </button>
     </div>
   );
 }
@@ -103,44 +88,22 @@ export function ProgrammingWorkspace({
   onClearTrack,
   disabled = false,
 }: ProgrammingWorkspaceProps) {
-  const tracks: Array<{
-    key: "f0" | "f1" | "f2";
-    label: string;
-    capacity: number;
-    slots: CommandSlot[];
-  }> = [
-    { key: "f0", label: "f0", capacity: config.f0, slots: slots.f0 },
-    ...(config.f1 > 0
-      ? [{ key: "f1" as const, label: "f1", capacity: config.f1, slots: slots.f1 }]
-      : []),
-    ...(config.f2 > 0
-      ? [{ key: "f2" as const, label: "f2", capacity: config.f2, slots: slots.f2 }]
-      : []),
-  ];
+  const tracks = (["f0", "f1", "f2"] as const).filter((key) => config[key] > 0);
 
   return (
-    <div
-      className="flex h-full flex-col gap-3 rounded-2xl border border-slate-200/80 bg-white/85 p-4 shadow-[0_16px_40px_-32px_rgba(15,23,42,0.5)] backdrop-blur"
-      data-tour-id="workspace"
-    >
-      <div className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
-        Functions
-      </div>
-      <div className="flex flex-1 flex-col gap-3 overflow-hidden">
-        {tracks.map((track) => (
-          <TrackRow
-            key={track.key}
-            label={track.label}
-            trackKey={track.key}
-            capacity={track.capacity}
-            slots={track.slots}
-            selectedIndex={selectedSlot?.track === track.key ? selectedSlot.index : null}
-            onSelectSlot={(index) => onSelectSlot(track.key, index)}
-            onClear={() => onClearTrack(track.key)}
-            disabled={disabled}
-          />
-        ))}
-      </div>
+    <div className="flex flex-col gap-2" data-tour-id="workspace">
+      {tracks.map((key) => (
+        <TrackRow
+          key={key}
+          trackKey={key}
+          capacity={config[key]}
+          slots={slots[key]}
+          selectedIndex={selectedSlot?.track === key ? selectedSlot.index : null}
+          onSelectSlot={(index) => onSelectSlot(key, index)}
+          onClear={() => onClearTrack(key)}
+          disabled={disabled}
+        />
+      ))}
     </div>
   );
 }
@@ -162,49 +125,41 @@ function DroppableSlot({
 }) {
   const command = slot?.type ?? null;
   const condition = slot?.condition ?? null;
-  const conditionBg =
-    condition === "R"
-      ? "bg-rose-500/80 text-white"
-      : condition === "G"
-        ? "bg-emerald-500/80 text-white"
-        : condition === "B"
-          ? "bg-sky-500/80 text-white"
-          : "";
-
   const { setNodeRef, isOver, active } = useDroppable({
     id: `slot-${trackKey}-${index}`,
-    data: {
-      track: trackKey,
-      index,
-    },
+    data: { track: trackKey, index },
     disabled,
   });
 
-  const canDrop = !disabled && active !== null;
-  const showDropIndicator = canDrop && isOver;
+  const dragging = !disabled && active !== null;
+  const label = command
+    ? `${trackKey.toUpperCase()} 第 ${index + 1} 格：${describeCommand(command, condition)}`
+    : condition
+      ? `${trackKey.toUpperCase()} 第 ${index + 1} 格：${TILE_COLORS[condition].name}色條件，尚未放指令`
+      : `${trackKey.toUpperCase()} 第 ${index + 1} 格：空`;
 
   return (
-    <div
+    <button
+      type="button"
       ref={setNodeRef}
-      className={`relative flex h-11 w-11 items-center justify-center rounded-lg border text-xs transition ${
-        conditionBg
-          ? `${conditionBg} border-transparent`
-          : command
-            ? "border-slate-200/80 bg-white text-slate-700"
-            : "border-slate-100 bg-slate-50 text-slate-400"
-      } ${
-        selected ? "ring-2 ring-slate-900/70 ring-offset-1 ring-offset-white" : ""
-      } ${
-        showDropIndicator
-          ? "ring-2 ring-slate-900 ring-offset-1"
-          : canDrop
-            ? "ring-2 ring-dashed ring-slate-300"
-            : ""
-      } ${disabled ? "cursor-not-allowed opacity-60" : "cursor-pointer"}`}
+      disabled={disabled}
+      aria-label={label}
+      aria-pressed={selected}
+      title={label}
       data-tour-id={`workspace-${trackKey}-slot-${index}`}
-      onClick={disabled ? undefined : () => onSelectSlot(index)}
+      onClick={() => onSelectSlot(index)}
+      className={`relative flex h-11 w-11 items-center justify-center rounded-lg border text-ink transition ${
+        condition
+          ? "border-transparent text-white"
+          : command
+            ? "border-line bg-white"
+            : "border-dashed border-ink/20 bg-white/60"
+      } ${selected ? "ring-2 ring-ink ring-offset-2 ring-offset-paper" : ""} ${
+        isOver && dragging ? "scale-105 ring-2 ring-tile-b ring-offset-1" : ""
+      } ${disabled ? "cursor-not-allowed opacity-70" : ""}`}
+      style={condition ? { background: TILE_COLORS[condition].fill } : undefined}
     >
-      {command ? <CommandIcon command={command} /> : null}
-    </div>
+      {command ? <CommandGlyph type={command} className="h-5 w-5" /> : null}
+    </button>
   );
 }

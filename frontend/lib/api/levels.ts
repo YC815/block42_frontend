@@ -1,24 +1,19 @@
 /**
  * Block42 Frontend - 公開關卡 API
- * 處理官方關卡、社群關卡列表與單一關卡查詢
+ * 社群關卡列表、單一關卡查詢、玩家進度與存檔。
+ * 官方關卡不經過 API，見 lib/levels/official.ts。
  */
 
-import { get, put } from "@/lib/api-client";
+import { ApiError, get, post, put } from "@/lib/api-client";
 import type {
   Level,
   LevelListItem,
   LevelProgress,
-  LevelProgressUpdate,
   LevelProgram,
   LevelProgramUpdate,
 } from "@/types/api";
 
-/**
- * 取得官方關卡列表
- */
-export async function getOfficialLevels(): Promise<LevelListItem[]> {
-  return get<LevelListItem[]>("/api/v1/levels/official");
-}
+const levelPath = (levelId: string) => `/api/v1/levels/${encodeURIComponent(levelId)}`;
 
 /**
  * 取得社群關卡列表
@@ -28,10 +23,10 @@ export async function getCommunityLevels(): Promise<LevelListItem[]> {
 }
 
 /**
- * 根據 ID 取得關卡詳情（不含 solution）
+ * 根據 ID 取得社群關卡詳情（不含 solution）
  */
 export async function getLevelById(levelId: string): Promise<Level> {
-  return get<Level>(`/api/v1/levels/${levelId}`);
+  return get<Level>(levelPath(levelId));
 }
 
 /**
@@ -42,13 +37,13 @@ export async function getLevelProgress(): Promise<LevelProgress[]> {
 }
 
 /**
- * 更新關卡進度
+ * 提交過關程式，伺服器重跑確認後才記錄完成
  */
-export async function updateLevelProgress(
+export async function completeLevel(
   levelId: string,
-  payload: LevelProgressUpdate
+  program: LevelProgramUpdate
 ): Promise<LevelProgress> {
-  return put<LevelProgress>(`/api/v1/levels/${levelId}/progress`, payload, true);
+  return post<LevelProgress>(`${levelPath(levelId)}/complete`, program, true);
 }
 
 /**
@@ -56,9 +51,9 @@ export async function updateLevelProgress(
  */
 export async function getLevelProgram(levelId: string): Promise<LevelProgram | null> {
   try {
-    return await get<LevelProgram>(`/api/v1/levels/${levelId}/program`, true);
+    return await get<LevelProgram>(`${levelPath(levelId)}/program`, true);
   } catch (error) {
-    if (error instanceof Error && error.message.includes("程式尚未儲存")) {
+    if (error instanceof ApiError && error.status === 404) {
       return null;
     }
     throw error;
@@ -72,5 +67,5 @@ export async function updateLevelProgram(
   levelId: string,
   payload: LevelProgramUpdate
 ): Promise<LevelProgram> {
-  return put<LevelProgram>(`/api/v1/levels/${levelId}/program`, payload, true);
+  return put<LevelProgram>(`${levelPath(levelId)}/program`, payload, true);
 }

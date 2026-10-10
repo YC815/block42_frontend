@@ -2,8 +2,10 @@
  * Block42 Frontend - Editor toolbar
  */
 
-import { Button } from "@/components/ui/button";
+import { Eraser, PaintBucket } from "lucide-react";
+import type { ReactNode } from "react";
 import type { TileColor } from "@/types/api";
+import { RobotIcon, StarIcon, TILE_COLORS } from "@/components/game/game-icons";
 
 export type EditorTool = "paint" | "erase" | "start" | "star";
 
@@ -14,80 +16,61 @@ interface EditorToolbarProps {
   onColorChange: (color: TileColor) => void;
 }
 
-export function EditorToolbar({
-  tool,
-  color,
-  onToolChange,
-  onColorChange,
-}: EditorToolbarProps) {
-  const buttonClass = (active: boolean) =>
-    active
-      ? "bg-slate-900 text-white hover:bg-slate-800"
-      : "bg-slate-100 text-slate-700 hover:bg-slate-200";
+const TOOLS: Array<{ key: EditorTool; label: string; hint: string; icon: ReactNode }> = [
+  { key: "paint", label: "地板", hint: "點一下鋪上目前選的顏色", icon: <PaintBucket className="h-5 w-5" /> },
+  { key: "erase", label: "清除", hint: "移除地板或星星", icon: <Eraser className="h-5 w-5" /> },
+  { key: "start", label: "起點", hint: "再點一次可轉向", icon: <RobotIcon className="h-5 w-5 rotate-90" /> },
+  { key: "star", label: "星星", hint: "再點一次可移除", icon: <StarIcon className="h-5 w-5" /> },
+];
 
+export function EditorToolbar({ tool, color, onToolChange, onColorChange }: EditorToolbarProps) {
   return (
-    <div className="space-y-4 rounded-3xl border border-white/70 bg-white/85 p-4 shadow-[0_18px_45px_-40px_rgba(15,23,42,0.5)] backdrop-blur">
+    <div className="space-y-4 rounded-2xl border border-line bg-white p-4">
       <div>
-        <div className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
-          工具
-        </div>
-        <div className="mt-3 grid grid-cols-2 gap-2">
-          <Button
-            variant={tool === "paint" ? "default" : "secondary"}
-            className={buttonClass(tool === "paint")}
-            onClick={() => onToolChange("paint")}
-          >
-            地板
-          </Button>
-          <Button
-            variant={tool === "erase" ? "default" : "secondary"}
-            className={buttonClass(tool === "erase")}
-            onClick={() => onToolChange("erase")}
-          >
-            橡皮擦
-          </Button>
-          <Button
-            variant={tool === "start" ? "default" : "secondary"}
-            className={buttonClass(tool === "start")}
-            onClick={() => onToolChange("start")}
-          >
-            起點
-          </Button>
-          <Button
-            variant={tool === "star" ? "default" : "secondary"}
-            className={buttonClass(tool === "star")}
-            onClick={() => onToolChange("star")}
-          >
-            星星
-          </Button>
+        <div className="text-sm font-semibold text-ink">工具</div>
+        <div className="mt-2 grid grid-cols-4 gap-1.5">
+          {TOOLS.map((item) => (
+            <button
+              key={item.key}
+              type="button"
+              title={item.hint}
+              aria-pressed={tool === item.key}
+              onClick={() => onToolChange(item.key)}
+              className={`flex flex-col items-center gap-1 rounded-xl border py-2 text-xs font-medium transition ${
+                tool === item.key
+                  ? "border-ink bg-ink text-white"
+                  : "border-line bg-white text-ink-soft hover:border-ink/40 hover:text-ink"
+              }`}
+            >
+              {item.icon}
+              {item.label}
+            </button>
+          ))}
         </div>
       </div>
 
       <div>
-        <div className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
-          顏色
-        </div>
-        <div className="mt-3 flex items-center gap-2">
-          {["R", "G", "B"].map((value) => {
-            const tileColor = value as TileColor;
-            const bg =
-              tileColor === "R"
-                ? "bg-rose-500"
-                : tileColor === "G"
-                  ? "bg-emerald-500"
-                  : "bg-sky-500";
-            const active = color === tileColor;
-            return (
-              <button
-                key={value}
-                type="button"
-                className={`h-8 w-8 rounded-full ${bg} ${
-                  active ? "ring-2 ring-offset-2 ring-slate-900/80" : "ring-0"
-                }`}
-                onClick={() => onColorChange(tileColor)}
-              />
-            );
-          })}
+        <div className="text-sm font-semibold text-ink">地板顏色</div>
+        <div className="mt-2 flex items-center gap-2">
+          {(["R", "G", "B"] as const).map((value) => (
+            <button
+              key={value}
+              type="button"
+              aria-pressed={color === value}
+              aria-label={`${TILE_COLORS[value].name}色地板`}
+              onClick={() => {
+                onColorChange(value);
+                onToolChange("paint");
+              }}
+              className={`h-9 w-9 rounded-lg transition ${
+                color === value ? "ring-2 ring-ink ring-offset-2" : ""
+              }`}
+              style={{
+                background: TILE_COLORS[value].fill,
+                boxShadow: `inset 0 -3px 0 ${TILE_COLORS[value].deep}`,
+              }}
+            />
+          ))}
         </div>
       </div>
     </div>

@@ -71,8 +71,6 @@ export interface Level {
   author_id: number;
   author_name?: string | null;
   status: LevelStatus;
-  is_official: boolean;
-  official_order: number;
   map: MapData;
   config: LevelConfig;
   created_at: string;
@@ -95,7 +93,6 @@ export interface LevelListItem {
   author_id: number;
   author_name?: string | null;
   status: LevelStatus;
-  is_official: boolean;
   created_at: string;
 }
 
@@ -196,16 +193,6 @@ export interface LevelUpdate {
  */
 export interface LevelPublish {
   solution: Solution;
-  as_official?: boolean; // 管理員專用
-  official_order?: number; // 管理員專用
-}
-
-/**
- * 審核通過請求
- */
-export interface LevelApprove {
-  as_official?: boolean;
-  official_order?: number;
 }
 
 /**
@@ -223,12 +210,10 @@ export interface AdminLevelUpdate {
   map?: MapData;
   config?: LevelConfig;
   status?: LevelStatus;
-  is_official?: boolean;
-  official_order?: number;
 }
 
 /**
- * 管理員列表項目（含官方排序與更新時間）
+ * 管理員列表項目（含更新時間）
  */
 export interface AdminLevelListItem {
   id: string;
@@ -236,8 +221,6 @@ export interface AdminLevelListItem {
   author_id: number;
   author_name?: string | null;
   status: LevelStatus;
-  is_official: boolean;
-  official_order: number;
   created_at: string;
   updated_at: string;
 }
@@ -251,12 +234,6 @@ export interface LevelProgress {
   stars_collected?: number | null;
   created_at: string;
   updated_at: string;
-}
-
-export interface LevelProgressUpdate {
-  is_completed?: boolean;
-  best_steps?: number | null;
-  stars_collected?: number | null;
 }
 
 // ==================== Program 相關類型 ====================

@@ -7,7 +7,7 @@ import { ReviewCard } from "@/components/admin/review-card";
 
 interface ReviewQueueProps {
   levels: LevelListItem[];
-  onApprove: (payload: { levelId: string; asOfficial: boolean; officialOrder?: number }) => void;
+  onApprove: (levelId: string) => void;
   onReject: (payload: { levelId: string; reason: string }) => void;
 }
 

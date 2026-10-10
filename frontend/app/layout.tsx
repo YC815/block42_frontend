@@ -5,8 +5,8 @@ import { QueryProvider } from "@/lib/query-provider";
 import { Toaster } from "@/components/ui/sonner";
 
 export const metadata: Metadata = {
-  title: "Block42 - 程式學習遊戲平台",
-  description: "透過遊戲學習程式設計 - Block42 關卡管理系統",
+  title: "Block42 - 程式解謎遊戲",
+  description: "把指令排進格子，帶機器人拿到所有星星。從順序、函式、遞迴到條件判斷的程式解謎遊戲。",
 };
 
 export default function RootLayout({

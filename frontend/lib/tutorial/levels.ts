@@ -89,9 +89,9 @@ const LEVEL_FINAL_MAP: MapData = {
 export const TUTORIAL_LEVELS: TutorialLevelDefinition[] = [
   {
     id: "tutorial-move",
-    title: "練習編碼",
-    summary: "兩格直線，只要鎖定格子、放入向前並啟動即可。",
-    goal: "點擊 f0 第一格加入向前指令，按播放收集星星。",
+    title: "放進第一個指令",
+    summary: "機器人前面就是星星。",
+    goal: "在 F0 放一個「前進」，按執行。",
     map: LEVEL_MOVE_MAP,
     config: {
       f0: 3,
@@ -107,36 +107,36 @@ export const TUTORIAL_LEVELS: TutorialLevelDefinition[] = [
     tour: [
       {
         id: "slot",
-        title: "點擊此格，先鎖定編輯格",
-        description: "點下 f0 的第一格，讓藍色框線出現，之後的指令都會填進來。",
+        title: "先選一個格子",
+        description: "這是 F0 的第一格。被選取的格子會有深色外框，等一下點的指令會放進這裡。",
         selector: '[data-tour-id="workspace-f0-slot-0"]',
         placement: "bottom",
       },
       {
         id: "move",
-        title: "放入向前",
-        description: "在左側指令區點擊向前（↑），格子會帶上箭頭。",
+        title: "點「前進」",
+        description: "指令會放進剛剛選的格子，然後自動跳到下一格。也可以直接把指令拖進格子。",
         selector: '[data-tour-id="command-move"]',
         placement: "right",
       },
       {
         id: "run",
-        title: "啟動看看",
-        description: "路徑只有一顆星星，按播放就能看到火箭前進。",
+        title: "按執行",
+        description: "機器人會從 F0 第一格開始，一格一格照著做。",
         selector: '[data-tour-id="control-run"]',
         placement: "top",
       },
     ],
     hints: [
-      "鎖定格子後才可以放指令，框線會變成深色。",
-      "啟動後失敗也能按重置再排程式。",
+      "再點一次已選取的格子，或按 Delete，可以清除它。",
+      "失敗了就改程式再按一次執行，沒有次數限制。",
     ],
   },
   {
     id: "tutorial-turns",
-    title: "熟悉編碼",
-    summary: "三格折線地圖，練習左轉與右轉的組合。",
-    goal: "排出前進、轉彎再前進的流程，讓火箭轉上去收星星。",
+    title: "轉彎",
+    summary: "星星在轉角後面。",
+    goal: "排出「前進、轉彎、前進」，讓機器人轉過去拿星星。",
     map: LEVEL_TURN_MAP,
     config: {
       f0: 5,
@@ -152,22 +152,22 @@ export const TUTORIAL_LEVELS: TutorialLevelDefinition[] = [
     tour: [
       {
         id: "turns",
-        title: "現在開放了向左向右轉",
-        description: "把轉彎指令與前進搭配起來，火箭就能轉上去拿星星。",
-        selector: '[data-tour-id="command-turn-left"]',
+        title: "左轉和右轉",
+        description: "轉彎只改變機器人面向的方向，不會移動。左右是以機器人自己的方向來看。",
+        selector: '[data-tour-id="command-turn_left"]',
         placement: "right",
       },
       {
         id: "run",
         title: "自己排排看",
-        description: "失敗沒關係，按重置後再調整順序。",
+        description: "機器人現在面向右邊。想一想：走一格之後，要往哪邊轉？",
         selector: '[data-tour-id="control-run"]',
         placement: "top",
       },
     ],
     hints: [
-      "轉彎不會改變位置，只改變朝向。",
-      "前進會依照當下朝向走一步，走到空白就會撞牆。",
+      "機器人的尖端是它面向的方向。",
+      "走到沒有地板的地方就會失敗。",
     ],
   },
   {

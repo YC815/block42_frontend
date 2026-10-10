@@ -1,169 +1,165 @@
 "use client";
 
 /**
- * Block42 Frontend - 導航列組件
- * 根據使用者狀態顯示不同的導航選項
+ * Block42 Frontend - 導航列
+ * 桌機顯示橫向連結；手機收進選單按鈕。
  */
 
 import Link from "next/link";
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname } from "next/navigation";
+import { useState } from "react";
+import { LogOut, Menu, X } from "lucide-react";
+import { toast } from "sonner";
 import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { Separator } from "@/components/ui/separator";
-import { toast } from "sonner";
-import { useNavbar } from "@/components/layout/navbar-context";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+
+function BrandMark() {
+  return (
+    <svg viewBox="0 0 32 32" className="h-8 w-8" aria-hidden="true">
+      <rect x="1" y="1" width="14" height="14" rx="4" fill="var(--tile-r)" />
+      <rect x="17" y="1" width="14" height="14" rx="4" fill="var(--tile-g)" />
+      <rect x="1" y="17" width="14" height="14" rx="4" fill="var(--tile-b)" />
+      <rect x="17" y="17" width="14" height="14" rx="4" fill="var(--ink)" />
+      <path d="M24 20.5l3.5 7h-7z" fill="#fff" />
+    </svg>
+  );
+}
 
 export function Navbar() {
   const { user, isAuthenticated, logout } = useAuth();
-  const { levelInfo } = useNavbar();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const tabParam = searchParams?.get("tab");
-  const isLevelsPage = pathname === "/levels";
-  const isTutorialPage = pathname === "/tutorial";
-  const isOfficialActive = isLevelsPage && (tabParam === "official" || !tabParam);
-  const isCommunityActive = isLevelsPage && tabParam === "community";
+  const pathname = usePathname() ?? "/";
+  const [open, setOpen] = useState(false);
 
-  const navLinkClass = (active: boolean) =>
-    [
-      "text-sm font-medium transition-colors",
-      active ? "text-blue-600 underline underline-offset-8" : "hover:text-blue-600",
-    ].join(" ");
+  const links = [
+    { href: "/tutorial", label: "教學" },
+    { href: "/levels", label: "關卡" },
+    { href: "/studio", label: "創作工作室" },
+    ...(user?.is_superuser ? [{ href: "/admin/dashboard", label: "管理後台" }] : []),
+  ];
+  const isActive = (href: string) =>
+    pathname === href ||
+    pathname.startsWith(`${href}/`) ||
+    (href === "/levels" && pathname.startsWith("/play"));
 
   const handleLogout = () => {
     logout();
+    setOpen(false);
     toast.success("已登出");
   };
 
+  const loginHref = `/login?returnUrl=${encodeURIComponent(pathname)}`;
+
   return (
-    <nav className="border-b bg-white">
-      <div className="container mx-auto px-4">
-        <div className="flex h-16 items-center justify-between gap-4">
-          {/* Logo */}
-          <Link href="/" className="flex items-center space-x-2">
-            <div className="h-8 w-8 rounded bg-blue-600 flex items-center justify-center">
-              <span className="text-white font-bold">B42</span>
-            </div>
-            <span className="text-xl font-bold">Block42</span>
-          </Link>
+    <header className="sticky top-0 z-40 border-b border-line bg-paper/90 backdrop-blur">
+      <nav className="mx-auto flex h-14 max-w-[1320px] items-center gap-6 px-4 sm:px-6" aria-label="主選單">
+        <Link href="/" className="flex shrink-0 items-center gap-2" onClick={() => setOpen(false)}>
+          <BrandMark />
+          <span className="text-lg font-bold tracking-tight text-ink">Block42</span>
+        </Link>
 
-          {levelInfo && (
-            <div className="flex min-w-0 flex-1 items-center justify-center">
-              <div className="max-w-[320px] rounded-full border border-slate-200/70 bg-slate-50 px-4 py-2 text-center">
-                <div className="text-[10px] font-semibold uppercase tracking-[0.3em] text-slate-500">
-                  {levelInfo.label}
+        <div className="hidden items-center gap-1 md:flex">
+          {links.map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              aria-current={isActive(link.href) ? "page" : undefined}
+              className={`rounded-lg px-3 py-1.5 text-sm font-medium transition ${
+                isActive(link.href) ? "bg-paper-deep text-ink" : "text-ink-soft hover:text-ink"
+              }`}
+            >
+              {link.label}
+            </Link>
+          ))}
+        </div>
+
+        <div className="ml-auto hidden items-center gap-2 md:flex">
+          {isAuthenticated ? (
+            <Popover>
+              <PopoverTrigger asChild>
+                <button
+                  type="button"
+                  className="flex items-center gap-2 rounded-lg px-2 py-1 text-sm font-medium text-ink transition hover:bg-paper-deep"
+                >
+                  <span className="flex h-7 w-7 items-center justify-center rounded-full bg-ink text-xs font-bold text-white">
+                    {user?.username.charAt(0).toUpperCase()}
+                  </span>
+                  <span className="max-w-[10rem] truncate">{user?.username}</span>
+                </button>
+              </PopoverTrigger>
+              <PopoverContent className="w-48 p-2" align="end">
+                <div className="px-2 py-1.5 text-xs text-ink-soft">
+                  {user?.is_superuser ? "管理員" : "玩家"}
                 </div>
-                <div className="truncate text-sm font-semibold text-slate-900">
-                  {levelInfo.title}
-                </div>
-              </div>
-            </div>
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm text-ink transition hover:bg-paper-deep"
+                >
+                  <LogOut className="h-4 w-4" />
+                  登出
+                </button>
+              </PopoverContent>
+            </Popover>
+          ) : (
+            <>
+              <Button asChild variant="ghost" size="sm">
+                <Link href={loginHref}>登入</Link>
+              </Button>
+              <Button asChild size="sm">
+                <Link href="/register">註冊</Link>
+              </Button>
+            </>
           )}
+        </div>
 
-          {/* Navigation Links */}
-          <div className="flex items-center space-x-6">
+        <button
+          type="button"
+          className="ml-auto rounded-lg p-2 text-ink md:hidden"
+          aria-label={open ? "關閉選單" : "開啟選單"}
+          aria-expanded={open}
+          onClick={() => setOpen((value) => !value)}
+        >
+          {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+        </button>
+      </nav>
+
+      {open && (
+        <div className="border-t border-line bg-paper px-4 pb-4 pt-2 md:hidden">
+          {links.map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              onClick={() => setOpen(false)}
+              aria-current={isActive(link.href) ? "page" : undefined}
+              className={`block rounded-lg px-3 py-2.5 text-base font-medium ${
+                isActive(link.href) ? "bg-paper-deep text-ink" : "text-ink-soft"
+              }`}
+            >
+              {link.label}
+            </Link>
+          ))}
+          <div className="mt-2 border-t border-line pt-3">
             {isAuthenticated ? (
-              <>
-                {/* 使用教學 */}
-                <Link
-                  href="/tutorial"
-                  className={navLinkClass(isTutorialPage)}
-                >
-                  使用教學
-                </Link>
-
-                {/* 官方關卡 */}
-                <Link
-                  href="/levels?tab=official"
-                  className={navLinkClass(isOfficialActive)}
-                >
-                  官方關卡
-                </Link>
-
-                {/* 社群關卡 */}
-                <Link
-                  href="/levels?tab=community"
-                  className={navLinkClass(isCommunityActive)}
-                >
-                  社群關卡
-                </Link>
-
-                {/* 創作工作室 */}
-                <Link
-                  href="/studio"
-                  className="text-sm font-medium hover:text-blue-600 transition-colors"
-                >
-                  創作工作室
-                </Link>
-
-                {/* 管理員入口（僅顯示給管理員） */}
-                {user?.is_superuser && (
-                  <Link
-                    href="/admin/dashboard"
-                    className="text-sm font-medium text-red-600 hover:text-red-700 transition-colors"
-                  >
-                    管理後台
-                  </Link>
-                )}
-
-                {/* 使用者選單 */}
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      className="flex items-center space-x-2"
-                    >
-                      <Avatar className="h-8 w-8">
-                        <AvatarFallback className="bg-blue-100 text-blue-600">
-                          {user?.username.charAt(0).toUpperCase()}
-                        </AvatarFallback>
-                      </Avatar>
-                      <span className="text-sm font-medium">
-                        {user?.username}
-                      </span>
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-48" align="end">
-                    <div className="space-y-2">
-                      <div className="px-2 py-1.5">
-                        <p className="text-sm font-medium">{user?.username}</p>
-                        <p className="text-xs text-gray-500">
-                          {user?.is_superuser ? "管理員" : "一般使用者"}
-                        </p>
-                      </div>
-                      <Separator />
-                      <Button
-                        variant="ghost"
-                        className="w-full justify-start text-sm"
-                        onClick={handleLogout}
-                      >
-                        登出
-                      </Button>
-                    </div>
-                  </PopoverContent>
-                </Popover>
-              </>
+              <div className="flex items-center justify-between px-3">
+                <span className="text-sm text-ink-soft">{user?.username}</span>
+                <Button variant="outline" size="sm" onClick={handleLogout}>
+                  登出
+                </Button>
+              </div>
             ) : (
-              <>
-                <Link href="/login">
-                  <Button variant="ghost" size="sm">
-                    登入
-                  </Button>
-                </Link>
-                <Link href="/register">
-                  <Button size="sm">註冊</Button>
-                </Link>
-              </>
+              <div className="flex gap-2 px-3">
+                <Button asChild variant="outline" className="flex-1">
+                  <Link href={loginHref} onClick={() => setOpen(false)}>登入</Link>
+                </Button>
+                <Button asChild className="flex-1">
+                  <Link href="/register" onClick={() => setOpen(false)}>註冊</Link>
+                </Button>
+              </div>
             )}
           </div>
         </div>
-      </div>
-    </nav>
+      )}
+    </header>
   );
 }

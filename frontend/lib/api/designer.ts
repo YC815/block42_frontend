@@ -33,7 +33,7 @@ export async function updateLevel(
   levelId: string,
   data: LevelUpdate
 ): Promise<LevelDetail> {
-  return put<LevelDetail>(`/api/v1/designer/levels/${levelId}`, data, true);
+  return put<LevelDetail>(`/api/v1/designer/levels/${encodeURIComponent(levelId)}`, data, true);
 }
 
 /**
@@ -44,7 +44,7 @@ export async function publishLevel(
   data: LevelPublish
 ): Promise<LevelDetail> {
   return post<LevelDetail>(
-    `/api/v1/designer/levels/${levelId}/publish`,
+    `/api/v1/designer/levels/${encodeURIComponent(levelId)}/publish`,
     data,
     true
   );
@@ -54,5 +54,5 @@ export async function publishLevel(
  * 刪除關卡
  */
 export async function deleteLevel(levelId: string): Promise<void> {
-  return del<void>(`/api/v1/designer/levels/${levelId}`, true);
+  return del<void>(`/api/v1/designer/levels/${encodeURIComponent(levelId)}`, true);
 }

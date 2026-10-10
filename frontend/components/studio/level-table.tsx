@@ -2,6 +2,7 @@
  * Block42 Frontend - Level table for studio dashboard.
  */
 
+import { formatDate } from "@/lib/utils";
 import Link from "next/link";
 import type { LevelListItem } from "@/types/api";
 import { Button } from "@/components/ui/button";
@@ -22,7 +23,7 @@ interface LevelTableProps {
 
 export function LevelTable({ levels, onDelete }: LevelTableProps) {
   return (
-    <div className="rounded-2xl border bg-white shadow-sm">
+    <div className="overflow-x-auto rounded-2xl border border-line bg-white">
       <Table>
         <TableHeader>
           <TableRow>
@@ -40,18 +41,22 @@ export function LevelTable({ levels, onDelete }: LevelTableProps) {
                 <StatusBadge status={level.status} />
               </TableCell>
               <TableCell>
-                {new Date(level.created_at).toLocaleDateString()}
+                {formatDate(level.created_at)}
               </TableCell>
               <TableCell className="text-right">
                 <div className="flex justify-end gap-2">
-                  <Link href={`/studio/editor/${level.id}`}>
-                    <Button size="sm" variant="secondary">
-                      編輯
+                  {level.status === "published" && (
+                    <Button asChild size="sm" variant="outline">
+                      <Link href={`/play/${level.id}`}>玩</Link>
                     </Button>
-                  </Link>
+                  )}
+                  <Button asChild size="sm" variant="outline">
+                    <Link href={`/studio/editor/${level.id}`}>編輯</Link>
+                  </Button>
                   <Button
                     size="sm"
-                    variant="destructive"
+                    variant="ghost"
+                    className="text-destructive hover:bg-destructive/5 hover:text-destructive"
                     onClick={() => onDelete(level.id)}
                   >
                     刪除

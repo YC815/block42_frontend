@@ -1,28 +1,5 @@
-/**
- * Block42 Frontend - 玩家區域 Layout
- * 關卡選擇、遊戲介面（需要認證）
- */
+import { SiteShell } from "@/components/layout/site-shell";
 
-import { Suspense } from "react";
-import { Navbar } from "@/components/layout/navbar";
-import { ProtectedRoute } from "@/components/layout/protected-route";
-import { NavbarProvider } from "@/components/layout/navbar-context";
-
-export default function PlayerLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  return (
-    <ProtectedRoute>
-      <NavbarProvider>
-        <div className="flex min-h-screen flex-col">
-          <Suspense fallback={<div className="h-16 border-b bg-white" />}>
-            <Navbar />
-          </Suspense>
-          <main className="flex-1">{children}</main>
-        </div>
-      </NavbarProvider>
-    </ProtectedRoute>
-  );
+export default function Layout({ children }: { children: React.ReactNode }) {
+  return <SiteShell>{children}</SiteShell>;
 }

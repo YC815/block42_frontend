@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useLayoutEffect, useMemo, useState } from "react";
+import { useCallback, useLayoutEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import type { TutorialTourStep, TourPlacement } from "@/lib/tutorial/levels";
 
@@ -55,10 +55,6 @@ export function TutorialTour({ steps, onClose, onComplete }: TutorialTourProps) 
   const total = steps.length;
   const step = useMemo(() => steps[stepIndex] ?? null, [steps, stepIndex]);
 
-  useEffect(() => {
-    setStepIndex(0);
-  }, [steps]);
-
   const goPrev = useCallback(() => {
     setStepIndex((prev) => Math.max(0, prev - 1));
   }, []);
@@ -96,11 +92,7 @@ export function TutorialTour({ steps, onClose, onComplete }: TutorialTourProps) 
   };
 
   useLayoutEffect(() => {
-    if (!step) {
-      setTargetRect(null);
-      setBubble(null);
-      return;
-    }
+    if (!step) return;
 
     if (step.selector) {
       const element = document.querySelector(step.selector) as HTMLElement | null;
@@ -152,22 +144,21 @@ export function TutorialTour({ steps, onClose, onComplete }: TutorialTourProps) 
 
   return (
     <div className="pointer-events-none fixed inset-0 z-40">
-      <div className="pointer-events-none absolute inset-0 bg-slate-950/25" />
       {highlightStyle && (
         <div
-          className="pointer-events-none absolute rounded-2xl ring-2 ring-amber-300/80 shadow-[0_0_0_9999px_rgba(15,23,42,0.55)]"
+          className="pointer-events-none absolute rounded-xl ring-[3px] ring-star shadow-[0_0_0_9999px_rgba(29,36,51,0.45)] transition-all duration-200"
           style={highlightStyle}
         />
       )}
       <div className="pointer-events-auto absolute" style={bubbleStyle}>
-        <div className="w-[min(320px,80vw)] rounded-2xl border border-slate-200/80 bg-white/95 p-4 shadow-[0_18px_38px_-24px_rgba(15,23,42,0.5)] backdrop-blur">
-          <div className="text-[11px] font-semibold uppercase tracking-[0.3em] text-slate-400">
-            教程引導 • {stepIndex + 1}/{total}
+        <div className="animate-rise-in w-[min(320px,80vw)] rounded-2xl border border-line bg-white p-4 shadow-xl shadow-ink/15">
+          <div className="text-xs text-ink-faint">
+            導覽 {stepIndex + 1}/{total}
           </div>
-          <div className="mt-1 text-lg font-semibold text-slate-900">{step.title}</div>
-          <p className="mt-2 text-sm text-slate-600">{step.description}</p>
+          <div className="mt-1 text-base font-bold text-ink">{step.title}</div>
+          <p className="mt-1.5 text-sm leading-relaxed text-ink-soft">{step.description}</p>
           <div className="mt-4 flex flex-wrap items-center gap-2">
-            <Button size="sm" variant="secondary" onClick={goPrev} disabled={stepIndex === 0}>
+            <Button size="sm" variant="outline" onClick={goPrev} disabled={stepIndex === 0}>
               上一步
             </Button>
             <Button size="sm" onClick={goNext}>

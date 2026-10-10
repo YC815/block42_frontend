@@ -5,7 +5,7 @@
  */
 
 const TOKEN_KEY = "auth_token";
-const DEFAULT_TTL_MS = 24 * 60 * 60 * 1000; // 24h
+const DEFAULT_TTL_MS = 12 * 60 * 60 * 1000; // 與後端 token 效期一致
 
 let inMemoryToken: string | null = null;
 let expiresAt: number | null = null;

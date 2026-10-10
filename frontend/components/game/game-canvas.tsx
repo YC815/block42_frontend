@@ -1,6 +1,6 @@
 /**
  * Block42 Frontend - Game Canvas
- * Renders the map grid, stars, and rocket.
+ * 畫出地圖、星星與機器人。機器人是獨立一層，移動與轉向用 CSS transition 補間。
  */
 
 "use client";
@@ -10,70 +10,35 @@ import type { GameState } from "@/lib/game-engine/types";
 import { coordToKey } from "@/lib/game-engine/types";
 import { computeRenderBounds } from "@/lib/map-utils";
 import { useEffect, useRef, useState } from "react";
+import { RobotIcon, StarIcon, TILE_COLORS } from "@/components/game/game-icons";
 
 interface GameCanvasProps {
   mapData: MapData;
   state: GameState | null;
   cellSize?: number;
   fitToContainer?: boolean;
+  /** 動畫每一步的毫秒數，用來同步機器人的補間時間 */
+  stepDurationMs?: number;
 }
 
-const MIN_CELL_SIZE = 18;
-const MAX_CELL_SIZE = 52;
-const GAP_RATIO = 0.12;
+const MIN_CELL_SIZE = 14;
+const MAX_CELL_SIZE = 56;
+const GAP_RATIO = 0.1;
 
 function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value));
 }
 
-function getGridPixelSize(gridSize: number, cellSize: number) {
-  const gap = Math.max(2, Math.round(cellSize * GAP_RATIO));
-  return gridSize * cellSize + (gridSize - 1) * gap;
+function gapFor(cellSize: number) {
+  return Math.max(2, Math.round(cellSize * GAP_RATIO));
 }
 
-function getFittedCellSize(
-  availableSize: number,
-  gridSize: number,
-  minCellSize: number,
-  maxCellSize: number
-) {
-  if (!Number.isFinite(availableSize) || availableSize <= 0) {
-    return maxCellSize;
+function fitCellSize(available: number, count: number, max: number) {
+  if (!Number.isFinite(available) || available <= 0) return max;
+  for (let size = max; size >= MIN_CELL_SIZE; size -= 1) {
+    if (count * size + (count - 1) * gapFor(size) <= available) return size;
   }
-  for (let size = maxCellSize; size >= minCellSize; size -= 1) {
-    if (getGridPixelSize(gridSize, size) <= availableSize) {
-      return size;
-    }
-  }
-  return minCellSize;
-}
-
-function tileColorClass(color: TileColor) {
-  switch (color) {
-    case "R":
-      return "bg-rose-600";
-    case "G":
-      return "bg-emerald-600";
-    case "B":
-      return "bg-sky-600";
-    default:
-      return "bg-slate-500";
-  }
-}
-
-function directionRotation(dir: number) {
-  switch (dir) {
-    case 0:
-      return "rotate-0";
-    case 1:
-      return "rotate-90";
-    case 2:
-      return "rotate-180";
-    case 3:
-      return "-rotate-90";
-    default:
-      return "rotate-0";
-  }
+  return MIN_CELL_SIZE;
 }
 
 export function GameCanvas({
@@ -81,173 +46,150 @@ export function GameCanvas({
   state,
   cellSize,
   fitToContainer = false,
+  stepDurationMs = 160,
 }: GameCanvasProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
-
-  // 計算基礎邊界
-  let bounds = computeRenderBounds(mapData);
-
-  // 如果有越界位置，擴大邊界以容納它
-  if (state?.outOfBoundsPosition) {
-    const { x, y } = state.outOfBoundsPosition;
-    bounds = {
-      minX: Math.min(bounds.minX, x),
-      minY: Math.min(bounds.minY, y),
-      maxX: Math.max(bounds.maxX, x),
-      maxY: Math.max(bounds.maxY, y),
-      width: Math.max(bounds.maxX, x) - Math.min(bounds.minX, x) + 1,
-      height: Math.max(bounds.maxY, y) - Math.min(bounds.minY, y) + 1,
-    };
-  }
-
-  const columns = bounds.width;
-  const rows = bounds.height;
 
   useEffect(() => {
     if (!fitToContainer) return;
     const element = containerRef.current;
     if (!element) return;
-
-    const updateSize = () => {
-      setContainerSize({
-        width: element.clientWidth,
-        height: element.clientHeight,
-      });
-    };
-
-    updateSize();
-
-    if (typeof ResizeObserver === "undefined") {
-      window.addEventListener("resize", updateSize);
-      return () => window.removeEventListener("resize", updateSize);
-    }
-
-    const observer = new ResizeObserver(updateSize);
+    const update = () =>
+      setContainerSize({ width: element.clientWidth, height: element.clientHeight });
+    update();
+    const observer = new ResizeObserver(update);
     observer.observe(element);
     return () => observer.disconnect();
   }, [fitToContainer]);
 
-  const maxCellSize = clamp(
-    Math.round(cellSize ?? MAX_CELL_SIZE),
-    MIN_CELL_SIZE,
-    MAX_CELL_SIZE
-  );
-  const fallbackCellSize = clamp(
-    Math.round(cellSize ?? 28),
-    MIN_CELL_SIZE,
-    MAX_CELL_SIZE
-  );
-  const availableWidth = containerSize.width;
-  const availableHeight = containerSize.height;
-  const resolvedCellSize = fitToContainer
-    ? Math.min(
-        getFittedCellSize(
-          availableWidth,
-          columns,
-          MIN_CELL_SIZE,
-          maxCellSize
-        ),
-        getFittedCellSize(
-          availableHeight,
-          rows,
-          MIN_CELL_SIZE,
-          maxCellSize
-        )
-      )
-    : fallbackCellSize;
-  const gridGap = Math.max(2, Math.round(resolvedCellSize * GAP_RATIO));
-  const tileMap = new Map<string, TileColor>();
-  mapData.tiles.forEach((tile) => {
-    tileMap.set(coordToKey(tile.x, tile.y), tile.color);
-  });
-  const starSet = new Set(mapData.stars.map((star) => coordToKey(star.x, star.y)));
-
-  const paintedTiles = state?.paintedTiles ?? new Map<string, TileColor>();
-  const collected = state?.collectedStars ?? new Set<string>();
-
-  const cells = [] as Array<{ x: number; y: number; key: string }>; // y-major
-  for (let y = bounds.minY; y <= bounds.maxY; y += 1) {
-    for (let x = bounds.minX; x <= bounds.maxX; x += 1) {
-      cells.push({ x, y, key: coordToKey(x, y) });
-    }
+  let bounds = computeRenderBounds(mapData);
+  // 機器人掉出地圖時，把邊界撐開讓玩家看到它掉在哪
+  const fallen = state?.outOfBoundsPosition;
+  if (fallen) {
+    const minX = Math.min(bounds.minX, fallen.x);
+    const minY = Math.min(bounds.minY, fallen.y);
+    const maxX = Math.max(bounds.maxX, fallen.x);
+    const maxY = Math.max(bounds.maxY, fallen.y);
+    bounds = { minX, minY, maxX, maxY, width: maxX - minX + 1, height: maxY - minY + 1 };
   }
 
-  const rocketPos = state?.position;
-  const rocketDir = state?.direction ?? mapData.start.dir;
-  const tokenSize = Math.max(12, Math.round(resolvedCellSize * 0.58));
+  const columns = bounds.width;
+  const rows = bounds.height;
+  const maxCell = clamp(Math.round(cellSize ?? MAX_CELL_SIZE), MIN_CELL_SIZE, MAX_CELL_SIZE);
+  const size = fitToContainer
+    ? Math.min(
+        fitCellSize(containerSize.width - 16, columns, maxCell),
+        fitCellSize(containerSize.height - 16, rows, maxCell)
+      )
+    : maxCell;
+  const gap = gapFor(size);
+  const pitch = size + gap;
+
+  const tileMap = new Map<string, TileColor>();
+  mapData.tiles.forEach((tile) => tileMap.set(coordToKey(tile.x, tile.y), tile.color));
+  const painted = state?.paintedTiles;
+  const collected = state?.collectedStars;
+
+  const position = state?.position ?? { x: mapData.start.x, y: mapData.start.y };
+  const direction = state?.direction ?? mapData.start.dir;
+  const failed = state?.status === "failure";
+
+  // 方向用累計角度，避免從 270° 轉到 0° 時反向轉一大圈
+  const [angle, setAngle] = useState(direction * 90);
+  const [lastDirection, setLastDirection] = useState(direction);
+  if (lastDirection !== direction) {
+    const delta = (direction - lastDirection + 4) % 4;
+    setLastDirection(direction);
+    setAngle(angle + (delta === 3 ? -90 : delta * 90));
+  }
+
+  const robotX = (position.x - bounds.minX) * pitch;
+  const robotY = (position.y - bounds.minY) * pitch;
+  const tween = `${Math.max(60, Math.min(220, stepDurationMs * 0.9))}ms`;
 
   return (
-    <div className="relative h-full w-full" data-tour-id="game-canvas">
-      <div className="absolute inset-0 rounded-[28px] bg-slate-100" />
-      <div className="relative h-full w-full p-6">
+    <div
+      ref={containerRef}
+      className="flex h-full w-full items-center justify-center"
+      data-tour-id="game-canvas"
+    >
+      <div
+        className="relative"
+        style={{ width: columns * pitch - gap, height: rows * pitch - gap }}
+        role="img"
+        aria-label={`地圖：${mapData.tiles.length} 格地板、${mapData.stars.length} 顆星星`}
+      >
+        {mapData.tiles.map((tile) => {
+          const key = coordToKey(tile.x, tile.y);
+          const color = painted?.get(key) ?? tile.color;
+          const palette = TILE_COLORS[color];
+          return (
+            <div
+              key={key}
+              className="absolute rounded-[22%] transition-colors duration-200"
+              style={{
+                left: (tile.x - bounds.minX) * pitch,
+                top: (tile.y - bounds.minY) * pitch,
+                width: size,
+                height: size,
+                background: palette.fill,
+                boxShadow: `inset 0 -${Math.max(2, Math.round(size * 0.08))}px 0 ${palette.deep}`,
+              }}
+            />
+          );
+        })}
+
+        {mapData.stars.map((star) => {
+          const key = coordToKey(star.x, star.y);
+          const isCollected = collected?.has(key);
+          return (
+            <div
+              key={`star-${key}`}
+              className="absolute flex items-center justify-center"
+              style={{
+                left: (star.x - bounds.minX) * pitch,
+                top: (star.y - bounds.minY) * pitch,
+                width: size,
+                height: size,
+              }}
+            >
+              <StarIcon
+                className={`h-[62%] w-[62%] drop-shadow-sm ${isCollected ? "animate-star-pop opacity-40" : ""}`}
+              />
+            </div>
+          );
+        })}
+
+        {fallen && (
+          <div
+            className="absolute rounded-[22%] border-2 border-dashed border-destructive/70"
+            style={{
+              left: (fallen.x - bounds.minX) * pitch,
+              top: (fallen.y - bounds.minY) * pitch,
+              width: size,
+              height: size,
+            }}
+          />
+        )}
+
         <div
-          ref={containerRef}
-          className="flex h-full w-full items-center justify-center"
+          className="absolute left-0 top-0 flex items-center justify-center"
+          style={{
+            width: size,
+            height: size,
+            transform: `translate(${robotX}px, ${robotY}px)`,
+            transition: `transform ${tween} ease-in-out`,
+          }}
         >
           <div
-            className="mx-auto grid"
-            style={{
-              gridTemplateColumns: `repeat(${columns}, ${resolvedCellSize}px)`,
-              gridTemplateRows: `repeat(${rows}, ${resolvedCellSize}px)`,
-              gap: `${gridGap}px`,
-            }}
+            className="flex h-full w-full items-center justify-center"
+            style={{ rotate: `${angle}deg`, transition: `rotate ${tween} ease-in-out` }}
           >
-            {cells.map(({ x, y, key }) => {
-              const painted = paintedTiles.get(key);
-              const baseTile = tileMap.get(key);
-              const color = painted || baseTile;
-              const hasStar = starSet.has(key);
-              const isCollected = collected.has(key);
-              const isRocket = rocketPos?.x === x && rocketPos?.y === y;
-              const isOutOfBounds = Boolean(
-                state?.outOfBoundsPosition &&
-                state.outOfBoundsPosition.x === x &&
-                state.outOfBoundsPosition.y === y
-              );
-
-              return (
-                <div
-                  key={key}
-                  className={`relative rounded-[10px] border border-slate-900/10 ${
-                    color ? tileColorClass(color) : "bg-slate-200/50"
-                  }`}
-                >
-                  {hasStar && (
-                    <div
-                      className={`absolute inset-0 flex items-center justify-center transition ${
-                        isCollected ? "opacity-30" : "opacity-100"
-                      }`}
-                      style={{ fontSize: Math.round(resolvedCellSize * 0.58) }}
-                    >
-                      ⭐
-                    </div>
-                  )}
-                  {isRocket && (
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div
-                        className={`flex items-center justify-center ${
-                          isOutOfBounds
-                            ? "text-red-600 opacity-60"
-                            : "text-white"
-                        } ${directionRotation(rocketDir)}`}
-                        style={{ fontSize: tokenSize }}
-                      >
-                        ▲
-                      </div>
-                      {isOutOfBounds && (
-                        <div
-                          className="absolute inset-0 flex items-center justify-center text-red-600"
-                          style={{ fontSize: Math.round(tokenSize * 1.3) }}
-                        >
-                          ⚠
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
+            <RobotIcon
+              failed={failed}
+              className={`h-[78%] w-[78%] drop-shadow ${failed ? "animate-robot-bump" : ""}`}
+            />
           </div>
         </div>
       </div>

@@ -6,10 +6,9 @@
  */
 
 import type { Command } from "@/lib/game-engine/types";
-import type { CommandType, TileColor } from "@/types/api";
-import type { ReactNode } from "react";
-import { ArrowBigUp, CornerUpLeft, CornerUpRight } from "lucide-react";
+import { useEffect, useRef, type ReactNode } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { CommandChip } from "@/components/game/game-icons";
 
 /**
  * 從 queueSnapshots 重構完整的執行歷史
@@ -47,29 +46,6 @@ function reconstructExecutionHistory(
   return { allCommands, executedCount, currentIndex };
 }
 
-const COMMAND_ICONS: Record<CommandType, { label?: string; icon?: "move" | "turn_left" | "turn_right" }> = {
-  move: { icon: "move" },
-  turn_left: { icon: "turn_left" },
-  turn_right: { icon: "turn_right" },
-  paint_red: { label: "" },
-  paint_green: { label: "" },
-  paint_blue: { label: "" },
-  f0: { label: "f0" },
-  f1: { label: "f1" },
-  f2: { label: "f2" },
-};
-
-function conditionBadge(condition?: TileColor) {
-  if (!condition) return null;
-  const bg =
-    condition === "R"
-      ? "bg-rose-500"
-      : condition === "G"
-        ? "bg-emerald-500"
-        : "bg-sky-500";
-  return <span className={`ml-2 inline-block h-2 w-2 rounded-full ${bg}`} />;
-}
-
 interface ExecutionThreadProps {
   queueSnapshots: Command[][];
   timelineIndex: number;
@@ -81,73 +57,58 @@ export function ExecutionThreadBar({
   queueSnapshots,
   timelineIndex,
   actions,
-  embedded
+  embedded,
 }: ExecutionThreadProps) {
   const { allCommands, currentIndex } = reconstructExecutionHistory(
     queueSnapshots,
     timelineIndex
   );
-  const hasQueue = allCommands.length > 0;
   const isExecutionFinished = currentIndex === -1 && timelineIndex > 0;
-  const containerClass = embedded
-    ? "border-0 bg-transparent px-0 py-0 shadow-none"
-    : "border border-slate-200/80 bg-white/85 px-4 py-3 shadow-[0_16px_40px_-32px_rgba(15,23,42,0.5)] backdrop-blur";
+  const currentRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    currentRef.current?.scrollIntoView({ block: "nearest", inline: "center", behavior: "smooth" });
+  }, [currentIndex]);
 
   return (
-    <div className={`rounded-2xl ${containerClass}`}>
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-3 text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
-          Execution
-          <span className="rounded-full border border-slate-200/70 bg-white/70 px-2 py-0.5 text-[10px] font-semibold text-slate-400">
-            {allCommands.length}
+    <div className={embedded ? "" : "rounded-2xl border border-line bg-white px-3 py-2.5"}>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="text-xs font-semibold text-ink-soft">
+          執行順序
+          <span className="ml-1.5 font-normal text-ink-faint">
+            {timelineIndex > 0 ? `第 ${timelineIndex} 步` : "按執行後，機器人會照這個順序做"}
           </span>
         </div>
         {actions ? <div className="flex items-center gap-2">{actions}</div> : null}
       </div>
       <ScrollArea
-        className="mt-2 min-h-[72px]"
+        className="mt-2"
         type="auto"
         scrollbarOrientation="horizontal"
-        scrollbarForceMount
-        viewportClassName="pt-2 pb-4"
-        scrollbarClassName="rounded-full bg-slate-50 data-[state=hidden]:pointer-events-none data-[state=visible]:bg-slate-100"
-        scrollbarThumbClassName="bg-slate-200 data-[state=hidden]:opacity-40 data-[state=hidden]:pointer-events-none data-[state=visible]:bg-slate-400"
+        viewportClassName="pb-3 pt-1"
       >
-        {hasQueue ? (
-          <div className="flex items-start gap-2">
-            {allCommands.map((command, index) => {
-              const iconDef = COMMAND_ICONS[command.type];
-              const isExecuted = isExecutionFinished || index < currentIndex;
-              const isExecuting = index === currentIndex;
-
-              const styles = isExecuted
-                ? "border-slate-200/50 bg-slate-100/50 text-slate-400"
-                : isExecuting
-                  ? "border-slate-900/40 bg-slate-900 text-white shadow-[0_10px_20px_-14px_rgba(15,23,42,0.6)]"
-                  : "border-slate-200/80 bg-white text-slate-700";
-
-              return (
-                <div
-                  key={`${command.type}-${index}`}
-                  className={`flex h-11 min-w-11 shrink-0 items-center justify-center rounded-lg border text-xs font-semibold transition ${styles}`}
-                >
-                  {iconDef.icon === "move" ? (
-                    <ArrowBigUp className="h-5 w-5" strokeWidth={2} />
-                  ) : iconDef.icon === "turn_left" ? (
-                    <CornerUpLeft className="h-4 w-4" strokeWidth={2.5} />
-                  ) : iconDef.icon === "turn_right" ? (
-                    <CornerUpRight className="h-4 w-4" strokeWidth={2.5} />
-                  ) : (
-                    <span>{iconDef.label}</span>
-                  )}
-                  {conditionBadge(command.condition)}
-                </div>
-              );
-            })}
+        {allCommands.length > 0 ? (
+          <div className="flex items-center gap-1.5 px-1">
+            {allCommands.map((command, index) => (
+              <div key={index} ref={index === currentIndex ? currentRef : undefined}>
+                <CommandChip
+                  type={command.type}
+                  condition={command.condition}
+                  size="sm"
+                  state={
+                    isExecutionFinished || index < currentIndex
+                      ? "done"
+                      : index === currentIndex
+                        ? "current"
+                        : "idle"
+                  }
+                />
+              </div>
+            ))}
           </div>
         ) : (
-          <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-400">
-            尚未配置指令
+          <div className="flex h-9 items-center rounded-lg border border-dashed border-line px-3 text-xs text-ink-faint">
+            F0 還是空的
           </div>
         )}
       </ScrollArea>

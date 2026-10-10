@@ -2,58 +2,58 @@
 
 /**
  * Block42 Frontend - Play Level Page
+ * 官方關卡讀程式內建資料；社群關卡從 API 載入。
  */
 
+import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useMemo, useRef } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { ArrowLeft, ChevronRight, Lightbulb } from "lucide-react";
 import {
+  completeLevel,
   getLevelById,
   getLevelProgram,
-  getOfficialLevels,
   updateLevelProgram,
-  updateLevelProgress,
 } from "@/lib/api/levels";
+import {
+  OFFICIAL_CHAPTERS,
+  getNextOfficialLevel,
+  getOfficialLevel,
+} from "@/lib/levels/official";
 import { useGameState } from "@/lib/hooks/use-game-state";
-import { GameCanvas } from "@/components/game/game-canvas";
-import { CommandToolbox } from "@/components/game/command-toolbox";
-import { ProgrammingWorkspace } from "@/components/game/programming-workspace";
-import { GameControls } from "@/components/game/game-controls";
-import { ExecutionThreadBar } from "@/components/game/execution-thread";
+import { GameWorkbench } from "@/components/game/game-workbench";
 import { GameResultOverlay } from "@/components/game/game-result-overlay";
-import { GameDndProvider } from "@/components/game/game-dnd-provider";
-import { useNavbar } from "@/components/layout/navbar-context";
 import { useAuth } from "@/lib/auth-context";
 import { serializeCommands } from "@/lib/game-engine/commands";
+import { Button } from "@/components/ui/button";
 
 export default function PlayLevelPage() {
   const params = useParams();
   const router = useRouter();
+  const queryClient = useQueryClient();
   const levelId = params?.levelId as string;
   const { isAuthenticated } = useAuth();
+  const official = getOfficialLevel(levelId);
 
-  const levelQuery = useQuery({
+  const communityQuery = useQuery({
     queryKey: ["level", levelId],
     queryFn: () => getLevelById(levelId),
+    enabled: !official,
   });
 
-  const { data: level } = levelQuery;
-  const { setLevelInfo } = useNavbar();
+  const level = official ?? communityQuery.data;
   const hasSavedProgress = useRef(false);
   const lastSavedProgramRef = useRef<string | null>(null);
   const saveTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const [showHint, setShowHint] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   const programQuery = useQuery({
     queryKey: ["level", levelId, "program"],
     queryFn: () => getLevelProgram(levelId),
     enabled: isAuthenticated,
     retry: false,
-  });
-
-  const officialListQuery = useQuery({
-    queryKey: ["levels", "official"],
-    queryFn: getOfficialLevels,
-    enabled: Boolean(level?.is_official),
   });
 
   const game = useGameState({
@@ -63,32 +63,33 @@ export default function PlayLevelPage() {
     initialCommandsKey: levelId,
   });
 
-  useEffect(() => {
-    if (!level) return;
-    setLevelInfo({ label: "Level", title: level.title });
-    return () => setLevelInfo(null);
-  }, [level, setLevelInfo]);
+  const serializedProgram = useMemo(
+    () => ({
+      commands_f0: serializeCommands(game.commandSet.f0),
+      commands_f1: serializeCommands(game.commandSet.f1),
+      commands_f2: serializeCommands(game.commandSet.f2),
+    }),
+    [game.commandSet]
+  );
 
+  // 過關後把程式交給伺服器確認，記錄進度
   useEffect(() => {
     if (!level || !game.didSucceed) {
       hasSavedProgress.current = false;
       return;
     }
-    if (hasSavedProgress.current) return;
-    if (!isAuthenticated) return;
-
+    if (hasSavedProgress.current || !isAuthenticated) return;
     hasSavedProgress.current = true;
-    const totalStars = level.map.stars.length;
-    const bestSteps = game.execution?.totalSteps ?? game.execution?.finalState.steps ?? 0;
-
-    updateLevelProgress(level.id, {
-      is_completed: true,
-      best_steps: bestSteps,
-      stars_collected: totalStars,
-    }).catch(() => {
-      hasSavedProgress.current = false;
-    });
-  }, [level, game.didSucceed, game.execution, isAuthenticated]);
+    completeLevel(level.id, serializedProgram)
+      .then(() => {
+        setSaveError(null);
+        queryClient.invalidateQueries({ queryKey: ["levels", "progress"] });
+      })
+      .catch((error: Error) => {
+        hasSavedProgress.current = false;
+        setSaveError(error.message);
+      });
+  }, [level, game.didSucceed, isAuthenticated, serializedProgram, queryClient]);
 
   useEffect(() => {
     if (!programQuery.data) return;
@@ -99,187 +100,140 @@ export default function PlayLevelPage() {
     });
   }, [programQuery.data]);
 
-  const serializedProgram = useMemo(() => {
-    return {
-      commands_f0: serializeCommands(game.commandSet.f0),
-      commands_f1: serializeCommands(game.commandSet.f1),
-      commands_f2: serializeCommands(game.commandSet.f2),
-    };
-  }, [game.commandSet]);
-
+  // 自動存檔（停止編輯 0.6 秒後）
   useEffect(() => {
     if (!isAuthenticated || !level) return;
-    const hasCommands =
-      serializedProgram.commands_f0.length > 0 ||
-      serializedProgram.commands_f1.length > 0 ||
-      serializedProgram.commands_f2.length > 0;
-    const alreadySaved = lastSavedProgramRef.current === JSON.stringify(serializedProgram);
+    const hasCommands = Object.values(serializedProgram).some((list) => list.length > 0);
     if (!hasCommands && !programQuery.data) return;
-    if (alreadySaved) return;
+    if (lastSavedProgramRef.current === JSON.stringify(serializedProgram)) return;
 
-    if (saveTimerRef.current) {
-      clearTimeout(saveTimerRef.current);
-    }
-
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
     saveTimerRef.current = setTimeout(() => {
       updateLevelProgram(level.id, serializedProgram)
         .then(() => {
           lastSavedProgramRef.current = JSON.stringify(serializedProgram);
         })
         .catch(() => {
-          // keep lastSavedProgramRef to allow retry on next change
+          // 下次修改時再試
         });
     }, 600);
 
     return () => {
-      if (saveTimerRef.current) {
-        clearTimeout(saveTimerRef.current);
-      }
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
     };
   }, [serializedProgram, isAuthenticated, level, programQuery.data]);
 
-  const nextOfficialLevel = useMemo(() => {
-    if (!level || !level.is_official || !officialListQuery.data) return null;
-    const index = officialListQuery.data.findIndex((item) => item.id === level.id);
-    if (index === -1) return null;
-    return officialListQuery.data[index + 1] ?? null;
-  }, [level, officialListQuery.data]);
-
-  const backToLobbyUrl = level?.is_official
-    ? "/levels?tab=official"
-    : "/levels?tab=community";
-
-  const nextButton = nextOfficialLevel ? (
-    <button
-      type="button"
-      onClick={() => router.push(`/play/${nextOfficialLevel.id}`)}
-      className="rounded-full bg-slate-900 px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800"
-    >
-      下一關
-    </button>
-  ) : null;
-
-  const backButton = (
-    <button
-      type="button"
-      onClick={() => router.push(backToLobbyUrl)}
-      className="rounded-full border border-slate-200 bg-white px-5 py-2 text-sm font-semibold text-slate-600 shadow-sm transition hover:border-slate-300"
-    >
-      回關卡大廳
-    </button>
-  );
-
-  const retryButton = (
-    <button
-      type="button"
-      onClick={game.reset}
-      className="rounded-full border border-slate-200 bg-white px-5 py-2 text-sm font-semibold text-slate-600 shadow-sm transition hover:border-slate-300"
-    >
-      再試一次
-    </button>
-  );
-
-  if (levelQuery.isLoading) {
-    return <div className="p-6">載入關卡中...</div>;
+  if (!official && communityQuery.isLoading) {
+    return <div className="mx-auto max-w-6xl px-4 py-10 text-sm text-ink-soft">載入關卡中…</div>;
   }
 
-  if (levelQuery.isError || !level) {
-    return <div className="p-6 text-red-500">關卡載入失敗</div>;
+  if (!level) {
+    return (
+      <div className="mx-auto max-w-md px-4 py-16 text-center">
+        <h1 className="text-lg font-bold text-ink">找不到這個關卡</h1>
+        <p className="mt-2 text-sm text-ink-soft">可能已被作者刪除，或網址打錯了。</p>
+        <Button asChild className="mt-6">
+          <Link href="/levels">回關卡列表</Link>
+        </Button>
+      </div>
+    );
   }
 
-  const currentState = game.currentState;
+  const nextLevel = official ? getNextOfficialLevel(official.id) : undefined;
+  const chapter = official
+    ? OFFICIAL_CHAPTERS.find((item) => item.id === official.chapter_id)
+    : undefined;
+  const backHref = official ? "/levels" : "/levels?tab=community";
+  const steps = game.execution?.totalSteps ?? 0;
+
+  const successOverlay = (
+    <GameResultOverlay
+      title="過關！"
+      description={
+        <>
+          用了 {steps} 步收齊所有星星。
+          {!isAuthenticated && (
+            <span className="mt-1 block text-xs text-ink-faint">登入後才會記錄進度。</span>
+          )}
+          {saveError && (
+            <span className="mt-1 block text-xs text-destructive">進度沒有存到：{saveError}</span>
+          )}
+        </>
+      }
+      primaryAction={
+        nextLevel ? (
+          <Button onClick={() => router.push(`/play/${nextLevel.id}`)}>
+            下一關
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        ) : (
+          <Button onClick={() => router.push(backHref)}>回關卡列表</Button>
+        )
+      }
+      secondaryAction={
+        <Button variant="outline" onClick={game.reset}>
+          再玩一次
+        </Button>
+      }
+    />
+  );
+
+  const aside = official ? (
+    <div className="rounded-2xl border border-line bg-white p-4">
+      <p className="text-sm leading-relaxed text-ink">{official.goal}</p>
+      <button
+        type="button"
+        onClick={() => setShowHint((value) => !value)}
+        className="mt-3 inline-flex items-center gap-1.5 text-xs font-medium text-ink-soft transition hover:text-ink"
+        aria-expanded={showHint}
+      >
+        <Lightbulb className="h-3.5 w-3.5" />
+        {showHint ? "收起提示" : "需要提示"}
+      </button>
+      {showHint && (
+        <p className="animate-rise-in mt-2 rounded-lg bg-paper px-3 py-2 text-xs leading-relaxed text-ink-soft">
+          {official.hint}
+        </p>
+      )}
+    </div>
+  ) : (
+    <div className="rounded-2xl border border-line bg-white p-4 text-sm text-ink-soft">
+      收集所有星星就過關。
+    </div>
+  );
 
   return (
-    <div className="h-[calc(100vh-4rem)] overflow-hidden bg-slate-50">
-      <div className="relative mx-auto flex h-full max-w-[1400px] flex-col gap-3 px-6 py-4">
-        <div className="flex min-h-0 flex-1 flex-col gap-3">
-          <div className="flex min-h-0 flex-[3] flex-col gap-3">
-            <div className="flex min-h-0 flex-1 rounded-[28px] border border-slate-200/80 bg-white/85 p-4 shadow-[0_16px_40px_-32px_rgba(15,23,42,0.5)] backdrop-blur">
-              <div className="relative flex min-h-0 flex-1 items-stretch">
-                {game.didSucceed && (
-                  <GameResultOverlay
-                    title="通關完成"
-                    description="已成功收集所有星星。"
-                    tone="success"
-                    primaryAction={nextButton ?? backButton}
-                    secondaryAction={
-                      <>
-                        {nextButton ? backButton : null}
-                        {retryButton}
-                      </>
-                    }
-                  />
-                )}
-                <GameCanvas
-                  mapData={level.map}
-                  state={currentState}
-                  fitToContainer
-                />
-                <div className="pointer-events-none absolute inset-0 rounded-[24px] ring-1 ring-slate-900/10" />
-              </div>
-            </div>
-            <ExecutionThreadBar
-              queueSnapshots={game.queueSnapshots}
-              timelineIndex={game.timelineIndex}
-              actions={
-                <GameControls
-                  isRunning={game.isRunning}
-                  speed={game.speed}
-                  onRun={game.run}
-                  onStep={game.step}
-                  onReset={game.reset}
-                  onSpeedChange={game.setSpeed}
-                />
-              }
-            />
-          </div>
+    <div className="mx-auto max-w-[1320px] px-4 pb-10 pt-4 sm:px-6">
+      <header className="mb-4 flex flex-wrap items-center gap-x-3 gap-y-1">
+        <Link
+          href={backHref}
+          className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-sm text-ink-soft transition hover:bg-paper-deep hover:text-ink"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          關卡列表
+        </Link>
+        <h1 className="flex items-baseline gap-2 text-lg font-bold text-ink sm:text-xl">
+          {official && (
+            <span className="font-mono text-sm font-semibold text-ink-faint">{official.number}</span>
+          )}
+          {level.title}
+        </h1>
+        <span className="text-xs text-ink-faint">
+          {chapter
+            ? `第 ${OFFICIAL_CHAPTERS.indexOf(chapter) + 1} 章・${chapter.title}`
+            : communityQuery.data?.author_name
+              ? `作者 ${communityQuery.data.author_name}`
+              : null}
+        </span>
+      </header>
 
-          <div className="flex min-h-0 flex-[2] gap-3">
-            <GameDndProvider
-              onDropCommand={game.dropCommand}
-              onDropCondition={game.dropCondition}
-              disabled={game.isEditingLocked}
-            >
-              <div className="w-[clamp(180px,22vw,240px)] shrink-0">
-                  <CommandToolbox
-                    config={level.config}
-                    activeCommand={game.selectedSlotState?.type ?? null}
-                    activeCondition={game.selectedSlotState?.condition ?? null}
-                    disabled={!game.selectedSlot || game.isEditingLocked}
-                    onSelectCommand={game.applyCommand}
-                    onSelectCondition={game.applyCondition}
-                  />
-              </div>
-              <div className="flex min-h-0 flex-1 flex-col gap-2">
-                <ProgrammingWorkspace
-                  config={level.config}
-                  slots={game.slots}
-                  selectedSlot={game.selectedSlot}
-                  onSelectSlot={game.selectSlot}
-                  onClearTrack={game.clearTrack}
-                  disabled={game.isEditingLocked}
-                />
-                {currentState && currentState.status === "failure" && (
-                  <div className="rounded-2xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
-                    {currentState.outOfBoundsPosition ? (
-                      <div className="space-y-1">
-                        <div className="font-semibold">🚨 火箭飛出有效範圍！</div>
-                        <div>
-                          越界位置：({currentState.outOfBoundsPosition.x},{" "}
-                          {currentState.outOfBoundsPosition.y})
-                        </div>
-                        <div className="text-rose-600">{currentState.error}</div>
-                      </div>
-                    ) : (
-                      currentState.error
-                    )}
-                  </div>
-                )}
-              </div>
-            </GameDndProvider>
-          </div>
-        </div>
-      </div>
+      <GameWorkbench
+        mapData={level.map}
+        config={level.config}
+        game={game}
+        aside={aside}
+        successOverlay={successOverlay}
+      />
     </div>
   );
 }

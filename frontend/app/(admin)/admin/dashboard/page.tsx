@@ -4,6 +4,7 @@
  * Block42 Frontend - Admin dashboard
  */
 
+import { formatDate } from "@/lib/utils";
 import { useState, useMemo, useRef, type ChangeEvent } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import Link from "next/link";
@@ -65,16 +66,12 @@ import { DEFAULT_PADDING, ensureStartFloor } from "@/lib/map-utils";
 const LEVEL_BATCH_VERSION = 1;
 const VALID_STATUSES: LevelStatus[] = ["draft", "pending", "published", "rejected"];
 
-type ExportScope = "all" | "official" | "community";
-
 interface ExportLevelEntry {
   id: string;
   title: string;
   map: MapData;
   config: LevelConfig;
   status: LevelStatus;
-  is_official: boolean;
-  official_order: number;
   author_id: number;
   author_name?: string | null;
 }
@@ -82,7 +79,6 @@ interface ExportLevelEntry {
 interface BatchExportPayload {
   version: number;
   exported_at: string;
-  scope: ExportScope;
   levels: ExportLevelEntry[];
 }
 
@@ -211,10 +207,17 @@ function downloadJson(filename: string, content: string) {
   URL.revokeObjectURL(url);
 }
 
-function buildExportFilename(scope: ExportScope) {
+function buildExportFilename() {
   const date = new Date().toISOString().slice(0, 10);
-  return `levels-${scope}-${date}.json`;
+  return `block42-community-levels-${date}.json`;
 }
+
+const STATUS_LABELS: Record<LevelStatus, string> = {
+  draft: "草稿",
+  pending: "待審核",
+  published: "已發布",
+  rejected: "已駁回",
+};
 
 function extractLevelId(entry: Record<string, unknown>): string | null {
   const direct = entry.id ?? entry.level_id ?? entry.levelId;
@@ -257,15 +260,6 @@ function parseImportEntry(entry: unknown): { id: string; data: AdminLevelUpdate 
   }
   if (isLevelStatus(normalized.status)) {
     payload.status = normalized.status;
-  }
-  const isOfficial = normalized.is_official ?? normalized.isOfficial;
-  if (typeof isOfficial === "boolean") {
-    payload.is_official = isOfficial;
-  }
-  const officialOrderValue = normalized.official_order ?? normalized.officialOrder;
-  const officialOrder = toInteger(officialOrderValue);
-  if (officialOrder !== null) {
-    payload.official_order = officialOrder;
   }
 
   return { id, data: payload };
@@ -312,33 +306,8 @@ export default function AdminDashboardPage() {
     );
   }, [levelsQuery.data]);
 
-  const officialLevels = useMemo(() => {
-    if (!levelsQuery.data) return [];
-    return [...levelsQuery.data]
-      .filter(level => level.is_official)
-      .sort((a, b) => a.official_order - b.official_order);
-  }, [levelsQuery.data]);
-
-  const communityLevels = useMemo(() => {
-    if (!levelsQuery.data) return [];
-    return [...levelsQuery.data]
-      .filter(level => !level.is_official)
-      .sort((a, b) =>
-        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-      );
-  }, [levelsQuery.data]);
-
-  const nextOfficialOrder = useMemo(() => {
-    if (!officialLevels.length) return 1;
-    return Math.max(...officialLevels.map(l => l.official_order)) + 1;
-  }, [officialLevels]);
-
   const approveMutation = useMutation({
-    mutationFn: (payload: { levelId: string; asOfficial: boolean; officialOrder?: number }) =>
-      approveLevel(payload.levelId, {
-        as_official: payload.asOfficial,
-        official_order: payload.officialOrder,
-      }),
+    mutationFn: (levelId: string) => approveLevel(levelId),
     onSuccess: () => {
       toast.success("已通過關卡");
       queueQuery.refetch();
@@ -481,9 +450,8 @@ export default function AdminDashboardPage() {
     setTransferDialogOpen(true);
   };
 
-  const handleBatchExport = async (scope: ExportScope) => {
-    const sourceLevels =
-      scope === "official" ? officialLevels : scope === "community" ? communityLevels : allLevels;
+  const handleBatchExport = async () => {
+    const sourceLevels = allLevels;
     if (!sourceLevels.length) {
       toast.error("沒有可匯出的關卡");
       return;
@@ -510,21 +478,18 @@ export default function AdminDashboardPage() {
       const payload: BatchExportPayload = {
         version: LEVEL_BATCH_VERSION,
         exported_at: new Date().toISOString(),
-        scope,
         levels: successes.map((level) => ({
           id: level.id,
           title: level.title,
           map: level.map,
           config: level.config,
           status: level.status,
-          is_official: level.is_official,
-          official_order: level.official_order,
           author_id: level.author_id,
           author_name: level.author_name ?? null,
         })),
       };
 
-      downloadJson(buildExportFilename(scope), JSON.stringify(payload, null, 2));
+      downloadJson(buildExportFilename(), JSON.stringify(payload, null, 2));
       if (failedCount > 0) {
         toast.error(`匯出完成，但有 ${failedCount} 個關卡失敗`);
       } else {
@@ -610,8 +575,6 @@ export default function AdminDashboardPage() {
           <TableHead>名稱</TableHead>
           <TableHead>作者</TableHead>
           <TableHead>狀態</TableHead>
-          <TableHead>官方</TableHead>
-          <TableHead>順序</TableHead>
           <TableHead>更新時間</TableHead>
           <TableHead>操作</TableHead>
         </TableRow>
@@ -623,7 +586,7 @@ export default function AdminDashboardPage() {
           const authorLabel = level.author_name ?? `#${level.author_id}`;
           return (
             <TableRow key={level.id}>
-              <TableCell className="font-mono text-xs text-slate-500">
+              <TableCell className="font-mono text-xs text-ink-soft">
                 {level.id}
               </TableCell>
               <TableCell>
@@ -635,12 +598,12 @@ export default function AdminDashboardPage() {
                   className="h-9 w-48"
                 />
               </TableCell>
-              <TableCell className="text-sm text-slate-600">
+              <TableCell className="text-sm text-ink-soft">
                 {authorLabel}
               </TableCell>
               <TableCell>
                 <select
-                  className="h-9 rounded-md border border-slate-200 bg-white px-2 text-sm text-slate-700"
+                  className="h-9 rounded-md border border-line bg-white px-2 text-sm text-ink"
                   value={getDraftValue(level, "status") as string}
                   onChange={(event) =>
                     updateDraft(level.id, {
@@ -648,39 +611,15 @@ export default function AdminDashboardPage() {
                     })
                   }
                 >
-                  <option value="draft">draft</option>
-                  <option value="pending">pending</option>
-                  <option value="published">published</option>
-                  <option value="rejected">rejected</option>
+                  {VALID_STATUSES.map((status) => (
+                    <option key={status} value={status}>
+                      {STATUS_LABELS[status]}
+                    </option>
+                  ))}
                 </select>
               </TableCell>
-              <TableCell>
-                <label className="flex items-center gap-2 text-sm text-slate-600">
-                  <input
-                    type="checkbox"
-                    checked={Boolean(getDraftValue(level, "is_official"))}
-                    onChange={(event) =>
-                      updateDraft(level.id, { is_official: event.target.checked })
-                    }
-                  />
-                  官方
-                </label>
-              </TableCell>
-              <TableCell>
-                <Input
-                  type="number"
-                  min={0}
-                  value={String(getDraftValue(level, "official_order") ?? 0)}
-                  onChange={(event) =>
-                    updateDraft(level.id, {
-                      official_order: Number(event.target.value),
-                    })
-                  }
-                  className="h-9 w-24"
-                />
-              </TableCell>
-              <TableCell className="text-xs text-slate-500">
-                {new Date(level.updated_at).toLocaleDateString()}
+              <TableCell className="text-xs text-ink-soft">
+                {formatDate(level.updated_at)}
               </TableCell>
               <TableCell>
                 <div className="flex items-center gap-2">
@@ -725,72 +664,58 @@ export default function AdminDashboardPage() {
   );
 
   return (
-    <div className="min-h-screen bg-red-50 px-6 py-8">
-      <div className="mx-auto max-w-5xl space-y-6">
+    <div className="px-4 py-8 sm:px-6">
+      <div className="mx-auto max-w-6xl space-y-6">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">審核隊列</h1>
-          <p className="text-gray-600">管理待審核與全部關卡。</p>
+          <h1 className="text-2xl font-bold text-ink">管理後台</h1>
+          <p className="mt-1 text-sm text-ink-soft">
+            審核社群關卡、管理帳號。官方關卡寫在程式碼裡（levels/official.txt），不在這裡管理。
+          </p>
         </div>
 
         <Tabs defaultValue="queue">
-          <TabsList className="bg-white/80">
+          <TabsList>
             <TabsTrigger value="queue">待審核</TabsTrigger>
             <TabsTrigger value="levels">關卡管理</TabsTrigger>
             <TabsTrigger value="users">帳號管理</TabsTrigger>
           </TabsList>
           <TabsContent value="queue">
-            {queueQuery.isLoading && <div>載入中...</div>}
-            {queueQuery.isError && <div className="text-red-500">載入失敗</div>}
+            {queueQuery.isLoading && <div>載入中…</div>}
+            {queueQuery.isError && <div className="text-destructive">載入失敗</div>}
             {queueQuery.data && queueQuery.data.length === 0 && (
-              <div className="text-gray-500">目前沒有待審核關卡</div>
+              <div className="text-ink-soft">目前沒有待審核關卡</div>
             )}
             {queueQuery.data && queueQuery.data.length > 0 && (
               <ReviewQueue
                 levels={queueQuery.data}
-                onApprove={(payload) => approveMutation.mutate(payload)}
+                onApprove={(levelId) => approveMutation.mutate(levelId)}
                 onReject={(payload) => rejectMutation.mutate(payload)}
               />
             )}
           </TabsContent>
           <TabsContent value="levels">
-            <div className="rounded-2xl border border-white/70 bg-white/80 p-4 shadow-[0_16px_40px_-32px_rgba(15,23,42,0.4)] backdrop-blur">
-              {levelsQuery.isLoading && <div>載入中...</div>}
-              {levelsQuery.isError && <div className="text-red-500">載入失敗</div>}
+            <div className="rounded-2xl border border-line bg-white p-4">
+              {levelsQuery.isLoading && <div>載入中…</div>}
+              {levelsQuery.isError && <div className="text-destructive">載入失敗</div>}
               {levelsQuery.data && (
                 <div className="space-y-4">
-                  <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-3 text-sm text-slate-600">
+                  <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-line bg-paper px-4 py-3 text-sm text-ink-soft">
                     <div>
-                      <div className="text-sm font-semibold text-slate-700">
+                      <div className="text-sm font-semibold text-ink">
                         批量匯入 / 匯出
                       </div>
-                      <div className="mt-1 text-xs text-slate-500">
-                        匯出包含 map/config，匯入會直接覆蓋關卡內容。
+                      <div className="mt-1 text-xs text-ink-soft">
+                        匯出包含地圖與設定；匯入會依 ID 覆蓋既有關卡。
                       </div>
                     </div>
                     <div className="flex flex-wrap items-center gap-2">
                       <Button
                         size="sm"
-                        variant="secondary"
+                        variant="outline"
                         disabled={batchExporting || batchImporting}
-                        onClick={() => handleBatchExport("all")}
+                        onClick={handleBatchExport}
                       >
                         匯出全部
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="secondary"
-                        disabled={batchExporting || batchImporting}
-                        onClick={() => handleBatchExport("official")}
-                      >
-                        匯出官方
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="secondary"
-                        disabled={batchExporting || batchImporting}
-                        onClick={() => handleBatchExport("community")}
-                      >
-                        匯出社群
                       </Button>
                       <Button
                         size="sm"
@@ -809,32 +734,10 @@ export default function AdminDashboardPage() {
                     </div>
                   </div>
                   {levelsQuery.data.length === 0 && (
-                    <div className="text-gray-500">目前沒有關卡</div>
+                    <div className="text-ink-soft">目前沒有關卡</div>
                   )}
                   {levelsQuery.data.length > 0 && (
-                    <Tabs defaultValue="all" className="space-y-4">
-                      <TabsList className="bg-white/80">
-                        <TabsTrigger value="all">全部</TabsTrigger>
-                        <TabsTrigger value="official">官方</TabsTrigger>
-                        <TabsTrigger value="community">社群</TabsTrigger>
-                      </TabsList>
-
-                      <TabsContent value="all">
-                        {renderLevelTable(allLevels)}
-                      </TabsContent>
-
-                      <TabsContent value="official">
-                        <div className="mb-4 rounded-lg bg-blue-50 px-4 py-3 text-sm text-blue-800">
-                          目前官方關卡數：<span className="font-semibold">{officialLevels.length}</span>
-                          {" "}• 下一個順序：<span className="font-semibold">{nextOfficialOrder}</span>
-                        </div>
-                        {renderLevelTable(officialLevels)}
-                      </TabsContent>
-
-                      <TabsContent value="community">
-                        {renderLevelTable(communityLevels)}
-                      </TabsContent>
-                    </Tabs>
+                    <div className="overflow-x-auto">{renderLevelTable(allLevels)}</div>
                   )}
                 </div>
               )}
@@ -842,8 +745,8 @@ export default function AdminDashboardPage() {
           </TabsContent>
           <TabsContent value="users">
             <div className="space-y-4">
-              <div className="rounded-2xl border border-white/70 bg-white/80 p-4 shadow-[0_16px_40px_-32px_rgba(15,23,42,0.4)] backdrop-blur">
-                <div className="text-sm font-semibold text-slate-700">建立新帳號</div>
+              <div className="rounded-2xl border border-line bg-white p-4">
+                <div className="text-sm font-semibold text-ink">建立新帳號</div>
                 <div className="mt-3 grid gap-3 md:grid-cols-[1.4fr_1fr_auto]">
                   <Input
                     placeholder="使用者名稱"
@@ -860,7 +763,7 @@ export default function AdminDashboardPage() {
                       setNewUser((prev) => ({ ...prev, password: event.target.value }))
                     }
                   />
-                  <label className="flex items-center gap-2 text-sm text-slate-600">
+                  <label className="flex items-center gap-2 text-sm text-ink-soft">
                     <input
                       type="checkbox"
                       checked={newUser.is_superuser}
@@ -887,11 +790,11 @@ export default function AdminDashboardPage() {
                 </div>
               </div>
 
-              <div className="rounded-2xl border border-white/70 bg-white/80 p-4 shadow-[0_16px_40px_-32px_rgba(15,23,42,0.4)] backdrop-blur">
-                {usersQuery.isLoading && <div>載入中...</div>}
-                {usersQuery.isError && <div className="text-red-500">載入失敗</div>}
+              <div className="rounded-2xl border border-line bg-white p-4">
+                {usersQuery.isLoading && <div>載入中…</div>}
+                {usersQuery.isError && <div className="text-destructive">載入失敗</div>}
                 {usersQuery.data && usersQuery.data.length === 0 && (
-                  <div className="text-gray-500">目前沒有使用者</div>
+                  <div className="text-ink-soft">目前沒有使用者</div>
                 )}
                 {usersQuery.data && usersQuery.data.length > 0 && (
                   <Table>
@@ -914,7 +817,7 @@ export default function AdminDashboardPage() {
                           levelsQuery.data?.filter((level) => level.author_id === account.id) ?? [];
                         return (
                           <TableRow key={account.id}>
-                            <TableCell className="font-mono text-xs text-slate-500">
+                            <TableCell className="font-mono text-xs text-ink-soft">
                               {account.id}
                             </TableCell>
                             <TableCell>
@@ -927,7 +830,7 @@ export default function AdminDashboardPage() {
                               />
                             </TableCell>
                             <TableCell>
-                              <label className="flex items-center gap-2 text-sm text-slate-600">
+                              <label className="flex items-center gap-2 text-sm text-ink-soft">
                                 <input
                                   type="checkbox"
                                   checked={Boolean(getUserDraftValue(account, "is_superuser"))}
@@ -940,7 +843,7 @@ export default function AdminDashboardPage() {
                                 管理員
                               </label>
                             </TableCell>
-                            <TableCell className="text-sm text-slate-600">
+                            <TableCell className="text-sm text-ink-soft">
                               {authoredLevels.length}
                             </TableCell>
                             <TableCell>
@@ -991,7 +894,7 @@ export default function AdminDashboardPage() {
                                 </Button>
                               </div>
                               {isSelf && (
-                                <div className="mt-1 text-xs text-slate-400">
+                                <div className="mt-1 text-xs text-ink-faint">
                                   無法刪除自己
                                 </div>
                               )}
@@ -1016,8 +919,8 @@ export default function AdminDashboardPage() {
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
-            <div className="flex flex-wrap items-center gap-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm">
-              <span className="text-slate-600">批次指定：</span>
+            <div className="flex flex-wrap items-center gap-3 rounded-lg border border-line bg-paper px-3 py-2 text-sm">
+              <span className="text-ink-soft">批次指定：</span>
               <Select
                 value={bulkAssignee}
                 onValueChange={(value) => setBulkAssignee(value)}
@@ -1055,13 +958,13 @@ export default function AdminDashboardPage() {
               {transferLevels.map((level) => (
                 <div
                   key={level.id}
-                  className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-slate-200 px-3 py-2"
+                  className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-line px-3 py-2"
                 >
                   <div>
-                    <div className="text-sm font-semibold text-slate-800">
+                    <div className="text-sm font-semibold text-ink">
                       {level.title}
                     </div>
-                    <div className="text-xs text-slate-400">{level.id}</div>
+                    <div className="text-xs text-ink-faint">{level.id}</div>
                   </div>
                   <Select
                     value={transferAssignments[level.id]?.toString() ?? ""}

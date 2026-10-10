@@ -7,7 +7,6 @@ import { get, post, put, del } from "@/lib/api-client";
 import type {
   LevelDetail,
   LevelListItem,
-  LevelApprove,
   LevelReject,
   AdminLevelListItem,
   AdminLevelUpdate,
@@ -28,11 +27,8 @@ export async function getReviewQueue(): Promise<LevelListItem[]> {
 /**
  * 審核通過關卡
  */
-export async function approveLevel(
-  levelId: string,
-  data: LevelApprove
-): Promise<LevelDetail> {
-  return post<LevelDetail>(`/api/v1/admin/levels/${levelId}/approve`, data, true);
+export async function approveLevel(levelId: string): Promise<LevelDetail> {
+  return post<LevelDetail>(`/api/v1/admin/levels/${encodeURIComponent(levelId)}/approve`, {}, true);
 }
 
 /**
@@ -42,7 +38,7 @@ export async function rejectLevel(
   levelId: string,
   data: LevelReject
 ): Promise<LevelDetail> {
-  return post<LevelDetail>(`/api/v1/admin/levels/${levelId}/reject`, data, true);
+  return post<LevelDetail>(`/api/v1/admin/levels/${encodeURIComponent(levelId)}/reject`, data, true);
 }
 
 /**
@@ -56,7 +52,7 @@ export async function getAllLevels(): Promise<AdminLevelListItem[]> {
  * 取得單一關卡詳情（管理用）
  */
 export async function getAdminLevelById(levelId: string): Promise<LevelDetail> {
-  return get<LevelDetail>(`/api/v1/admin/levels/${levelId}`, true);
+  return get<LevelDetail>(`/api/v1/admin/levels/${encodeURIComponent(levelId)}`, true);
 }
 
 /**
@@ -66,14 +62,14 @@ export async function updateAdminLevel(
   levelId: string,
   data: AdminLevelUpdate
 ): Promise<LevelDetail> {
-  return put<LevelDetail>(`/api/v1/admin/levels/${levelId}`, data, true);
+  return put<LevelDetail>(`/api/v1/admin/levels/${encodeURIComponent(levelId)}`, data, true);
 }
 
 /**
  * 管理員刪除關卡
  */
 export async function deleteAdminLevel(levelId: string): Promise<void> {
-  return del<void>(`/api/v1/admin/levels/${levelId}`, true);
+  return del<void>(`/api/v1/admin/levels/${encodeURIComponent(levelId)}`, true);
 }
 
 /**

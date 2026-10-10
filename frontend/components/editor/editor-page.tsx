@@ -8,6 +8,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import type { LevelConfig, MapData, Solution } from "@/types/api";
 import { getLevelById } from "@/lib/api/levels";
@@ -207,77 +209,55 @@ export function EditorPage({ levelId, mode = "designer" }: EditorPageProps) {
   };
 
   if (levelId && levelQuery.isLoading) {
-    return <div className="p-6">載入關卡中...</div>;
+    return <div className="px-4 py-10 text-sm text-ink-soft">載入關卡中…</div>;
   }
 
   if (levelId && levelQuery.isError) {
-    return <div className="p-6 text-red-500">關卡載入失敗</div>;
+    return <div className="px-4 py-10 text-sm text-destructive">關卡載入失敗</div>;
   }
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top,rgba(56,189,248,0.16),transparent_45%),radial-gradient(circle_at_15%_20%,rgba(250,204,21,0.16),transparent_40%),linear-gradient(180deg,#f8fafc,#e2e8f0)] px-6 py-8">
-      <div className="mx-auto max-w-[1400px] space-y-6">
-        <div className="flex flex-wrap items-center justify-between gap-4 rounded-[28px] border border-white/70 bg-white/80 px-6 py-4 shadow-[0_20px_50px_-40px_rgba(15,23,42,0.45)] backdrop-blur">
+    <div className="px-4 pb-12 pt-6 sm:px-6">
+      <div className="mx-auto max-w-[1320px] space-y-4">
+        <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
-            <div className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">
-              Level Editor
-            </div>
-            <h1 className="mt-2 text-3xl font-semibold text-slate-900">
-              關卡編輯器
-            </h1>
-            <p className="mt-1 text-sm text-slate-600">建立或修改關卡內容。</p>
+            <Link href={mode === "admin" ? "/admin/dashboard" : "/studio"} className="text-sm text-ink-soft hover:text-ink">
+              ← {mode === "admin" ? "管理後台" : "創作工作室"}
+            </Link>
+            <h1 className="mt-1 text-2xl font-bold text-ink">{levelId ? "編輯關卡" : "新關卡"}</h1>
+            <p className="mt-1 text-sm text-ink-soft">
+              {mode === "designer"
+                ? "畫好地圖後先自己試玩解開，才能送出審核。"
+                : "管理員可以直接修改內容；修改地圖後關卡會回到草稿。"}
+            </p>
           </div>
-          <div className="flex items-center gap-2">
-            <button
-              className="h-10 rounded-full border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50"
-              onClick={handlePlaytest}
+          <div className="flex flex-wrap items-center gap-2">
+            <span
+              className={`rounded-full px-2.5 py-1 text-xs font-medium ${
+                playtestPassed ? "bg-success/10 text-success" : "bg-paper-deep text-ink-soft"
+              }`}
             >
-              試玩驗證
-            </button>
-            <button
-              className="h-10 rounded-full bg-slate-900 px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800"
-              onClick={handleSave}
-            >
-              {mode === "admin" ? "儲存關卡" : "儲存草稿"}
-            </button>
-            {mode === "designer" && (
-              <div className="flex flex-col items-end gap-1">
-                <button
-                  className="h-10 rounded-full bg-teal-500 px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-teal-400"
-                  onClick={() => {
-                    if (playtestPassed) {
-                      handlePublish();
-                    } else {
-                      handlePlaytest();
-                    }
-                  }}
-                >
-                  測試過關並提交發布
-                </button>
-                <span className="min-h-[16px] text-xs text-slate-500">
-                  {!playtestPassed ? "需要先在測試頁面完成過關才可以發佈" : ""}
-                </span>
-              </div>
+              {playtestPassed ? "已解開" : "還沒解開"}
+            </span>
+            {!sizeCheck.ok && (
+              <span className="rounded-full bg-destructive/10 px-2.5 py-1 text-xs font-medium text-destructive">
+                地圖太大
+              </span>
             )}
-          </div>
-        </div>
-
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="text-xs text-slate-500 space-x-2">
-            <span>
-              編輯範圍：{contentBounds.width} x {contentBounds.height}
-            </span>
-            <span className="text-slate-400">
-              x: {contentBounds.minX}~{contentBounds.maxX}, y: {contentBounds.minY}~{contentBounds.maxY}
-            </span>
-          </div>
-          <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500">
-            <span className={sizeCheck.ok ? "" : "text-rose-600"}>
-              渲染框（含空氣）：{compiledMap.bounds.width} x {compiledMap.bounds.height}
-            </span>
-            <span className="text-xs text-slate-500">
-              試玩驗證：{playtestPassed ? "已通過" : "尚未通過"}
-            </span>
+            <Button variant="outline" onClick={handlePlaytest}>
+              試玩
+            </Button>
+            <Button variant={mode === "designer" ? "outline" : "default"} onClick={handleSave}>
+              {mode === "admin" ? "儲存關卡" : "儲存草稿"}
+            </Button>
+            {mode === "designer" && (
+              <Button
+                onClick={() => (playtestPassed ? handlePublish() : handlePlaytest())}
+                title={playtestPassed ? "送出審核" : "先試玩解開這一關"}
+              >
+                {playtestPassed ? "送出審核" : "試玩後送出"}
+              </Button>
+            )}
           </div>
         </div>
 

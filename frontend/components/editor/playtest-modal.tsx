@@ -2,19 +2,16 @@
 
 /**
  * Block42 Frontend - Fullscreen playtest modal
+ * 作者在這裡解開自己的關卡；過關時把解法回報給編輯器，才能送出發布。
  */
 
-import { useEffect, useState } from "react";
-import { XIcon } from "lucide-react";
+import { useEffect, useRef } from "react";
+import { Check, X } from "lucide-react";
 import type { LevelConfig, MapData, Solution } from "@/types/api";
 import { useGameState } from "@/lib/hooks/use-game-state";
-import { GameCanvas } from "@/components/game/game-canvas";
-import { CommandToolbox } from "@/components/game/command-toolbox";
-import { ProgrammingWorkspace } from "@/components/game/programming-workspace";
-import { GameControls } from "@/components/game/game-controls";
-import { ExecutionThreadBar } from "@/components/game/execution-thread";
+import { GameWorkbench } from "@/components/game/game-workbench";
 import { GameResultOverlay } from "@/components/game/game-result-overlay";
-import { GameDndProvider } from "@/components/game/game-dnd-provider";
+import { Button } from "@/components/ui/button";
 
 interface PlaytestModalProps {
   title: string;
@@ -40,201 +37,86 @@ export function PlaytestModal({
   onSuccess,
 }: PlaytestModalProps) {
   const game = useGameState({ mapData, config });
-  const [reportedSuccess, setReportedSuccess] = useState(false);
-  const [showResult, setShowResult] = useState(false);
+  const reportedRef = useRef(false);
+  const { didSucceed, serializeSolution } = game;
 
   useEffect(() => {
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKeyDown);
     return () => {
       document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", onKeyDown);
     };
-  }, []);
+  }, [onClose]);
 
   useEffect(() => {
-    if (!game.didSucceed || reportedSuccess) return;
-    const timer = setTimeout(() => {
-      setReportedSuccess(true);
-    }, 0);
-    onSuccess(game.serializeSolution());
-    return () => clearTimeout(timer);
-  }, [game.didSucceed, game.serializeSolution, onSuccess, reportedSuccess, game]);
+    if (!didSucceed) {
+      reportedRef.current = false;
+      return;
+    }
+    if (reportedRef.current) return;
+    reportedRef.current = true;
+    onSuccess(serializeSolution());
+  }, [didSucceed, serializeSolution, onSuccess]);
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setReportedSuccess(false);
-      setShowResult(false);
-    }, 0);
-    return () => clearTimeout(timer);
-  }, [mapData, config]);
-
-  useEffect(() => {
-    if (!game.didSucceed) return;
-    const timer = setTimeout(() => setShowResult(true), 0);
-    return () => clearTimeout(timer);
-  }, [game.didSucceed, game]);
-
-  useEffect(() => {
-    if (game.didSucceed) return;
-    const timer = setTimeout(() => setShowResult(false), 0);
-    return () => clearTimeout(timer);
-  }, [game.didSucceed, game]);
-
-  const currentState = game.currentState;
-  const resolvedPassed = playtestPassed || game.didSucceed;
+  const passed = playtestPassed || didSucceed;
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex flex-col bg-[radial-gradient(circle_at_top,rgba(56,189,248,0.18),transparent_45%),radial-gradient(circle_at_18%_20%,rgba(250,204,21,0.18),transparent_40%),linear-gradient(180deg,#f8fafc,#e2e8f0)]"
-      role="dialog"
-      aria-modal="true"
-    >
-      <div className="flex items-center justify-between border-b border-white/70 bg-white/85 px-6 py-3 shadow-[0_10px_30px_-24px_rgba(15,23,42,0.5)] backdrop-blur">
-        <div>
-          <div className="text-[10px] font-semibold uppercase tracking-[0.35em] text-slate-400">
-            Level
-          </div>
-          <div className="mt-1 text-lg font-semibold text-slate-900">{title}</div>
+    <div className="fixed inset-0 z-50 flex flex-col bg-paper" role="dialog" aria-modal="true" aria-label={`試玩：${title}`}>
+      <div className="flex flex-wrap items-center gap-3 border-b border-line bg-white px-4 py-3 sm:px-6">
+        <div className="min-w-0">
+          <div className="text-xs text-ink-faint">試玩</div>
+          <div className="truncate font-semibold text-ink">{title}</div>
         </div>
-        <button
-          type="button"
-          onClick={onClose}
-          className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:border-slate-300 hover:text-slate-900"
-          aria-label="關閉試玩視窗"
+        <span
+          className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium ${
+            passed ? "bg-success/10 text-success" : "bg-paper-deep text-ink-soft"
+          }`}
         >
-          <XIcon className="h-4 w-4" />
-        </button>
+          {passed && <Check className="h-3 w-3" strokeWidth={3} />}
+          {passed ? "已解開" : "還沒解開"}
+        </span>
+        <div className="ml-auto flex items-center gap-2">
+          <div className="hidden text-right text-xs text-ink-faint sm:block">{!canPublish && publishHint}</div>
+          <Button size="sm" onClick={onPublish} disabled={!canPublish}>
+            送出發布
+          </Button>
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-lg p-2 text-ink-soft transition hover:bg-paper-deep hover:text-ink"
+            aria-label="關閉試玩"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
       </div>
 
-      <div className="flex-1 overflow-hidden">
-        <div className="relative mx-auto flex h-full max-w-[1400px] flex-col gap-4 px-6 py-4">
-          <div className="flex flex-wrap items-center justify-between gap-4 rounded-[22px] border border-white/70 bg-white/85 px-4 py-3 text-sm text-slate-600 shadow-[0_16px_40px_-32px_rgba(15,23,42,0.5)] backdrop-blur">
-            <div className="flex items-center gap-3">
-              <span className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">
-                Playtest
-              </span>
-              <span
-                className={`text-sm font-semibold ${
-                  resolvedPassed ? "text-emerald-600" : "text-slate-600"
-                }`}
-              >
-                {resolvedPassed ? "已通過" : "尚未通過"}
-              </span>
-            </div>
-            <div className="flex flex-col items-end gap-1 text-right">
-              <button
-                type="button"
-                onClick={onPublish}
-                disabled={!canPublish}
-                className="rounded-full bg-teal-500 px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-teal-400 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                提交發布
-              </button>
-              {!canPublish && (
-                <span className="text-xs text-slate-400">{publishHint}</span>
-              )}
-            </div>
-          </div>
-
-          <div className="flex min-h-0 flex-1 flex-col gap-3">
-            <div className="flex min-h-0 flex-[3] flex-col gap-3">
-              <div className="flex min-h-0 flex-1 rounded-[28px] border border-slate-200/80 bg-white/85 p-4 shadow-[0_16px_40px_-32px_rgba(15,23,42,0.5)] backdrop-blur">
-                <div className="relative flex min-h-0 flex-1 items-stretch">
-                  {showResult && game.didSucceed && (
-                    <GameResultOverlay
-                      title="通關完成"
-                      description="已成功收集所有星星，可以直接提交發布。"
-                      tone="success"
-                      primaryAction={
-                        <button
-                          type="button"
-                          onClick={onPublish}
-                          disabled={!canPublish}
-                          className="rounded-full bg-teal-500 px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-teal-400 disabled:cursor-not-allowed disabled:opacity-50"
-                        >
-                          提交發布
-                        </button>
-                      }
-                      secondaryAction={
-                        <button
-                          type="button"
-                          onClick={() => setShowResult(false)}
-                          className="rounded-full border border-slate-200 bg-white px-5 py-2 text-sm font-semibold text-slate-600 shadow-sm transition hover:border-slate-300"
-                        >
-                          繼續試玩
-                        </button>
-                      }
-                    />
-                  )}
-                  <GameCanvas
-                    mapData={mapData}
-                    state={currentState}
-                    fitToContainer
-                  />
-                  <div className="pointer-events-none absolute inset-0 rounded-[24px] ring-1 ring-slate-900/10" />
-                </div>
-              </div>
-              <ExecutionThreadBar
-                queueSnapshots={game.queueSnapshots}
-                timelineIndex={game.timelineIndex}
-                actions={
-                  <GameControls
-                    isRunning={game.isRunning}
-                    speed={game.speed}
-                    onRun={game.run}
-                    onStep={game.step}
-                    onReset={game.reset}
-                    onSpeedChange={game.setSpeed}
-                  />
+      <div className="flex-1 overflow-y-auto">
+        <div className="mx-auto max-w-[1320px] px-4 py-4 sm:px-6">
+          <GameWorkbench
+            mapData={mapData}
+            config={config}
+            game={game}
+            successOverlay={
+              <GameResultOverlay
+                title="解開了"
+                description="這個解法會跟著關卡一起送出，伺服器會再驗證一次。"
+                primaryAction={
+                  canPublish ? <Button onClick={onPublish}>送出發布</Button> : undefined
+                }
+                secondaryAction={
+                  <Button variant="outline" onClick={onClose}>
+                    回到編輯
+                  </Button>
                 }
               />
-            </div>
-
-            <div className="flex min-h-0 flex-[2] gap-3">
-              <GameDndProvider
-                onDropCommand={game.dropCommand}
-                onDropCondition={game.dropCondition}
-                disabled={game.isEditingLocked}
-              >
-                <div className="w-[clamp(180px,22vw,240px)] shrink-0">
-                  <CommandToolbox
-                    config={config}
-                    activeCommand={game.selectedSlotState?.type ?? null}
-                    activeCondition={game.selectedSlotState?.condition ?? null}
-                    disabled={!game.selectedSlot || game.isEditingLocked}
-                    onSelectCommand={game.applyCommand}
-                    onSelectCondition={game.applyCondition}
-                  />
-                </div>
-                <div className="flex min-h-0 flex-1 flex-col gap-2">
-                  <ProgrammingWorkspace
-                    config={config}
-                    slots={game.slots}
-                    selectedSlot={game.selectedSlot}
-                    onSelectSlot={game.selectSlot}
-                    onClearTrack={game.clearTrack}
-                    disabled={game.isEditingLocked}
-                  />
-                  {currentState && currentState.status === "failure" && (
-                    <div className="rounded-2xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
-                      {currentState.outOfBoundsPosition ? (
-                        <div className="space-y-1">
-                          <div className="font-semibold">🚨 火箭飛出有效範圍！</div>
-                          <div>
-                            越界位置：({currentState.outOfBoundsPosition.x},{" "}
-                            {currentState.outOfBoundsPosition.y})
-                          </div>
-                          <div className="text-rose-600">{currentState.error}</div>
-                        </div>
-                      ) : (
-                        currentState.error
-                      )}
-                    </div>
-                  )}
-                </div>
-              </GameDndProvider>
-            </div>
-          </div>
+            }
+          />
         </div>
       </div>
     </div>

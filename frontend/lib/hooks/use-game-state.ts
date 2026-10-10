@@ -19,11 +19,16 @@ import {
 import { serializeCommands } from "@/lib/game-engine/commands";
 
 const DEFAULT_SPEED = 1;
-const SPEED_UNIT_MS = 100;
+const SPEED_UNIT_MS = 180;
 const MIN_STEP_MS = 20;
 const MIN_RUN_DELAY_MS = 100;
 
 export type TrackKey = "f0" | "f1" | "f2";
+
+/** 每一步動畫的毫秒數 */
+export function stepDurationFor(speed: number) {
+  return Math.max(MIN_STEP_MS, SPEED_UNIT_MS / speed);
+}
 
 export interface CommandSlot {
   type: CommandType | null;
@@ -254,7 +259,7 @@ export function useGameState({
   useEffect(() => {
     if (!isRunning || !execution) return;
 
-    const interval = Math.max(MIN_STEP_MS, SPEED_UNIT_MS / speed);
+    const interval = stepDurationFor(speed);
     timerRef.current = setInterval(() => {
       setStepIndex((prev) => {
         if (!execution) return prev;
@@ -353,6 +358,15 @@ export function useGameState({
     [selectedSlot, isEditingLocked]
   );
 
+  const clearSelectedSlot = useCallback(() => {
+    if (isEditingLocked || !selectedSlot) return;
+    setSlots((prev) => {
+      const nextTrack = prev[selectedSlot.track].slice();
+      nextTrack[selectedSlot.index] = { ...EMPTY_SLOT };
+      return { ...prev, [selectedSlot.track]: nextTrack };
+    });
+  }, [isEditingLocked, selectedSlot]);
+
   const clearTrack = useCallback((track: TrackKey) => {
     if (isEditingLocked) return;
     setSlots((prev) => ({
@@ -442,6 +456,7 @@ export function useGameState({
     reset,
     clearTrack,
     clearAll,
+    clearSelectedSlot,
     serializeSolution,
   };
 }
