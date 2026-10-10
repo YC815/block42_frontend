@@ -1,13 +1,13 @@
 """FastAPI 應用入口"""
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
 
 from app.database import engine
 from app.config import settings
 from app.api.v1 import auth, levels, designer, admin
+from app.core.body_limit import BodySizeLimitMiddleware
 
 MAX_BODY_BYTES = 512 * 1024  # 最大地圖 128x128 約 400KB
 
@@ -39,19 +39,6 @@ app = FastAPI(
 )
 
 
-@app.middleware("http")
-async def limit_body_size(request: Request, call_next):
-    """擋下過大的請求，避免塞爆 JSON 解析和資料庫"""
-    if request.method in ("POST", "PUT", "PATCH"):
-        content_length = request.headers.get("content-length", "")
-        if not content_length.isdigit():
-            # 不接受沒有長度的串流上傳，否則無法事先擋下過大的內容
-            return JSONResponse(status_code=411, content={"detail": "缺少 Content-Length"})
-        if int(content_length) > MAX_BODY_BYTES:
-            return JSONResponse(status_code=413, content={"detail": "請求內容過大"})
-    return await call_next(request)
-
-
 # 前端用 Authorization header 帶 token，不需要跨站 cookie
 app.add_middleware(
     CORSMiddleware,
@@ -60,6 +47,9 @@ app.add_middleware(
     allow_methods=["GET", "POST", "PUT", "DELETE"],
     allow_headers=["Authorization", "Content-Type"],
 )
+
+# 最外層：先擋下過大的請求，避免塞爆 JSON 解析和資料庫
+app.add_middleware(BodySizeLimitMiddleware, max_bytes=MAX_BODY_BYTES)
 
 app.include_router(auth.router, prefix="/api/v1")
 app.include_router(levels.router, prefix="/api/v1")

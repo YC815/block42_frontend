@@ -108,3 +108,28 @@ def test_oversized_map_rejected(client, auth):
         headers=auth,
     )
     assert resp.status_code in (413, 422)
+
+
+def test_chunked_oversized_body_rejected(client, auth):
+    def chunks():
+        for _ in range(100):
+            yield b"x" * 10_000
+
+    resp = client.post(
+        "/api/v1/designer/levels",
+        content=chunks(),
+        headers={**auth, "content-type": "application/json"},
+    )
+    assert resp.status_code == 413
+
+
+def test_body_without_content_length_still_accepted(client, auth):
+    def body():
+        yield b'{"commands_f0": ["move"]}'
+
+    resp = client.put(
+        "/api/v1/levels/official-01/program",
+        content=body(),
+        headers={**auth, "content-type": "application/json"},
+    )
+    assert resp.status_code == 200
