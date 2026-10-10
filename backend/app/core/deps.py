@@ -1,14 +1,12 @@
 """FastAPI 依賴注入"""
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
-from jose import JWTError, jwt
 from sqlalchemy.orm import Session
 from typing import Optional
 
 from app.database import get_db
 from app.models.user import User
-from app.core.security import SECRET_KEY, ALGORITHM
-from app.schemas.user import TokenData
+from app.core.security import decode_access_token
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login")
 oauth2_scheme_optional = OAuth2PasswordBearer(
@@ -23,53 +21,22 @@ def get_current_user(
 ) -> User:
     """從 JWT token 取得當前使用者
 
-    Args:
-        token: JWT token (自動從 Authorization header 提取)
-        db: 資料庫 session
-
-    Returns:
-        User: 當前使用者物件
-
     Raises:
         HTTPException 401: Token 無效或使用者不存在
     """
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="無效的認證憑證",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
-
-    try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        user_id_raw = payload.get("sub")
-        is_superuser: bool = payload.get("is_superuser", False)
-
-        if user_id_raw is None:
-            raise credentials_exception
-        try:
-            user_id = int(user_id_raw)
-        except (TypeError, ValueError):
-            raise credentials_exception
-
-        token_data = TokenData(user_id=user_id, is_superuser=is_superuser)
-    except JWTError:
-        raise credentials_exception
-
-    user = db.query(User).filter(User.id == token_data.user_id).first()
+    user_id = decode_access_token(token)
+    user = db.query(User).filter(User.id == user_id).first() if user_id is not None else None
     if user is None:
-        raise credentials_exception
-
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="無效的認證憑證",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
     return user
 
 
 def require_superuser(current_user: User = Depends(get_current_user)) -> User:
     """要求 superuser 權限
-
-    Args:
-        current_user: 當前使用者（自動注入）
-
-    Returns:
-        User: 當前使用者物件
 
     Raises:
         HTTPException 403: 使用者不是管理員
@@ -77,8 +44,8 @@ def require_superuser(current_user: User = Depends(get_current_user)) -> User:
     if not current_user.is_superuser:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-        detail="需要管理員權限"
-    )
+            detail="需要管理員權限"
+        )
     return current_user
 
 
@@ -86,28 +53,10 @@ def get_current_user_optional(
     token: Optional[str] = Depends(oauth2_scheme_optional),
     db: Session = Depends(get_db)
 ) -> Optional[User]:
-    """可選的使用者解析：未提供 token 時回傳 None，否則驗證 JWT。
-
-    用於部分公開端點在需要時提升為認證狀態。
-    """
+    """可選的使用者解析：未提供或無效的 token 回傳 None。"""
     if not token:
         return None
-    try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        user_id_raw = payload.get("sub")
-        is_superuser: bool = payload.get("is_superuser", False)
-        if user_id_raw is None:
-            return None
-        try:
-            user_id = int(user_id_raw)
-        except (TypeError, ValueError):
-            return None
-    except JWTError:
+    user_id = decode_access_token(token)
+    if user_id is None:
         return None
-
-    user = db.query(User).filter(User.id == user_id).first()
-    if not user:
-        return None
-    # 同步 superuser 資訊
-    user.is_superuser = bool(is_superuser)
-    return user
+    return db.query(User).filter(User.id == user_id).first()

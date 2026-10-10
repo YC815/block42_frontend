@@ -3,11 +3,11 @@
 此模組將業務邏輯從路由層分離，實現關注點分離。
 """
 from app.services.level_service import LevelService
-from app.services.publish_service import get_publish_strategy
+from app.services.publish_service import publish_level
 from app.services.moderation_service import ModerationService
 
 __all__ = [
     "LevelService",
-    "get_publish_strategy",
+    "publish_level",
     "ModerationService",
 ]

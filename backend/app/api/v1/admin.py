@@ -8,7 +8,6 @@ from app.models.level import Level, LevelStatus
 from app.models.progress import LevelProgress
 from app.models.program import LevelProgram
 from app.schemas.level import (
-    LevelApprove,
     LevelReject,
     LevelDetail,
     LevelListItem,
@@ -19,6 +18,7 @@ from app.schemas.user import AdminUserCreate, AdminUserUpdate, UserOut
 from app.schemas.admin import LevelTransferRequest, LevelTransferResult
 from app.core.security import get_password_hash
 from app.core.deps import require_superuser
+from app.api.v1.auth import username_taken
 from app.services import ModerationService, LevelService
 
 router = APIRouter(prefix="/admin", tags=["admin"])
@@ -68,8 +68,7 @@ def create_user(
     db: Session = Depends(get_db)
 ):
     """建立使用者（管理用）"""
-    existing = db.query(User).filter(User.username == data.username).first()
-    if existing:
+    if username_taken(db, data.username):
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="使用者名稱已存在")
 
     user = User(
@@ -96,8 +95,7 @@ def update_user(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="使用者不存在")
 
     if data.username and data.username != user.username:
-        existing = db.query(User).filter(User.username == data.username).first()
-        if existing:
+        if data.username.lower() != user.username.lower() and username_taken(db, data.username):
             raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="使用者名稱已存在")
         user.username = data.username
 
@@ -260,19 +258,13 @@ def delete_level_admin(
 @router.post("/levels/{level_id}/approve", response_model=LevelDetail)
 def approve_level(
     level_id: str,
-    data: LevelApprove,
     current_user: User = Depends(require_superuser),
     db: Session = Depends(get_db)
 ):
-    """審核通過
-
-    **狀態機邏輯：**
-    - as_official=True → status='published', is_official=True
-    - as_official=False → status='published', is_official=False
+    """審核通過，上架為社群關卡
 
     Args:
         level_id: 關卡 ID
-        data: 審核資料（可選設為官方關卡）
         current_user: 當前使用者（需為管理員）
         db: 資料庫 session
 
@@ -289,7 +281,7 @@ def approve_level(
     if not level:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="關卡不存在")
 
-    level = ModerationService.approve_level(db, level, data.as_official, data.official_order)
+    level = ModerationService.approve_level(db, level)
     return level
 
 

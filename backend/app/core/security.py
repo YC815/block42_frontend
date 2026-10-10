@@ -2,14 +2,19 @@
 from datetime import datetime, timedelta, UTC
 from typing import Any
 import bcrypt
-from jose import jwt
+import jwt
 
 from app.config import settings
 
-# JWT 設定（從環境變數讀取）
-SECRET_KEY = getattr(settings, "secret_key", "INSECURE_DEFAULT_SECRET_CHANGE_ME")
+SECRET_KEY = settings.secret_key
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24  # 24 小時
+ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 12  # 12 小時
+
+# bcrypt 只看前 72 bytes，超過會直接丟例外；schema 端已擋下更長的密碼
+BCRYPT_MAX_BYTES = 72
+
+# 帳號不存在時也跑一次 bcrypt，讓回應時間無法用來判斷帳號是否存在
+_DUMMY_HASH = bcrypt.hashpw(b"block42-dummy-password", bcrypt.gensalt()).decode("utf-8")
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
@@ -22,16 +27,23 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
     Returns:
         bool: 密碼是否正確
     """
+    password = plain_password.encode("utf-8")
+    if len(password) > BCRYPT_MAX_BYTES:
+        return False
     # Bcrypt hash 是 ASCII-compatible binary data，必須用 latin-1 編碼
-    # 絕對不能用 utf-8，否則會破壞 hash 的二進制結構
-    return bcrypt.checkpw(plain_password.encode("utf-8"), hashed_password.encode("latin-1"))
+    return bcrypt.checkpw(password, hashed_password.encode("latin-1"))
+
+
+def verify_dummy_password(plain_password: str) -> None:
+    """帳號不存在時呼叫，消耗和正常驗證相同的時間"""
+    verify_password(plain_password, _DUMMY_HASH)
 
 
 def get_password_hash(password: str) -> str:
     """雜湊密碼
 
     Args:
-        password: 明文密碼（無長度限制）
+        password: 明文密碼（UTF-8 不超過 72 bytes）
 
     Returns:
         str: Bcrypt 雜湊後的密碼
@@ -41,20 +53,19 @@ def get_password_hash(password: str) -> str:
     return hashed.decode("utf-8")
 
 
-def create_access_token(data: dict[str, Any]) -> str:
-    """建立 JWT token
-
-    Args:
-        data: Payload 資料（必須包含 'sub' 和 'is_superuser'）
-
-    Returns:
-        str: JWT token 字串
-    """
-    to_encode = data.copy()
-    if "sub" in to_encode:
-        # jose 要求 sub 必須是 string
-        to_encode["sub"] = str(to_encode["sub"])
+def create_access_token(user_id: int) -> str:
+    """建立 JWT token（只放使用者 ID，權限一律以資料庫為準）"""
     expire = datetime.now(UTC) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
-    return encoded_jwt
+    payload: dict[str, Any] = {"sub": str(user_id), "exp": expire}
+    return jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
+
+
+def decode_access_token(token: str) -> int | None:
+    """解析 token，回傳使用者 ID；無效或過期回傳 None"""
+    try:
+        payload = jwt.decode(
+            token, SECRET_KEY, algorithms=[ALGORITHM], options={"require": ["exp", "sub"]}
+        )
+        return int(payload["sub"])
+    except (jwt.PyJWTError, TypeError, ValueError):
+        return None

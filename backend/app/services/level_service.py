@@ -3,6 +3,8 @@ from sqlalchemy.orm import Session
 from nanoid import generate
 
 from app.models.level import Level, LevelStatus
+from app.models.progress import LevelProgress
+from app.models.program import LevelProgram
 from app.schemas.level import LevelCreate, LevelUpdate, AdminLevelUpdate
 
 
@@ -60,12 +62,14 @@ class LevelService:
 
     @staticmethod
     def delete_level(db: Session, level: Level) -> None:
-        """刪除關卡
+        """刪除關卡（連同玩家在這關的進度與存檔）
 
         Args:
             db: 資料庫 session
             level: 要刪除的關卡
         """
+        for model in (LevelProgress, LevelProgram):
+            db.query(model).filter(model.level_id == level.id).delete(synchronize_session=False)
         db.delete(level)
         db.commit()
 
@@ -91,10 +95,6 @@ class LevelService:
         if data.config is not None:
             level.config = data.config.model_dump()
             updated_map = True
-        if data.is_official is not None:
-            level.is_official = data.is_official
-        if data.official_order is not None:
-            level.official_order = data.official_order
         if data.status is not None:
             level.status = LevelStatus(data.status)
 

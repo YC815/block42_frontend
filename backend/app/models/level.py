@@ -10,8 +10,6 @@ from app.database import Base
 
 if TYPE_CHECKING:
     from app.models.user import User
-    from app.models.progress import LevelProgress
-    from app.models.program import LevelProgram
 
 
 class LevelStatus(str, enum.Enum):
@@ -41,7 +39,7 @@ class Level(Base):
     - Create Level → status='draft', solution=NULL
     - Update Level → 強制 status='draft', solution=NULL
     - Publish (一般使用者) → status='pending'
-    - Publish (管理員 + as_official) → status='published', is_official=True
+    - Publish (管理員) → status='published'
     - Approve (管理員) → status='published'
     - Reject (管理員) → status='rejected'
     """
@@ -57,6 +55,8 @@ class Level(Base):
         nullable=False,
         index=True
     )
+    # 舊版把官方關卡存在資料庫；官方關卡已改為寫在 levels/official.txt。
+    # 欄位保留給既有資料，新關卡一律為 False，is_official=True 的舊資料不會出現在社群列表。
     is_official: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False, index=True)
     official_order: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
 
@@ -93,12 +93,6 @@ class Level(Base):
 
     # ===== Relationship =====
     author: Mapped["User"] = relationship("User", back_populates="levels")
-    progresses: Mapped[list["LevelProgress"]] = relationship(
-        "LevelProgress", back_populates="level"
-    )
-    programs: Mapped[list["LevelProgram"]] = relationship(
-        "LevelProgram", back_populates="level"
-    )
 
     @property
     def map(self) -> dict:

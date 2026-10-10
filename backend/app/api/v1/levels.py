@@ -1,4 +1,4 @@
-"""Public API - 無需認證"""
+"""Public API - 社群關卡列表、玩家進度與存檔"""
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session, joinedload
 
@@ -6,49 +6,26 @@ from app.database import get_db
 from app.models.level import Level, LevelStatus
 from app.models.progress import LevelProgress
 from app.models.program import LevelProgram
-from app.schemas.progress import LevelProgressOut, LevelProgressUpdate
-from app.schemas.program import LevelProgramOut, LevelProgramUpdate
+from app.schemas.progress import LevelProgressOut
+from app.schemas.program import LevelProgramOut, ProgramCommands
 from app.schemas.level import LevelOut, LevelListItem
 from app.core.deps import get_current_user, get_current_user_optional
 from app.models.user import User
+from app.services.play_service import get_playable_level, run_solution
 
 router = APIRouter(prefix="/levels", tags=["public"])
 
 
-@router.get("/official", response_model=list[LevelListItem])
-def list_official_levels(db: Session = Depends(get_db)):
-    """列出官方關卡
-
-    Args:
-        db: 資料庫 session
-
-    Returns:
-        list[LevelListItem]: 官方關卡列表（按 official_order 排序）
-    """
-    levels = (
-        db.query(Level)
-        .options(joinedload(Level.author))
-        .filter(Level.is_official == True, Level.status == LevelStatus.PUBLISHED)
-        .order_by(Level.official_order)
-        .all()
-    )
-    return levels
-
-
 @router.get("/community", response_model=list[LevelListItem])
 def list_community_levels(db: Session = Depends(get_db)):
-    """列出社群關卡
+    """列出社群關卡（按建立時間倒序）
 
-    Args:
-        db: 資料庫 session
-
-    Returns:
-        list[LevelListItem]: 社群關卡列表（按建立時間倒序）
+    官方關卡由前端內建，不經過這裡。
     """
     levels = (
         db.query(Level)
         .options(joinedload(Level.author))
-        .filter(Level.is_official == False, Level.status == LevelStatus.PUBLISHED)
+        .filter(Level.is_official == False, Level.status == LevelStatus.PUBLISHED)  # noqa: E712
         .order_by(Level.created_at.desc())
         .all()
     )
@@ -69,20 +46,19 @@ def list_level_progress(
     return progress
 
 
-@router.put("/{level_id}/progress", response_model=LevelProgressOut)
-def upsert_level_progress(
+@router.post("/{level_id}/complete", response_model=LevelProgressOut)
+def complete_level(
     level_id: str,
-    data: LevelProgressUpdate,
+    data: ProgramCommands,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """更新或建立關卡進度"""
-    level = db.query(Level).filter(Level.id == level_id).first()
-    if not level:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="關卡不存在",
-        )
+    """提交過關程式
+
+    伺服器會重跑一次，真的收齊所有星星才記錄為完成。
+    """
+    map_data, config = get_playable_level(db, level_id, current_user)
+    result = run_solution(map_data, config, data.as_program())
 
     progress = (
         db.query(LevelProgress)
@@ -92,34 +68,15 @@ def upsert_level_progress(
         )
         .first()
     )
-
     if not progress:
-        progress = LevelProgress(
-            user_id=current_user.id,
-            level_id=level_id,
-            is_completed=data.is_completed,
-            best_steps=data.best_steps,
-            stars_collected=data.stars_collected,
-        )
+        progress = LevelProgress(user_id=current_user.id, level_id=level_id)
         db.add(progress)
-        db.commit()
-        db.refresh(progress)
-        return progress
 
-    if data.is_completed:
-        progress.is_completed = True
-    if data.best_steps is not None:
-        progress.best_steps = (
-            data.best_steps
-            if progress.best_steps is None
-            else min(progress.best_steps, data.best_steps)
-        )
-    if data.stars_collected is not None:
-        progress.stars_collected = (
-            data.stars_collected
-            if progress.stars_collected is None
-            else max(progress.stars_collected, data.stars_collected)
-        )
+    progress.is_completed = True
+    progress.best_steps = (
+        result.steps if progress.best_steps is None else min(progress.best_steps, result.steps)
+    )
+    progress.stars_collected = result.total_stars
 
     db.commit()
     db.refresh(progress)
@@ -152,17 +109,18 @@ def get_level_program(
 @router.put("/{level_id}/program", response_model=LevelProgramOut)
 def upsert_level_program(
     level_id: str,
-    data: LevelProgramUpdate,
+    data: ProgramCommands,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     """更新或建立關卡程式碼"""
-    level = db.query(Level).filter(Level.id == level_id).first()
-    if not level:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="關卡不存在",
-        )
+    _, config = get_playable_level(db, level_id, current_user)
+    for key, commands in data.as_program().items():
+        if len(commands) > config.get(key, 0):
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+                detail=f"{key} 指令數超過上限",
+            )
 
     program = (
         db.query(LevelProgram)
@@ -186,11 +144,9 @@ def upsert_level_program(
             commands=payload,
         )
         db.add(program)
-        db.commit()
-        db.refresh(program)
-        return program
+    else:
+        program.commands = payload
 
-    program.commands = payload
     db.commit()
     db.refresh(program)
     return program
@@ -202,18 +158,9 @@ def get_level(
     db: Session = Depends(get_db),
     current_user: User | None = Depends(get_current_user_optional),
 ):
-    """獲取單個關卡詳情（不含 solution）
+    """獲取單個社群關卡詳情（不含 solution）
 
-    Args:
-        level_id: 關卡 ID（NanoID）
-        db: 資料庫 session
-        current_user: 可選的當前使用者（公開端點）
-
-    Returns:
-        LevelOut: 關卡詳情（僅公開已發布關卡；草稿需作者或管理員）
-
-    Raises:
-        HTTPException 404/403: 關卡不存在或無權存取
+    已發布關卡公開；草稿只有作者或管理員能看。
     """
     level = (
         db.query(Level)

@@ -12,7 +12,7 @@ if database_url.startswith("postgresql://"):
 # 同步 engine
 engine = create_engine(
     database_url,
-    echo=settings.debug,  # SQL 日誌
+    echo=False,  # 需要看 SQL 時再暫時打開，避免把參數（含密碼雜湊）寫進 log
     pool_pre_ping=True,   # 連線健康檢查
 )
 

@@ -3,10 +3,14 @@ from pydantic import BaseModel, Field, field_validator, model_validator
 from typing import Literal
 from datetime import datetime
 
+from app.schemas.program import ProgramCommands
+
 # --- 地圖限制常數 ---
 COORD_MIN = -512
 COORD_MAX = 512
 MAX_DIMENSION = 128
+MAX_TILES = MAX_DIMENSION * MAX_DIMENSION
+MAX_STARS = 1024
 
 # --- 遊戲資料結構 (保持原樣) ---
 class Coordinate(BaseModel):
@@ -84,8 +88,8 @@ class MapData(BaseModel):
     padding: int = Field(1, ge=0, le=8, description="渲染預留空氣的格數")
     bounds: MapBounds | None = None
     start: StartPoint
-    stars: list[Coordinate]
-    tiles: list[Tile]
+    stars: list[Coordinate] = Field(..., max_length=MAX_STARS)
+    tiles: list[Tile] = Field(..., max_length=MAX_TILES)
 
     @model_validator(mode="before")
     @classmethod
@@ -121,13 +125,15 @@ class MapData(BaseModel):
         shift_x = self.padding - min_x
         shift_y = self.padding - min_y
 
+        # 同一格重複出現時以最後一筆為準
+        tile_colors = {(tile.x, tile.y): tile.color for tile in self.tiles}
         normalized_tiles = [
-            Tile(x=tile.x + shift_x, y=tile.y + shift_y, color=tile.color)
-            for tile in self.tiles
+            Tile(x=x + shift_x, y=y + shift_y, color=color)
+            for (x, y), color in tile_colors.items()
         ]
         normalized_stars = [
-            Coordinate(x=star.x + shift_x, y=star.y + shift_y)
-            for star in self.stars
+            Coordinate(x=x + shift_x, y=y + shift_y)
+            for x, y in dict.fromkeys((star.x, star.y) for star in self.stars)
         ]
         normalized_start = StartPoint(
             x=self.start.x + shift_x,
@@ -159,12 +165,12 @@ class MapData(BaseModel):
 
 
 # --- Solution Schema ---
-class Solution(BaseModel):
-    """解題資料（提交時驗證格式）"""
-    commands_f0: list[str]
-    commands_f1: list[str] = []
-    commands_f2: list[str] = []
-    steps_count: int = Field(..., ge=0, description="步數（用於難度評估）")
+class Solution(ProgramCommands):
+    """解題資料
+
+    steps_count 由伺服器重跑解法後填入，客戶端送來的值會被覆蓋。
+    """
+    steps_count: int = Field(0, ge=0, le=10_000, description="步數（用於難度評估）")
 
 
 # --- Request Schemas ---
@@ -185,19 +191,11 @@ class LevelUpdate(BaseModel):
 class LevelPublish(BaseModel):
     """發布關卡（提交 solution）"""
     solution: Solution
-    as_official: bool = False  # 管理員專用
-    official_order: int | None = None  # 管理員專用
-
-
-class LevelApprove(BaseModel):
-    """審核通過"""
-    as_official: bool = False
-    official_order: int | None = None
 
 
 class LevelReject(BaseModel):
     """駁回理由"""
-    reason: str = Field(..., min_length=1)
+    reason: str = Field(..., min_length=1, max_length=1000)
 
 
 class AdminLevelUpdate(BaseModel):
@@ -206,8 +204,6 @@ class AdminLevelUpdate(BaseModel):
     config: LevelConfig | None = None
     map: MapData | None = None
     status: Literal["draft", "pending", "published", "rejected"] | None = None
-    is_official: bool | None = None
-    official_order: int | None = None
 
 
 # --- Response Schemas ---
@@ -218,8 +214,6 @@ class LevelOut(BaseModel):
     author_id: int
     author_name: str | None = None
     status: str
-    is_official: bool
-    official_order: int
     config: LevelConfig
     map: MapData
     created_at: datetime
@@ -240,7 +234,6 @@ class LevelListItem(BaseModel):
     author_id: int
     author_name: str | None = None
     status: str
-    is_official: bool
     created_at: datetime
 
     model_config = {"from_attributes": True}
@@ -253,8 +246,6 @@ class AdminLevelListItem(BaseModel):
     author_id: int
     author_name: str | None = None
     status: str
-    is_official: bool
-    official_order: int
     created_at: datetime
     updated_at: datetime
 

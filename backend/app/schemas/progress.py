@@ -1,14 +1,6 @@
 """Progress schemas."""
 from datetime import datetime
-from pydantic import BaseModel, Field
-
-
-class LevelProgressUpdate(BaseModel):
-    """Upsert payload for progress."""
-
-    is_completed: bool = False
-    best_steps: int | None = Field(default=None, ge=0)
-    stars_collected: int | None = Field(default=None, ge=0)
+from pydantic import BaseModel
 
 
 class LevelProgressOut(BaseModel):

@@ -1,29 +1,22 @@
 """審核服務層 - 管理員審核操作"""
-from typing import Optional
 from datetime import datetime, UTC
 from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
 
 from app.models.level import Level, LevelStatus
+from app.services.play_service import run_solution
 
 
 class ModerationService:
     """審核業務邏輯服務"""
 
     @staticmethod
-    def approve_level(
-        db: Session,
-        level: Level,
-        as_official: bool = False,
-        official_order: Optional[int] = None
-    ) -> Level:
-        """審核通過
+    def approve_level(db: Session, level: Level) -> Level:
+        """審核通過（上架為社群關卡）
 
         Args:
             db: 資料庫 session
             level: 待審核的關卡
-            as_official: 是否設為官方關卡
-            official_order: 官方關卡序號（可選）
 
         Returns:
             Level: 審核通過的關卡（status=PUBLISHED）
@@ -38,18 +31,15 @@ class ModerationService:
                 detail=f"只能審核 PENDING 狀態的關卡，當前: {level.status}",
             )
 
+        # 舊版沒有在伺服器驗證解法，審核時再跑一次
+        solution = level.solution or {}
+        run_solution(level.map_data, level.config, {
+            "f0": solution.get("commands_f0", []),
+            "f1": solution.get("commands_f1", []),
+            "f2": solution.get("commands_f2", []),
+        })
+
         level.status = LevelStatus.PUBLISHED
-        level.is_official = as_official
-
-        if as_official:
-            # 處理官方關卡序號
-            if official_order is not None:
-                level.official_order = official_order
-            else:
-                # 自動分配下一個序號
-                max_order_result = db.query(Level.official_order).order_by(Level.official_order.desc()).first()
-                level.official_order = (max_order_result[0] + 1) if max_order_result else 1
-
         db.commit()
         db.refresh(level)
         return level

@@ -1,9 +1,8 @@
-from app.schemas.user import UserRegister, UserLogin, UserOut, Token, TokenData
+from app.schemas.user import UserRegister, UserLogin, UserOut, Token
 from app.schemas.level import (
     LevelCreate,
     LevelUpdate,
     LevelPublish,
-    LevelApprove,
     LevelReject,
     LevelOut,
     LevelDetail,
@@ -11,7 +10,7 @@ from app.schemas.level import (
 )
 
 __all__ = [
-    "UserRegister", "UserLogin", "UserOut", "Token", "TokenData",
-    "LevelCreate", "LevelUpdate", "LevelPublish", "LevelApprove", "LevelReject",
+    "UserRegister", "UserLogin", "UserOut", "Token",
+    "LevelCreate", "LevelUpdate", "LevelPublish", "LevelReject",
     "LevelOut", "LevelDetail", "LevelListItem",
 ]

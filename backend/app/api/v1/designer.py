@@ -13,7 +13,7 @@ from app.schemas.level import (
     LevelListItem,
 )
 from app.core.deps import get_current_user
-from app.services import LevelService, get_publish_strategy
+from app.services import LevelService, publish_level as publish_level_service
 
 router = APIRouter(prefix="/designer", tags=["designer"])
 
@@ -105,10 +105,11 @@ def publish_level(
 ):
     """發布關卡（提交 solution）
 
+    伺服器會重跑 solution，確定可解才會送出。
+
     **狀態機邏輯：**
     - 一般使用者 → status='pending' (需審核)
-    - 管理員 + as_official=True → status='published', is_official=True
-    - 管理員 + as_official=False → status='published', is_official=False
+    - 管理員 → status='published'
 
     Args:
         level_id: 關卡 ID
@@ -122,6 +123,7 @@ def publish_level(
     Raises:
         HTTPException 404: 關卡不存在
         HTTPException 403: 無權發布此關卡
+        HTTPException 422: solution 無法通過
     """
     level = db.query(Level).filter(Level.id == level_id).first()
     if not level:
@@ -134,10 +136,7 @@ def publish_level(
             detail=f"當前狀態為 {level.status}，只能從 draft 發布。請先更新回草稿後再送審。",
         )
 
-    # 使用策略模式 - 消除所有 if/elif 分支
-    strategy = get_publish_strategy(current_user, data.as_official, data.official_order)
-    level = strategy.execute(db, level, data.solution.model_dump())
-    return level
+    return publish_level_service(db, current_user, level, data.solution)
 
 
 @router.delete("/levels/{level_id}", status_code=status.HTTP_204_NO_CONTENT)
