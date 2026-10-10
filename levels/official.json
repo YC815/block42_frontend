@@ -1,0 +1,4847 @@
+{
+  "chapters": [
+    {
+      "id": "chapter-1",
+      "title": "起步"
+    },
+    {
+      "id": "chapter-2",
+      "title": "函式"
+    },
+    {
+      "id": "chapter-3",
+      "title": "遞迴"
+    },
+    {
+      "id": "chapter-4",
+      "title": "顏色條件"
+    },
+    {
+      "id": "chapter-5",
+      "title": "塗色"
+    },
+    {
+      "id": "chapter-6",
+      "title": "挑戰"
+    }
+  ],
+  "levels": [
+    {
+      "id": "official-01",
+      "order": 1,
+      "number": "1-1",
+      "chapter_id": "chapter-1",
+      "title": "第一步",
+      "goal": "讓機器人往前走，拿到星星。",
+      "hint": "把「前進」拖進 F0，按執行看看。",
+      "config": {
+        "f0": 4,
+        "f1": 0,
+        "f2": 0,
+        "tools": {
+          "paint_red": false,
+          "paint_green": false,
+          "paint_blue": false
+        }
+      },
+      "map": {
+        "gridSize": 6,
+        "padding": 1,
+        "bounds": {
+          "minX": 0,
+          "minY": 0,
+          "maxX": 5,
+          "maxY": 2
+        },
+        "start": {
+          "x": 1,
+          "y": 1,
+          "dir": 1
+        },
+        "stars": [
+          {
+            "x": 4,
+            "y": 1
+          }
+        ],
+        "tiles": [
+          {
+            "x": 1,
+            "y": 1,
+            "color": "R"
+          },
+          {
+            "x": 2,
+            "y": 1,
+            "color": "R"
+          },
+          {
+            "x": 3,
+            "y": 1,
+            "color": "R"
+          },
+          {
+            "x": 4,
+            "y": 1,
+            "color": "R"
+          }
+        ]
+      },
+      "solution": {
+        "f0": [
+          "move",
+          "move",
+          "move"
+        ],
+        "f1": [],
+        "f2": []
+      },
+      "solution_steps": 3
+    },
+    {
+      "id": "official-02",
+      "order": 2,
+      "number": "1-2",
+      "chapter_id": "chapter-1",
+      "title": "轉彎",
+      "goal": "走到轉角，轉個方向再繼續。",
+      "hint": "轉彎不會移動，只會改變面向。右轉是以機器人自己的方向來看。",
+      "config": {
+        "f0": 6,
+        "f1": 0,
+        "f2": 0,
+        "tools": {
+          "paint_red": false,
+          "paint_green": false,
+          "paint_blue": false
+        }
+      },
+      "map": {
+        "gridSize": 5,
+        "padding": 1,
+        "bounds": {
+          "minX": 0,
+          "minY": 0,
+          "maxX": 4,
+          "maxY": 4
+        },
+        "start": {
+          "x": 1,
+          "y": 1,
+          "dir": 1
+        },
+        "stars": [
+          {
+            "x": 3,
+            "y": 3
+          }
+        ],
+        "tiles": [
+          {
+            "x": 1,
+            "y": 1,
+            "color": "R"
+          },
+          {
+            "x": 2,
+            "y": 1,
+            "color": "R"
+          },
+          {
+            "x": 3,
+            "y": 1,
+            "color": "R"
+          },
+          {
+            "x": 3,
+            "y": 2,
+            "color": "R"
+          },
+          {
+            "x": 3,
+            "y": 3,
+            "color": "R"
+          }
+        ]
+      },
+      "solution": {
+        "f0": [
+          "move",
+          "move",
+          "turn_right",
+          "move",
+          "move"
+        ],
+        "f1": [],
+        "f2": []
+      },
+      "solution_steps": 5
+    },
+    {
+      "id": "official-03",
+      "order": 3,
+      "number": "1-3",
+      "chapter_id": "chapter-1",
+      "title": "之字形",
+      "goal": "先右轉再左轉，沿著路走到底。",
+      "hint": "先在腦中走一遍，數清楚每一段要前進幾格。",
+      "config": {
+        "f0": 8,
+        "f1": 0,
+        "f2": 0,
+        "tools": {
+          "paint_red": false,
+          "paint_green": false,
+          "paint_blue": false
+        }
+      },
+      "map": {
+        "gridSize": 6,
+        "padding": 1,
+        "bounds": {
+          "minX": 0,
+          "minY": 0,
+          "maxX": 5,
+          "maxY": 4
+        },
+        "start": {
+          "x": 1,
+          "y": 1,
+          "dir": 1
+        },
+        "stars": [
+          {
+            "x": 4,
+            "y": 3
+          }
+        ],
+        "tiles": [
+          {
+            "x": 1,
+            "y": 1,
+            "color": "R"
+          },
+          {
+            "x": 2,
+            "y": 1,
+            "color": "R"
+          },
+          {
+            "x": 2,
+            "y": 2,
+            "color": "R"
+          },
+          {
+            "x": 2,
+            "y": 3,
+            "color": "R"
+          },
+          {
+            "x": 3,
+            "y": 3,
+            "color": "R"
+          },
+          {
+            "x": 4,
+            "y": 3,
+            "color": "R"
+          }
+        ]
+      },
+      "solution": {
+        "f0": [
+          "move",
+          "turn_right",
+          "move",
+          "move",
+          "turn_left",
+          "move",
+          "move"
+        ],
+        "f1": [],
+        "f2": []
+      },
+      "solution_steps": 7
+    },
+    {
+      "id": "official-04",
+      "order": 4,
+      "number": "1-4",
+      "chapter_id": "chapter-1",
+      "title": "三顆星星",
+      "goal": "一次收集三顆星星。",
+      "hint": "星星一走到就算拿到，不需要停下來。",
+      "config": {
+        "f0": 8,
+        "f1": 0,
+        "f2": 0,
+        "tools": {
+          "paint_red": false,
+          "paint_green": false,
+          "paint_blue": false
+        }
+      },
+      "map": {
+        "gridSize": 5,
+        "padding": 1,
+        "bounds": {
+          "minX": 0,
+          "minY": 0,
+          "maxX": 4,
+          "maxY": 4
+        },
+        "start": {
+          "x": 1,
+          "y": 3,
+          "dir": 0
+        },
+        "stars": [
+          {
+            "x": 1,
+            "y": 1
+          },
+          {
+            "x": 3,
+            "y": 1
+          },
+          {
+            "x": 3,
+            "y": 3
+          }
+        ],
+        "tiles": [
+          {
+            "x": 1,
+            "y": 1,
+            "color": "R"
+          },
+          {
+            "x": 2,
+            "y": 1,
+            "color": "R"
+          },
+          {
+            "x": 3,
+            "y": 1,
+            "color": "R"
+          },
+          {
+            "x": 1,
+            "y": 2,
+            "color": "R"
+          },
+          {
+            "x": 3,
+            "y": 2,
+            "color": "R"
+          },
+          {
+            "x": 1,
+            "y": 3,
+            "color": "R"
+          },
+          {
+            "x": 3,
+            "y": 3,
+            "color": "R"
+          }
+        ]
+      },
+      "solution": {
+        "f0": [
+          "move",
+          "move",
+          "turn_right",
+          "move",
+          "move",
+          "turn_right",
+          "move",
+          "move"
+        ],
+        "f1": [],
+        "f2": []
+      },
+      "solution_steps": 8
+    },
+    {
+      "id": "official-05",
+      "order": 5,
+      "number": "1-5",
+      "chapter_id": "chapter-1",
+      "title": "迴轉",
+      "goal": "走進死路拿星星，再掉頭回來。",
+      "hint": "連續轉兩次，就能面向反方向。",
+      "config": {
+        "f0": 10,
+        "f1": 0,
+        "f2": 0,
+        "tools": {
+          "paint_red": false,
+          "paint_green": false,
+          "paint_blue": false
+        }
+      },
+      "map": {
+        "gridSize": 6,
+        "padding": 1,
+        "bounds": {
+          "minX": 0,
+          "minY": 0,
+          "maxX": 5,
+          "maxY": 3
+        },
+        "start": {
+          "x": 1,
+          "y": 2,
+          "dir": 1
+        },
+        "stars": [
+          {
+            "x": 2,
+            "y": 1
+          },
+          {
+            "x": 4,
+            "y": 2
+          }
+        ],
+        "tiles": [
+          {
+            "x": 2,
+            "y": 1,
+            "color": "R"
+          },
+          {
+            "x": 1,
+            "y": 2,
+            "color": "R"
+          },
+          {
+            "x": 2,
+            "y": 2,
+            "color": "R"
+          },
+          {
+            "x": 3,
+            "y": 2,
+            "color": "R"
+          },
+          {
+            "x": 4,
+            "y": 2,
+            "color": "R"
+          }
+        ]
+      },
+      "solution": {
+        "f0": [
+          "move",
+          "turn_left",
+          "move",
+          "turn_left",
+          "turn_left",
+          "move",
+          "turn_left",
+          "move",
+          "move"
+        ],
+        "f1": [],
+        "f2": []
+      },
+      "solution_steps": 9
+    },
+    {
+      "id": "official-06",
+      "order": 6,
+      "number": "2-1",
+      "chapter_id": "chapter-2",
+      "title": "重複的台階",
+      "goal": "F0 只有 4 格，把重複的動作放進 F1。",
+      "hint": "找出一直重複的那一段動作，放進 F1，再從 F0 呼叫它。",
+      "config": {
+        "f0": 4,
+        "f1": 4,
+        "f2": 0,
+        "tools": {
+          "paint_red": false,
+          "paint_green": false,
+          "paint_blue": false
+        }
+      },
+      "map": {
+        "gridSize": 7,
+        "padding": 1,
+        "bounds": {
+          "minX": 0,
+          "minY": 0,
+          "maxX": 6,
+          "maxY": 5
+        },
+        "start": {
+          "x": 1,
+          "y": 1,
+          "dir": 1
+        },
+        "stars": [
+          {
+            "x": 3,
+            "y": 3
+          },
+          {
+            "x": 5,
+            "y": 4
+          }
+        ],
+        "tiles": [
+          {
+            "x": 1,
+            "y": 1,
+            "color": "R"
+          },
+          {
+            "x": 2,
+            "y": 1,
+            "color": "R"
+          },
+          {
+            "x": 2,
+            "y": 2,
+            "color": "R"
+          },
+          {
+            "x": 3,
+            "y": 2,
+            "color": "R"
+          },
+          {
+            "x": 3,
+            "y": 3,
+            "color": "R"
+          },
+          {
+            "x": 4,
+            "y": 3,
+            "color": "R"
+          },
+          {
+            "x": 4,
+            "y": 4,
+            "color": "R"
+          },
+          {
+            "x": 5,
+            "y": 4,
+            "color": "R"
+          }
+        ]
+      },
+      "solution": {
+        "f0": [
+          "f1",
+          "f1",
+          "f1",
+          "move"
+        ],
+        "f1": [
+          "move",
+          "turn_right",
+          "move",
+          "turn_left"
+        ],
+        "f2": []
+      },
+      "solution_steps": 16
+    },
+    {
+      "id": "official-07",
+      "order": 7,
+      "number": "2-2",
+      "chapter_id": "chapter-2",
+      "title": "繞一圈",
+      "goal": "繞正方形走一圈，拿到三個角落的星星。",
+      "hint": "每一邊的動作都一樣：走到底，然後轉彎。",
+      "config": {
+        "f0": 3,
+        "f1": 4,
+        "f2": 0,
+        "tools": {
+          "paint_red": false,
+          "paint_green": false,
+          "paint_blue": false
+        }
+      },
+      "map": {
+        "gridSize": 6,
+        "padding": 1,
+        "bounds": {
+          "minX": 0,
+          "minY": 0,
+          "maxX": 5,
+          "maxY": 5
+        },
+        "start": {
+          "x": 1,
+          "y": 1,
+          "dir": 1
+        },
+        "stars": [
+          {
+            "x": 4,
+            "y": 1
+          },
+          {
+            "x": 1,
+            "y": 4
+          },
+          {
+            "x": 4,
+            "y": 4
+          }
+        ],
+        "tiles": [
+          {
+            "x": 1,
+            "y": 1,
+            "color": "R"
+          },
+          {
+            "x": 2,
+            "y": 1,
+            "color": "R"
+          },
+          {
+            "x": 3,
+            "y": 1,
+            "color": "R"
+          },
+          {
+            "x": 4,
+            "y": 1,
+            "color": "R"
+          },
+          {
+            "x": 1,
+            "y": 2,
+            "color": "R"
+          },
+          {
+            "x": 4,
+            "y": 2,
+            "color": "R"
+          },
+          {
+            "x": 1,
+            "y": 3,
+            "color": "R"
+          },
+          {
+            "x": 4,
+            "y": 3,
+            "color": "R"
+          },
+          {
+            "x": 1,
+            "y": 4,
+            "color": "R"
+          },
+          {
+            "x": 2,
+            "y": 4,
+            "color": "R"
+          },
+          {
+            "x": 3,
+            "y": 4,
+            "color": "R"
+          },
+          {
+            "x": 4,
+            "y": 4,
+            "color": "R"
+          }
+        ]
+      },
+      "solution": {
+        "f0": [
+          "f1",
+          "f1",
+          "f1"
+        ],
+        "f1": [
+          "move",
+          "move",
+          "move",
+          "turn_right"
+        ],
+        "f2": []
+      },
+      "solution_steps": 14
+    },
+    {
+      "id": "official-08",
+      "order": 8,
+      "number": "2-3",
+      "chapter_id": "chapter-2",
+      "title": "函式裡的函式",
+      "goal": "大正方形。三個函式都只有 3 格。",
+      "hint": "函式也可以呼叫另一個函式。先想「一邊」怎麼走，再想「一邊」由哪些小段組成。",
+      "config": {
+        "f0": 3,
+        "f1": 3,
+        "f2": 3,
+        "tools": {
+          "paint_red": false,
+          "paint_green": false,
+          "paint_blue": false
+        }
+      },
+      "map": {
+        "gridSize": 9,
+        "padding": 1,
+        "bounds": {
+          "minX": 0,
+          "minY": 0,
+          "maxX": 8,
+          "maxY": 8
+        },
+        "start": {
+          "x": 1,
+          "y": 1,
+          "dir": 1
+        },
+        "stars": [
+          {
+            "x": 4,
+            "y": 1
+          },
+          {
+            "x": 7,
+            "y": 1
+          },
+          {
+            "x": 7,
+            "y": 4
+          },
+          {
+            "x": 1,
+            "y": 7
+          },
+          {
+            "x": 4,
+            "y": 7
+          },
+          {
+            "x": 7,
+            "y": 7
+          }
+        ],
+        "tiles": [
+          {
+            "x": 1,
+            "y": 1,
+            "color": "R"
+          },
+          {
+            "x": 2,
+            "y": 1,
+            "color": "R"
+          },
+          {
+            "x": 3,
+            "y": 1,
+            "color": "R"
+          },
+          {
+            "x": 4,
+            "y": 1,
+            "color": "R"
+          },
+          {
+            "x": 5,
+            "y": 1,
+            "color": "R"
+          },
+          {
+            "x": 6,
+            "y": 1,
+            "color": "R"
+          },
+          {
+            "x": 7,
+            "y": 1,
+            "color": "R"
+          },
+          {
+            "x": 1,
+            "y": 2,
+            "color": "R"
+          },
+          {
+            "x": 7,
+            "y": 2,
+            "color": "R"
+          },
+          {
+            "x": 1,
+            "y": 3,
+            "color": "R"
+          },
+          {
+            "x": 7,
+            "y": 3,
+            "color": "R"
+          },
+          {
+            "x": 1,
+            "y": 4,
+            "color": "R"
+          },
+          {
+            "x": 7,
+            "y": 4,
+            "color": "R"
+          },
+          {
+            "x": 1,
+            "y": 5,
+            "color": "R"
+          },
+          {
+            "x": 7,
+            "y": 5,
+            "color": "R"
+          },
+          {
+            "x": 1,
+            "y": 6,
+            "color": "R"
+          },
+          {
+            "x": 7,
+            "y": 6,
+            "color": "R"
+          },
+          {
+            "x": 1,
+            "y": 7,
+            "color": "R"
+          },
+          {
+            "x": 2,
+            "y": 7,
+            "color": "R"
+          },
+          {
+            "x": 3,
+            "y": 7,
+            "color": "R"
+          },
+          {
+            "x": 4,
+            "y": 7,
+            "color": "R"
+          },
+          {
+            "x": 5,
+            "y": 7,
+            "color": "R"
+          },
+          {
+            "x": 6,
+            "y": 7,
+            "color": "R"
+          },
+          {
+            "x": 7,
+            "y": 7,
+            "color": "R"
+          }
+        ]
+      },
+      "solution": {
+        "f0": [
+          "f2",
+          "f2",
+          "f2"
+        ],
+        "f1": [
+          "move",
+          "move",
+          "move"
+        ],
+        "f2": [
+          "f1",
+          "f1",
+          "turn_right"
+        ]
+      },
+      "solution_steps": 29
+    },
+    {
+      "id": "official-09",
+      "order": 9,
+      "number": "2-4",
+      "chapter_id": "chapter-2",
+      "title": "山峰",
+      "goal": "爬上山頂，再走下山。",
+      "hint": "上坡和下坡是兩種不同的台階，各用一個函式。",
+      "config": {
+        "f0": 6,
+        "f1": 4,
+        "f2": 4,
+        "tools": {
+          "paint_red": false,
+          "paint_green": false,
+          "paint_blue": false
+        }
+      },
+      "map": {
+        "gridSize": 9,
+        "padding": 1,
+        "bounds": {
+          "minX": 0,
+          "minY": 0,
+          "maxX": 8,
+          "maxY": 5
+        },
+        "start": {
+          "x": 1,
+          "y": 4,
+          "dir": 1
+        },
+        "stars": [
+          {
+            "x": 4,
+            "y": 1
+          },
+          {
+            "x": 7,
+            "y": 4
+          }
+        ],
+        "tiles": [
+          {
+            "x": 4,
+            "y": 1,
+            "color": "R"
+          },
+          {
+            "x": 5,
+            "y": 1,
+            "color": "R"
+          },
+          {
+            "x": 3,
+            "y": 2,
+            "color": "R"
+          },
+          {
+            "x": 4,
+            "y": 2,
+            "color": "R"
+          },
+          {
+            "x": 5,
+            "y": 2,
+            "color": "R"
+          },
+          {
+            "x": 6,
+            "y": 2,
+            "color": "R"
+          },
+          {
+            "x": 2,
+            "y": 3,
+            "color": "R"
+          },
+          {
+            "x": 3,
+            "y": 3,
+            "color": "R"
+          },
+          {
+            "x": 6,
+            "y": 3,
+            "color": "R"
+          },
+          {
+            "x": 7,
+            "y": 3,
+            "color": "R"
+          },
+          {
+            "x": 1,
+            "y": 4,
+            "color": "R"
+          },
+          {
+            "x": 2,
+            "y": 4,
+            "color": "R"
+          },
+          {
+            "x": 7,
+            "y": 4,
+            "color": "R"
+          }
+        ]
+      },
+      "solution": {
+        "f0": [
+          "f1",
+          "f1",
+          "f1",
+          "f2",
+          "f2",
+          "f2"
+        ],
+        "f1": [
+          "move",
+          "turn_left",
+          "move",
+          "turn_right"
+        ],
+        "f2": [
+          "move",
+          "turn_right",
+          "move",
+          "turn_left"
+        ]
+      },
+      "solution_steps": 29
+    },
+    {
+      "id": "official-10",
+      "order": 10,
+      "number": "2-5",
+      "chapter_id": "chapter-2",
+      "title": "梳子",
+      "goal": "把每根梳齒尖端的星星都拿到。",
+      "hint": "走過去再走回來是一組動作；相隔兩格的移動也可以重複利用。",
+      "config": {
+        "f0": 6,
+        "f1": 6,
+        "f2": 2,
+        "tools": {
+          "paint_red": false,
+          "paint_green": false,
+          "paint_blue": false
+        }
+      },
+      "map": {
+        "gridSize": 8,
+        "padding": 1,
+        "bounds": {
+          "minX": 0,
+          "minY": 0,
+          "maxX": 7,
+          "maxY": 4
+        },
+        "start": {
+          "x": 1,
+          "y": 3,
+          "dir": 1
+        },
+        "stars": [
+          {
+            "x": 2,
+            "y": 1
+          },
+          {
+            "x": 4,
+            "y": 1
+          },
+          {
+            "x": 6,
+            "y": 1
+          }
+        ],
+        "tiles": [
+          {
+            "x": 2,
+            "y": 1,
+            "color": "R"
+          },
+          {
+            "x": 4,
+            "y": 1,
+            "color": "R"
+          },
+          {
+            "x": 6,
+            "y": 1,
+            "color": "R"
+          },
+          {
+            "x": 2,
+            "y": 2,
+            "color": "R"
+          },
+          {
+            "x": 4,
+            "y": 2,
+            "color": "R"
+          },
+          {
+            "x": 6,
+            "y": 2,
+            "color": "R"
+          },
+          {
+            "x": 1,
+            "y": 3,
+            "color": "R"
+          },
+          {
+            "x": 2,
+            "y": 3,
+            "color": "R"
+          },
+          {
+            "x": 3,
+            "y": 3,
+            "color": "R"
+          },
+          {
+            "x": 4,
+            "y": 3,
+            "color": "R"
+          },
+          {
+            "x": 5,
+            "y": 3,
+            "color": "R"
+          },
+          {
+            "x": 6,
+            "y": 3,
+            "color": "R"
+          }
+        ]
+      },
+      "solution": {
+        "f0": [
+          "move",
+          "f1",
+          "f2",
+          "f1",
+          "f2",
+          "f1"
+        ],
+        "f1": [
+          "turn_left",
+          "f2",
+          "turn_right",
+          "turn_right",
+          "f2",
+          "turn_left"
+        ],
+        "f2": [
+          "move",
+          "move"
+        ]
+      },
+      "solution_steps": 34
+    },
+    {
+      "id": "official-11",
+      "order": 11,
+      "number": "3-1",
+      "chapter_id": "chapter-3",
+      "title": "無限迴圈",
+      "goal": "F0 只有 2 格，卻要走很遠。",
+      "hint": "F0 也可以呼叫自己。呼叫自己，就會從頭再做一次。",
+      "config": {
+        "f0": 2,
+        "f1": 0,
+        "f2": 0,
+        "tools": {
+          "paint_red": false,
+          "paint_green": false,
+          "paint_blue": false
+        }
+      },
+      "map": {
+        "gridSize": 12,
+        "padding": 1,
+        "bounds": {
+          "minX": 0,
+          "minY": 0,
+          "maxX": 11,
+          "maxY": 2
+        },
+        "start": {
+          "x": 1,
+          "y": 1,
+          "dir": 1
+        },
+        "stars": [
+          {
+            "x": 10,
+            "y": 1
+          }
+        ],
+        "tiles": [
+          {
+            "x": 1,
+            "y": 1,
+            "color": "R"
+          },
+          {
+            "x": 2,
+            "y": 1,
+            "color": "R"
+          },
+          {
+            "x": 3,
+            "y": 1,
+            "color": "R"
+          },
+          {
+            "x": 4,
+            "y": 1,
+            "color": "R"
+          },
+          {
+            "x": 5,
+            "y": 1,
+            "color": "R"
+          },
+          {
+            "x": 6,
+            "y": 1,
+            "color": "R"
+          },
+          {
+            "x": 7,
+            "y": 1,
+            "color": "R"
+          },
+          {
+            "x": 8,
+            "y": 1,
+            "color": "R"
+          },
+          {
+            "x": 9,
+            "y": 1,
+            "color": "R"
+          },
+          {
+            "x": 10,
+            "y": 1,
+            "color": "R"
+          }
+        ]
+      },
+      "solution": {
+        "f0": [
+          "move",
+          "f0"
+        ],
+        "f1": [],
+        "f2": []
+      },
+      "solution_steps": 17
+    },
+    {
+      "id": "official-12",
+      "order": 12,
+      "number": "3-2",
+      "chapter_id": "chapter-3",
+      "title": "長樓梯",
+      "goal": "爬上一座很長的樓梯。",
+      "hint": "寫好一階的動作，最後呼叫 F0 自己。拿到所有星星時程式會自動停止。",
+      "config": {
+        "f0": 5,
+        "f1": 0,
+        "f2": 0,
+        "tools": {
+          "paint_red": false,
+          "paint_green": false,
+          "paint_blue": false
+        }
+      },
+      "map": {
+        "gridSize": 10,
+        "padding": 1,
+        "bounds": {
+          "minX": 0,
+          "minY": 0,
+          "maxX": 9,
+          "maxY": 8
+        },
+        "start": {
+          "x": 1,
+          "y": 7,
+          "dir": 1
+        },
+        "stars": [
+          {
+            "x": 8,
+            "y": 1
+          },
+          {
+            "x": 4,
+            "y": 4
+          }
+        ],
+        "tiles": [
+          {
+            "x": 7,
+            "y": 1,
+            "color": "R"
+          },
+          {
+            "x": 8,
+            "y": 1,
+            "color": "R"
+          },
+          {
+            "x": 6,
+            "y": 2,
+            "color": "R"
+          },
+          {
+            "x": 7,
+            "y": 2,
+            "color": "R"
+          },
+          {
+            "x": 5,
+            "y": 3,
+            "color": "R"
+          },
+          {
+            "x": 6,
+            "y": 3,
+            "color": "R"
+          },
+          {
+            "x": 4,
+            "y": 4,
+            "color": "R"
+          },
+          {
+            "x": 5,
+            "y": 4,
+            "color": "R"
+          },
+          {
+            "x": 3,
+            "y": 5,
+            "color": "R"
+          },
+          {
+            "x": 4,
+            "y": 5,
+            "color": "R"
+          },
+          {
+            "x": 2,
+            "y": 6,
+            "color": "R"
+          },
+          {
+            "x": 3,
+            "y": 6,
+            "color": "R"
+          },
+          {
+            "x": 1,
+            "y": 7,
+            "color": "R"
+          },
+          {
+            "x": 2,
+            "y": 7,
+            "color": "R"
+          }
+        ]
+      },
+      "solution": {
+        "f0": [
+          "move",
+          "turn_left",
+          "move",
+          "turn_right",
+          "f0"
+        ],
+        "f1": [],
+        "f2": []
+      },
+      "solution_steps": 31
+    },
+    {
+      "id": "official-13",
+      "order": 13,
+      "number": "3-3",
+      "chapter_id": "chapter-3",
+      "title": "城牆",
+      "goal": "沿著城牆的城垛一路走過去。",
+      "hint": "往上的那段和往下的那段各是一個函式，F0 負責把它們串起來並重複。",
+      "config": {
+        "f0": 3,
+        "f1": 5,
+        "f2": 5,
+        "tools": {
+          "paint_red": false,
+          "paint_green": false,
+          "paint_blue": false
+        }
+      },
+      "map": {
+        "gridSize": 15,
+        "padding": 1,
+        "bounds": {
+          "minX": 0,
+          "minY": 0,
+          "maxX": 14,
+          "maxY": 3
+        },
+        "start": {
+          "x": 1,
+          "y": 2,
+          "dir": 1
+        },
+        "stars": [
+          {
+            "x": 2,
+            "y": 1
+          },
+          {
+            "x": 6,
+            "y": 1
+          },
+          {
+            "x": 10,
+            "y": 1
+          },
+          {
+            "x": 13,
+            "y": 2
+          }
+        ],
+        "tiles": [
+          {
+            "x": 1,
+            "y": 1,
+            "color": "R"
+          },
+          {
+            "x": 2,
+            "y": 1,
+            "color": "R"
+          },
+          {
+            "x": 3,
+            "y": 1,
+            "color": "R"
+          },
+          {
+            "x": 5,
+            "y": 1,
+            "color": "R"
+          },
+          {
+            "x": 6,
+            "y": 1,
+            "color": "R"
+          },
+          {
+            "x": 7,
+            "y": 1,
+            "color": "R"
+          },
+          {
+            "x": 9,
+            "y": 1,
+            "color": "R"
+          },
+          {
+            "x": 10,
+            "y": 1,
+            "color": "R"
+          },
+          {
+            "x": 11,
+            "y": 1,
+            "color": "R"
+          },
+          {
+            "x": 1,
+            "y": 2,
+            "color": "R"
+          },
+          {
+            "x": 3,
+            "y": 2,
+            "color": "R"
+          },
+          {
+            "x": 4,
+            "y": 2,
+            "color": "R"
+          },
+          {
+            "x": 5,
+            "y": 2,
+            "color": "R"
+          },
+          {
+            "x": 7,
+            "y": 2,
+            "color": "R"
+          },
+          {
+            "x": 8,
+            "y": 2,
+            "color": "R"
+          },
+          {
+            "x": 9,
+            "y": 2,
+            "color": "R"
+          },
+          {
+            "x": 11,
+            "y": 2,
+            "color": "R"
+          },
+          {
+            "x": 12,
+            "y": 2,
+            "color": "R"
+          },
+          {
+            "x": 13,
+            "y": 2,
+            "color": "R"
+          }
+        ]
+      },
+      "solution": {
+        "f0": [
+          "f1",
+          "f2",
+          "f0"
+        ],
+        "f1": [
+          "turn_left",
+          "move",
+          "turn_right",
+          "move",
+          "move"
+        ],
+        "f2": [
+          "turn_right",
+          "move",
+          "turn_left",
+          "move",
+          "move"
+        ]
+      },
+      "solution_steps": 38
+    },
+    {
+      "id": "official-14",
+      "order": 14,
+      "number": "3-4",
+      "chapter_id": "chapter-3",
+      "title": "長方形跑道",
+      "goal": "長方形的長邊和短邊不一樣長。",
+      "hint": "長邊可以拆成兩個短邊。",
+      "config": {
+        "f0": 6,
+        "f1": 3,
+        "f2": 0,
+        "tools": {
+          "paint_red": false,
+          "paint_green": false,
+          "paint_blue": false
+        }
+      },
+      "map": {
+        "gridSize": 9,
+        "padding": 1,
+        "bounds": {
+          "minX": 0,
+          "minY": 0,
+          "maxX": 8,
+          "maxY": 5
+        },
+        "start": {
+          "x": 1,
+          "y": 1,
+          "dir": 1
+        },
+        "stars": [
+          {
+            "x": 4,
+            "y": 1
+          },
+          {
+            "x": 1,
+            "y": 2
+          },
+          {
+            "x": 7,
+            "y": 3
+          },
+          {
+            "x": 3,
+            "y": 4
+          }
+        ],
+        "tiles": [
+          {
+            "x": 1,
+            "y": 1,
+            "color": "R"
+          },
+          {
+            "x": 2,
+            "y": 1,
+            "color": "R"
+          },
+          {
+            "x": 3,
+            "y": 1,
+            "color": "R"
+          },
+          {
+            "x": 4,
+            "y": 1,
+            "color": "R"
+          },
+          {
+            "x": 5,
+            "y": 1,
+            "color": "R"
+          },
+          {
+            "x": 6,
+            "y": 1,
+            "color": "R"
+          },
+          {
+            "x": 7,
+            "y": 1,
+            "color": "R"
+          },
+          {
+            "x": 1,
+            "y": 2,
+            "color": "R"
+          },
+          {
+            "x": 7,
+            "y": 2,
+            "color": "R"
+          },
+          {
+            "x": 1,
+            "y": 3,
+            "color": "R"
+          },
+          {
+            "x": 7,
+            "y": 3,
+            "color": "R"
+          },
+          {
+            "x": 1,
+            "y": 4,
+            "color": "R"
+          },
+          {
+            "x": 2,
+            "y": 4,
+            "color": "R"
+          },
+          {
+            "x": 3,
+            "y": 4,
+            "color": "R"
+          },
+          {
+            "x": 4,
+            "y": 4,
+            "color": "R"
+          },
+          {
+            "x": 5,
+            "y": 4,
+            "color": "R"
+          },
+          {
+            "x": 6,
+            "y": 4,
+            "color": "R"
+          },
+          {
+            "x": 7,
+            "y": 4,
+            "color": "R"
+          }
+        ]
+      },
+      "solution": {
+        "f0": [
+          "f1",
+          "f1",
+          "turn_right",
+          "f1",
+          "turn_right",
+          "f0"
+        ],
+        "f1": [
+          "move",
+          "move",
+          "move"
+        ],
+        "f2": []
+      },
+      "solution_steps": 27
+    },
+    {
+      "id": "official-15",
+      "order": 15,
+      "number": "3-5",
+      "chapter_id": "chapter-3",
+      "title": "鑽石",
+      "goal": "沿著鑽石的邊走，拿到三個尖角的星星。",
+      "hint": "斜線其實是一格一格的台階；每兩階要轉一次方向。",
+      "config": {
+        "f0": 4,
+        "f1": 4,
+        "f2": 0,
+        "tools": {
+          "paint_red": false,
+          "paint_green": false,
+          "paint_blue": false
+        }
+      },
+      "map": {
+        "gridSize": 7,
+        "padding": 1,
+        "bounds": {
+          "minX": 0,
+          "minY": 0,
+          "maxX": 6,
+          "maxY": 6
+        },
+        "start": {
+          "x": 1,
+          "y": 3,
+          "dir": 1
+        },
+        "stars": [
+          {
+            "x": 3,
+            "y": 1
+          },
+          {
+            "x": 5,
+            "y": 3
+          },
+          {
+            "x": 3,
+            "y": 5
+          }
+        ],
+        "tiles": [
+          {
+            "x": 3,
+            "y": 1,
+            "color": "R"
+          },
+          {
+            "x": 2,
+            "y": 2,
+            "color": "R"
+          },
+          {
+            "x": 3,
+            "y": 2,
+            "color": "R"
+          },
+          {
+            "x": 4,
+            "y": 2,
+            "color": "R"
+          },
+          {
+            "x": 1,
+            "y": 3,
+            "color": "R"
+          },
+          {
+            "x": 2,
+            "y": 3,
+            "color": "R"
+          },
+          {
+            "x": 4,
+            "y": 3,
+            "color": "R"
+          },
+          {
+            "x": 5,
+            "y": 3,
+            "color": "R"
+          },
+          {
+            "x": 2,
+            "y": 4,
+            "color": "R"
+          },
+          {
+            "x": 3,
+            "y": 4,
+            "color": "R"
+          },
+          {
+            "x": 4,
+            "y": 4,
+            "color": "R"
+          },
+          {
+            "x": 3,
+            "y": 5,
+            "color": "R"
+          }
+        ]
+      },
+      "solution": {
+        "f0": [
+          "f1",
+          "f1",
+          "turn_right",
+          "f0"
+        ],
+        "f1": [
+          "move",
+          "turn_left",
+          "move",
+          "turn_right"
+        ],
+        "f2": []
+      },
+      "solution_steps": 33
+    },
+    {
+      "id": "official-16",
+      "order": 16,
+      "number": "4-1",
+      "chapter_id": "chapter-4",
+      "title": "看到綠色就右轉",
+      "goal": "走到綠色地板時右轉，繼續往下走。",
+      "hint": "指令可以加上顏色條件：選好格子，再點下方的顏色。加了綠色條件的「右轉」，只有站在綠色地板上才會做。",
+      "config": {
+        "f0": 3,
+        "f1": 0,
+        "f2": 0,
+        "tools": {
+          "paint_red": false,
+          "paint_green": false,
+          "paint_blue": false
+        }
+      },
+      "map": {
+        "gridSize": 9,
+        "padding": 1,
+        "bounds": {
+          "minX": 0,
+          "minY": 0,
+          "maxX": 8,
+          "maxY": 6
+        },
+        "start": {
+          "x": 1,
+          "y": 1,
+          "dir": 1
+        },
+        "stars": [
+          {
+            "x": 7,
+            "y": 1
+          },
+          {
+            "x": 7,
+            "y": 5
+          }
+        ],
+        "tiles": [
+          {
+            "x": 1,
+            "y": 1,
+            "color": "R"
+          },
+          {
+            "x": 2,
+            "y": 1,
+            "color": "R"
+          },
+          {
+            "x": 3,
+            "y": 1,
+            "color": "R"
+          },
+          {
+            "x": 4,
+            "y": 1,
+            "color": "R"
+          },
+          {
+            "x": 5,
+            "y": 1,
+            "color": "R"
+          },
+          {
+            "x": 6,
+            "y": 1,
+            "color": "R"
+          },
+          {
+            "x": 7,
+            "y": 1,
+            "color": "G"
+          },
+          {
+            "x": 7,
+            "y": 2,
+            "color": "R"
+          },
+          {
+            "x": 7,
+            "y": 3,
+            "color": "R"
+          },
+          {
+            "x": 7,
+            "y": 4,
+            "color": "R"
+          },
+          {
+            "x": 7,
+            "y": 5,
+            "color": "R"
+          }
+        ]
+      },
+      "solution": {
+        "f0": [
+          "move",
+          "turn_right:G",
+          "f0"
+        ],
+        "f1": [],
+        "f2": []
+      },
+      "solution_steps": 28
+    },
+    {
+      "id": "official-17",
+      "order": 17,
+      "number": "4-2",
+      "chapter_id": "chapter-4",
+      "title": "綠色轉彎",
+      "goal": "沿著螺旋一路走到中心。",
+      "hint": "規則跟上一關一樣，只是轉角變多了。所有轉角都是綠色。",
+      "config": {
+        "f0": 3,
+        "f1": 0,
+        "f2": 0,
+        "tools": {
+          "paint_red": false,
+          "paint_green": false,
+          "paint_blue": false
+        }
+      },
+      "map": {
+        "gridSize": 9,
+        "padding": 1,
+        "bounds": {
+          "minX": 0,
+          "minY": 0,
+          "maxX": 8,
+          "maxY": 8
+        },
+        "start": {
+          "x": 1,
+          "y": 1,
+          "dir": 1
+        },
+        "stars": [
+          {
+            "x": 4,
+            "y": 1
+          },
+          {
+            "x": 3,
+            "y": 3
+          },
+          {
+            "x": 7,
+            "y": 4
+          },
+          {
+            "x": 1,
+            "y": 5
+          },
+          {
+            "x": 3,
+            "y": 5
+          },
+          {
+            "x": 4,
+            "y": 7
+          }
+        ],
+        "tiles": [
+          {
+            "x": 1,
+            "y": 1,
+            "color": "R"
+          },
+          {
+            "x": 2,
+            "y": 1,
+            "color": "R"
+          },
+          {
+            "x": 3,
+            "y": 1,
+            "color": "R"
+          },
+          {
+            "x": 4,
+            "y": 1,
+            "color": "R"
+          },
+          {
+            "x": 5,
+            "y": 1,
+            "color": "R"
+          },
+          {
+            "x": 6,
+            "y": 1,
+            "color": "R"
+          },
+          {
+            "x": 7,
+            "y": 1,
+            "color": "G"
+          },
+          {
+            "x": 7,
+            "y": 2,
+            "color": "R"
+          },
+          {
+            "x": 1,
+            "y": 3,
+            "color": "G"
+          },
+          {
+            "x": 2,
+            "y": 3,
+            "color": "R"
+          },
+          {
+            "x": 3,
+            "y": 3,
+            "color": "R"
+          },
+          {
+            "x": 4,
+            "y": 3,
+            "color": "R"
+          },
+          {
+            "x": 5,
+            "y": 3,
+            "color": "G"
+          },
+          {
+            "x": 7,
+            "y": 3,
+            "color": "R"
+          },
+          {
+            "x": 1,
+            "y": 4,
+            "color": "R"
+          },
+          {
+            "x": 5,
+            "y": 4,
+            "color": "R"
+          },
+          {
+            "x": 7,
+            "y": 4,
+            "color": "R"
+          },
+          {
+            "x": 1,
+            "y": 5,
+            "color": "R"
+          },
+          {
+            "x": 3,
+            "y": 5,
+            "color": "R"
+          },
+          {
+            "x": 4,
+            "y": 5,
+            "color": "R"
+          },
+          {
+            "x": 5,
+            "y": 5,
+            "color": "G"
+          },
+          {
+            "x": 7,
+            "y": 5,
+            "color": "R"
+          },
+          {
+            "x": 1,
+            "y": 6,
+            "color": "R"
+          },
+          {
+            "x": 7,
+            "y": 6,
+            "color": "R"
+          },
+          {
+            "x": 1,
+            "y": 7,
+            "color": "G"
+          },
+          {
+            "x": 2,
+            "y": 7,
+            "color": "R"
+          },
+          {
+            "x": 3,
+            "y": 7,
+            "color": "R"
+          },
+          {
+            "x": 4,
+            "y": 7,
+            "color": "R"
+          },
+          {
+            "x": 5,
+            "y": 7,
+            "color": "R"
+          },
+          {
+            "x": 6,
+            "y": 7,
+            "color": "R"
+          },
+          {
+            "x": 7,
+            "y": 7,
+            "color": "G"
+          }
+        ]
+      },
+      "solution": {
+        "f0": [
+          "move",
+          "turn_right:G",
+          "f0"
+        ],
+        "f1": [],
+        "f2": []
+      },
+      "solution_steps": 88
+    },
+    {
+      "id": "official-18",
+      "order": 18,
+      "number": "4-3",
+      "chapter_id": "chapter-4",
+      "title": "左轉右轉",
+      "goal": "綠色右轉、藍色左轉。",
+      "hint": "一個指令只能有一個顏色條件，但同一個函式裡可以放好幾個不同條件的指令。",
+      "config": {
+        "f0": 4,
+        "f1": 0,
+        "f2": 0,
+        "tools": {
+          "paint_red": false,
+          "paint_green": false,
+          "paint_blue": false
+        }
+      },
+      "map": {
+        "gridSize": 9,
+        "padding": 1,
+        "bounds": {
+          "minX": 0,
+          "minY": 0,
+          "maxX": 8,
+          "maxY": 8
+        },
+        "start": {
+          "x": 1,
+          "y": 1,
+          "dir": 1
+        },
+        "stars": [
+          {
+            "x": 5,
+            "y": 2
+          },
+          {
+            "x": 7,
+            "y": 4
+          },
+          {
+            "x": 4,
+            "y": 5
+          },
+          {
+            "x": 1,
+            "y": 7
+          }
+        ],
+        "tiles": [
+          {
+            "x": 1,
+            "y": 1,
+            "color": "R"
+          },
+          {
+            "x": 2,
+            "y": 1,
+            "color": "R"
+          },
+          {
+            "x": 3,
+            "y": 1,
+            "color": "G"
+          },
+          {
+            "x": 5,
+            "y": 1,
+            "color": "G"
+          },
+          {
+            "x": 6,
+            "y": 1,
+            "color": "R"
+          },
+          {
+            "x": 7,
+            "y": 1,
+            "color": "G"
+          },
+          {
+            "x": 3,
+            "y": 2,
+            "color": "R"
+          },
+          {
+            "x": 5,
+            "y": 2,
+            "color": "R"
+          },
+          {
+            "x": 7,
+            "y": 2,
+            "color": "R"
+          },
+          {
+            "x": 3,
+            "y": 3,
+            "color": "B"
+          },
+          {
+            "x": 4,
+            "y": 3,
+            "color": "R"
+          },
+          {
+            "x": 5,
+            "y": 3,
+            "color": "B"
+          },
+          {
+            "x": 7,
+            "y": 3,
+            "color": "R"
+          },
+          {
+            "x": 7,
+            "y": 4,
+            "color": "R"
+          },
+          {
+            "x": 3,
+            "y": 5,
+            "color": "B"
+          },
+          {
+            "x": 4,
+            "y": 5,
+            "color": "R"
+          },
+          {
+            "x": 5,
+            "y": 5,
+            "color": "R"
+          },
+          {
+            "x": 6,
+            "y": 5,
+            "color": "R"
+          },
+          {
+            "x": 7,
+            "y": 5,
+            "color": "G"
+          },
+          {
+            "x": 3,
+            "y": 6,
+            "color": "R"
+          },
+          {
+            "x": 1,
+            "y": 7,
+            "color": "R"
+          },
+          {
+            "x": 2,
+            "y": 7,
+            "color": "R"
+          },
+          {
+            "x": 3,
+            "y": 7,
+            "color": "G"
+          }
+        ]
+      },
+      "solution": {
+        "f0": [
+          "move",
+          "turn_right:G",
+          "turn_left:B",
+          "f0"
+        ],
+        "f1": [],
+        "f2": []
+      },
+      "solution_steps": 85
+    },
+    {
+      "id": "official-19",
+      "order": 19,
+      "number": "4-4",
+      "chapter_id": "chapter-4",
+      "title": "田字",
+      "goal": "四個房間共用中間的十字路口，把每個房間都繞一圈。",
+      "hint": "規則跟螺旋一樣簡單。先在紙上走一遍，看看路口的顏色該怎麼處理。",
+      "config": {
+        "f0": 3,
+        "f1": 0,
+        "f2": 0,
+        "tools": {
+          "paint_red": false,
+          "paint_green": false,
+          "paint_blue": false
+        }
+      },
+      "map": {
+        "gridSize": 7,
+        "padding": 1,
+        "bounds": {
+          "minX": 0,
+          "minY": 0,
+          "maxX": 6,
+          "maxY": 6
+        },
+        "start": {
+          "x": 3,
+          "y": 4,
+          "dir": 0
+        },
+        "stars": [
+          {
+            "x": 1,
+            "y": 2
+          },
+          {
+            "x": 5,
+            "y": 2
+          },
+          {
+            "x": 1,
+            "y": 4
+          },
+          {
+            "x": 5,
+            "y": 4
+          }
+        ],
+        "tiles": [
+          {
+            "x": 1,
+            "y": 1,
+            "color": "G"
+          },
+          {
+            "x": 2,
+            "y": 1,
+            "color": "R"
+          },
+          {
+            "x": 3,
+            "y": 1,
+            "color": "G"
+          },
+          {
+            "x": 4,
+            "y": 1,
+            "color": "R"
+          },
+          {
+            "x": 5,
+            "y": 1,
+            "color": "G"
+          },
+          {
+            "x": 1,
+            "y": 2,
+            "color": "R"
+          },
+          {
+            "x": 3,
+            "y": 2,
+            "color": "R"
+          },
+          {
+            "x": 5,
+            "y": 2,
+            "color": "R"
+          },
+          {
+            "x": 1,
+            "y": 3,
+            "color": "G"
+          },
+          {
+            "x": 2,
+            "y": 3,
+            "color": "R"
+          },
+          {
+            "x": 3,
+            "y": 3,
+            "color": "R"
+          },
+          {
+            "x": 4,
+            "y": 3,
+            "color": "R"
+          },
+          {
+            "x": 5,
+            "y": 3,
+            "color": "G"
+          },
+          {
+            "x": 1,
+            "y": 4,
+            "color": "R"
+          },
+          {
+            "x": 3,
+            "y": 4,
+            "color": "R"
+          },
+          {
+            "x": 5,
+            "y": 4,
+            "color": "R"
+          },
+          {
+            "x": 1,
+            "y": 5,
+            "color": "G"
+          },
+          {
+            "x": 2,
+            "y": 5,
+            "color": "R"
+          },
+          {
+            "x": 3,
+            "y": 5,
+            "color": "G"
+          },
+          {
+            "x": 4,
+            "y": 5,
+            "color": "R"
+          },
+          {
+            "x": 5,
+            "y": 5,
+            "color": "G"
+          }
+        ]
+      },
+      "solution": {
+        "f0": [
+          "move",
+          "turn_right:G",
+          "f0"
+        ],
+        "f1": [],
+        "f2": []
+      },
+      "solution_steps": 82
+    },
+    {
+      "id": "official-20",
+      "order": 20,
+      "number": "4-5",
+      "chapter_id": "chapter-4",
+      "title": "支線探索",
+      "goal": "每個藍色路口上方都有一顆星星。",
+      "hint": "函式呼叫也能加顏色條件：只在藍色地板上才進支線。",
+      "config": {
+        "f0": 3,
+        "f1": 6,
+        "f2": 2,
+        "tools": {
+          "paint_red": false,
+          "paint_green": false,
+          "paint_blue": false
+        }
+      },
+      "map": {
+        "gridSize": 12,
+        "padding": 1,
+        "bounds": {
+          "minX": 0,
+          "minY": 0,
+          "maxX": 11,
+          "maxY": 4
+        },
+        "start": {
+          "x": 1,
+          "y": 3,
+          "dir": 1
+        },
+        "stars": [
+          {
+            "x": 3,
+            "y": 1
+          },
+          {
+            "x": 6,
+            "y": 1
+          },
+          {
+            "x": 7,
+            "y": 1
+          },
+          {
+            "x": 10,
+            "y": 1
+          }
+        ],
+        "tiles": [
+          {
+            "x": 3,
+            "y": 1,
+            "color": "R"
+          },
+          {
+            "x": 6,
+            "y": 1,
+            "color": "R"
+          },
+          {
+            "x": 7,
+            "y": 1,
+            "color": "R"
+          },
+          {
+            "x": 10,
+            "y": 1,
+            "color": "R"
+          },
+          {
+            "x": 3,
+            "y": 2,
+            "color": "R"
+          },
+          {
+            "x": 6,
+            "y": 2,
+            "color": "R"
+          },
+          {
+            "x": 7,
+            "y": 2,
+            "color": "R"
+          },
+          {
+            "x": 10,
+            "y": 2,
+            "color": "R"
+          },
+          {
+            "x": 1,
+            "y": 3,
+            "color": "R"
+          },
+          {
+            "x": 2,
+            "y": 3,
+            "color": "R"
+          },
+          {
+            "x": 3,
+            "y": 3,
+            "color": "B"
+          },
+          {
+            "x": 4,
+            "y": 3,
+            "color": "R"
+          },
+          {
+            "x": 5,
+            "y": 3,
+            "color": "R"
+          },
+          {
+            "x": 6,
+            "y": 3,
+            "color": "B"
+          },
+          {
+            "x": 7,
+            "y": 3,
+            "color": "B"
+          },
+          {
+            "x": 8,
+            "y": 3,
+            "color": "R"
+          },
+          {
+            "x": 9,
+            "y": 3,
+            "color": "R"
+          },
+          {
+            "x": 10,
+            "y": 3,
+            "color": "B"
+          }
+        ]
+      },
+      "solution": {
+        "f0": [
+          "move",
+          "f1:B",
+          "f0"
+        ],
+        "f1": [
+          "turn_left",
+          "f2",
+          "turn_right",
+          "turn_right",
+          "f2",
+          "turn_left"
+        ],
+        "f2": [
+          "move",
+          "move"
+        ]
+      },
+      "solution_steps": 60
+    },
+    {
+      "id": "official-21",
+      "order": 21,
+      "number": "4-6",
+      "chapter_id": "chapter-4",
+      "title": "來回掃描",
+      "goal": "像掃地機器人一樣，一排一排掃過去。",
+      "hint": "綠色和藍色的行尾，掉頭的方向剛好相反。",
+      "config": {
+        "f0": 4,
+        "f1": 3,
+        "f2": 3,
+        "tools": {
+          "paint_red": false,
+          "paint_green": false,
+          "paint_blue": false
+        }
+      },
+      "map": {
+        "gridSize": 8,
+        "padding": 1,
+        "bounds": {
+          "minX": 0,
+          "minY": 0,
+          "maxX": 7,
+          "maxY": 6
+        },
+        "start": {
+          "x": 1,
+          "y": 1,
+          "dir": 1
+        },
+        "stars": [
+          {
+            "x": 4,
+            "y": 1
+          },
+          {
+            "x": 3,
+            "y": 2
+          },
+          {
+            "x": 4,
+            "y": 3
+          },
+          {
+            "x": 2,
+            "y": 4
+          },
+          {
+            "x": 6,
+            "y": 5
+          }
+        ],
+        "tiles": [
+          {
+            "x": 1,
+            "y": 1,
+            "color": "R"
+          },
+          {
+            "x": 2,
+            "y": 1,
+            "color": "R"
+          },
+          {
+            "x": 3,
+            "y": 1,
+            "color": "R"
+          },
+          {
+            "x": 4,
+            "y": 1,
+            "color": "R"
+          },
+          {
+            "x": 5,
+            "y": 1,
+            "color": "R"
+          },
+          {
+            "x": 6,
+            "y": 1,
+            "color": "G"
+          },
+          {
+            "x": 2,
+            "y": 2,
+            "color": "B"
+          },
+          {
+            "x": 3,
+            "y": 2,
+            "color": "R"
+          },
+          {
+            "x": 4,
+            "y": 2,
+            "color": "R"
+          },
+          {
+            "x": 5,
+            "y": 2,
+            "color": "R"
+          },
+          {
+            "x": 6,
+            "y": 2,
+            "color": "R"
+          },
+          {
+            "x": 2,
+            "y": 3,
+            "color": "R"
+          },
+          {
+            "x": 3,
+            "y": 3,
+            "color": "R"
+          },
+          {
+            "x": 4,
+            "y": 3,
+            "color": "R"
+          },
+          {
+            "x": 5,
+            "y": 3,
+            "color": "G"
+          },
+          {
+            "x": 1,
+            "y": 4,
+            "color": "B"
+          },
+          {
+            "x": 2,
+            "y": 4,
+            "color": "R"
+          },
+          {
+            "x": 3,
+            "y": 4,
+            "color": "R"
+          },
+          {
+            "x": 4,
+            "y": 4,
+            "color": "R"
+          },
+          {
+            "x": 5,
+            "y": 4,
+            "color": "R"
+          },
+          {
+            "x": 1,
+            "y": 5,
+            "color": "R"
+          },
+          {
+            "x": 2,
+            "y": 5,
+            "color": "R"
+          },
+          {
+            "x": 3,
+            "y": 5,
+            "color": "R"
+          },
+          {
+            "x": 4,
+            "y": 5,
+            "color": "R"
+          },
+          {
+            "x": 5,
+            "y": 5,
+            "color": "R"
+          },
+          {
+            "x": 6,
+            "y": 5,
+            "color": "R"
+          }
+        ]
+      },
+      "solution": {
+        "f0": [
+          "move",
+          "f1:G",
+          "f2:B",
+          "f0"
+        ],
+        "f1": [
+          "turn_right",
+          "move",
+          "turn_right"
+        ],
+        "f2": [
+          "turn_left",
+          "move",
+          "turn_left"
+        ]
+      },
+      "solution_steps": 93
+    },
+    {
+      "id": "official-22",
+      "order": 22,
+      "number": "4-7",
+      "chapter_id": "chapter-4",
+      "title": "螺旋寶庫",
+      "goal": "螺旋的轉角是綠色，藍色路口外面藏著星星。",
+      "hint": "這關要同時處理轉彎和支線，兩種顏色條件都會用到。",
+      "config": {
+        "f0": 4,
+        "f1": 6,
+        "f2": 0,
+        "tools": {
+          "paint_red": false,
+          "paint_green": false,
+          "paint_blue": false
+        }
+      },
+      "map": {
+        "gridSize": 11,
+        "padding": 1,
+        "bounds": {
+          "minX": 0,
+          "minY": 0,
+          "maxX": 10,
+          "maxY": 10
+        },
+        "start": {
+          "x": 2,
+          "y": 2,
+          "dir": 1
+        },
+        "stars": [
+          {
+            "x": 5,
+            "y": 1
+          },
+          {
+            "x": 4,
+            "y": 3
+          },
+          {
+            "x": 9,
+            "y": 5
+          },
+          {
+            "x": 1,
+            "y": 6
+          },
+          {
+            "x": 4,
+            "y": 6
+          },
+          {
+            "x": 5,
+            "y": 9
+          }
+        ],
+        "tiles": [
+          {
+            "x": 5,
+            "y": 1,
+            "color": "R"
+          },
+          {
+            "x": 2,
+            "y": 2,
+            "color": "R"
+          },
+          {
+            "x": 3,
+            "y": 2,
+            "color": "R"
+          },
+          {
+            "x": 4,
+            "y": 2,
+            "color": "R"
+          },
+          {
+            "x": 5,
+            "y": 2,
+            "color": "B"
+          },
+          {
+            "x": 6,
+            "y": 2,
+            "color": "R"
+          },
+          {
+            "x": 7,
+            "y": 2,
+            "color": "R"
+          },
+          {
+            "x": 8,
+            "y": 2,
+            "color": "G"
+          },
+          {
+            "x": 4,
+            "y": 3,
+            "color": "R"
+          },
+          {
+            "x": 8,
+            "y": 3,
+            "color": "R"
+          },
+          {
+            "x": 2,
+            "y": 4,
+            "color": "G"
+          },
+          {
+            "x": 3,
+            "y": 4,
+            "color": "R"
+          },
+          {
+            "x": 4,
+            "y": 4,
+            "color": "B"
+          },
+          {
+            "x": 5,
+            "y": 4,
+            "color": "R"
+          },
+          {
+            "x": 6,
+            "y": 4,
+            "color": "G"
+          },
+          {
+            "x": 8,
+            "y": 4,
+            "color": "R"
+          },
+          {
+            "x": 2,
+            "y": 5,
+            "color": "R"
+          },
+          {
+            "x": 6,
+            "y": 5,
+            "color": "R"
+          },
+          {
+            "x": 8,
+            "y": 5,
+            "color": "B"
+          },
+          {
+            "x": 9,
+            "y": 5,
+            "color": "R"
+          },
+          {
+            "x": 1,
+            "y": 6,
+            "color": "R"
+          },
+          {
+            "x": 2,
+            "y": 6,
+            "color": "B"
+          },
+          {
+            "x": 4,
+            "y": 6,
+            "color": "R"
+          },
+          {
+            "x": 5,
+            "y": 6,
+            "color": "R"
+          },
+          {
+            "x": 6,
+            "y": 6,
+            "color": "G"
+          },
+          {
+            "x": 8,
+            "y": 6,
+            "color": "R"
+          },
+          {
+            "x": 2,
+            "y": 7,
+            "color": "R"
+          },
+          {
+            "x": 8,
+            "y": 7,
+            "color": "R"
+          },
+          {
+            "x": 2,
+            "y": 8,
+            "color": "G"
+          },
+          {
+            "x": 3,
+            "y": 8,
+            "color": "R"
+          },
+          {
+            "x": 4,
+            "y": 8,
+            "color": "R"
+          },
+          {
+            "x": 5,
+            "y": 8,
+            "color": "B"
+          },
+          {
+            "x": 6,
+            "y": 8,
+            "color": "R"
+          },
+          {
+            "x": 7,
+            "y": 8,
+            "color": "R"
+          },
+          {
+            "x": 8,
+            "y": 8,
+            "color": "G"
+          },
+          {
+            "x": 5,
+            "y": 9,
+            "color": "R"
+          }
+        ]
+      },
+      "solution": {
+        "f0": [
+          "move",
+          "turn_right:G",
+          "f1:B",
+          "f0"
+        ],
+        "f1": [
+          "turn_left",
+          "move",
+          "turn_right",
+          "turn_right",
+          "move",
+          "turn_left"
+        ],
+        "f2": []
+      },
+      "solution_steps": 147
+    },
+    {
+      "id": "official-23",
+      "order": 23,
+      "number": "5-1",
+      "chapter_id": "chapter-5",
+      "title": "走過就塗掉",
+      "goal": "繞一圈之後，從右上角直直走出去。",
+      "hint": "機器人可以改變地板的顏色，塗色也能加顏色條件。轉過的轉角塗成紅色，下次經過就不會再轉。",
+      "config": {
+        "f0": 4,
+        "f1": 0,
+        "f2": 0,
+        "tools": {
+          "paint_red": true,
+          "paint_green": false,
+          "paint_blue": false
+        }
+      },
+      "map": {
+        "gridSize": 9,
+        "padding": 1,
+        "bounds": {
+          "minX": 0,
+          "minY": 0,
+          "maxX": 8,
+          "maxY": 5
+        },
+        "start": {
+          "x": 1,
+          "y": 1,
+          "dir": 1
+        },
+        "stars": [
+          {
+            "x": 7,
+            "y": 1
+          },
+          {
+            "x": 1,
+            "y": 3
+          },
+          {
+            "x": 4,
+            "y": 3
+          }
+        ],
+        "tiles": [
+          {
+            "x": 1,
+            "y": 1,
+            "color": "G"
+          },
+          {
+            "x": 2,
+            "y": 1,
+            "color": "R"
+          },
+          {
+            "x": 3,
+            "y": 1,
+            "color": "R"
+          },
+          {
+            "x": 4,
+            "y": 1,
+            "color": "G"
+          },
+          {
+            "x": 5,
+            "y": 1,
+            "color": "R"
+          },
+          {
+            "x": 6,
+            "y": 1,
+            "color": "R"
+          },
+          {
+            "x": 7,
+            "y": 1,
+            "color": "R"
+          },
+          {
+            "x": 1,
+            "y": 2,
+            "color": "R"
+          },
+          {
+            "x": 4,
+            "y": 2,
+            "color": "R"
+          },
+          {
+            "x": 1,
+            "y": 3,
+            "color": "R"
+          },
+          {
+            "x": 4,
+            "y": 3,
+            "color": "R"
+          },
+          {
+            "x": 1,
+            "y": 4,
+            "color": "G"
+          },
+          {
+            "x": 2,
+            "y": 4,
+            "color": "R"
+          },
+          {
+            "x": 3,
+            "y": 4,
+            "color": "R"
+          },
+          {
+            "x": 4,
+            "y": 4,
+            "color": "G"
+          }
+        ]
+      },
+      "solution": {
+        "f0": [
+          "move",
+          "turn_right:G",
+          "paint_red:G",
+          "f0"
+        ],
+        "f1": [],
+        "f2": []
+      },
+      "solution_steps": 69
+    },
+    {
+      "id": "official-24",
+      "order": 24,
+      "number": "5-2",
+      "chapter_id": "chapter-5",
+      "title": "塗掉轉角",
+      "goal": "繞完一圈後，要從右下角直走出去。",
+      "hint": "這次轉角要左轉。「轉彎再塗色」兩個動作可以包進 F1，用一個條件呼叫。",
+      "config": {
+        "f0": 3,
+        "f1": 2,
+        "f2": 0,
+        "tools": {
+          "paint_red": true,
+          "paint_green": false,
+          "paint_blue": false
+        }
+      },
+      "map": {
+        "gridSize": 9,
+        "padding": 1,
+        "bounds": {
+          "minX": 0,
+          "minY": 0,
+          "maxX": 8,
+          "maxY": 6
+        },
+        "start": {
+          "x": 3,
+          "y": 5,
+          "dir": 1
+        },
+        "stars": [
+          {
+            "x": 3,
+            "y": 1
+          },
+          {
+            "x": 1,
+            "y": 3
+          },
+          {
+            "x": 5,
+            "y": 3
+          },
+          {
+            "x": 7,
+            "y": 5
+          }
+        ],
+        "tiles": [
+          {
+            "x": 1,
+            "y": 1,
+            "color": "G"
+          },
+          {
+            "x": 2,
+            "y": 1,
+            "color": "R"
+          },
+          {
+            "x": 3,
+            "y": 1,
+            "color": "R"
+          },
+          {
+            "x": 4,
+            "y": 1,
+            "color": "R"
+          },
+          {
+            "x": 5,
+            "y": 1,
+            "color": "G"
+          },
+          {
+            "x": 1,
+            "y": 2,
+            "color": "R"
+          },
+          {
+            "x": 5,
+            "y": 2,
+            "color": "R"
+          },
+          {
+            "x": 1,
+            "y": 3,
+            "color": "R"
+          },
+          {
+            "x": 5,
+            "y": 3,
+            "color": "R"
+          },
+          {
+            "x": 1,
+            "y": 4,
+            "color": "R"
+          },
+          {
+            "x": 5,
+            "y": 4,
+            "color": "R"
+          },
+          {
+            "x": 1,
+            "y": 5,
+            "color": "G"
+          },
+          {
+            "x": 2,
+            "y": 5,
+            "color": "R"
+          },
+          {
+            "x": 3,
+            "y": 5,
+            "color": "R"
+          },
+          {
+            "x": 4,
+            "y": 5,
+            "color": "R"
+          },
+          {
+            "x": 5,
+            "y": 5,
+            "color": "G"
+          },
+          {
+            "x": 6,
+            "y": 5,
+            "color": "R"
+          },
+          {
+            "x": 7,
+            "y": 5,
+            "color": "R"
+          }
+        ]
+      },
+      "solution": {
+        "f0": [
+          "move",
+          "f1:G",
+          "f0"
+        ],
+        "f1": [
+          "turn_left",
+          "paint_red"
+        ],
+        "f2": []
+      },
+      "solution_steps": 66
+    },
+    {
+      "id": "official-25",
+      "order": 25,
+      "number": "5-3",
+      "chapter_id": "chapter-5",
+      "title": "T 字路口",
+      "goal": "先走上面的死路，再回頭走下面那條。",
+      "hint": "同一個路口經過兩次，第二次要有不同的反應。",
+      "config": {
+        "f0": 4,
+        "f1": 2,
+        "f2": 2,
+        "tools": {
+          "paint_red": true,
+          "paint_green": false,
+          "paint_blue": false
+        }
+      },
+      "map": {
+        "gridSize": 8,
+        "padding": 1,
+        "bounds": {
+          "minX": 0,
+          "minY": 0,
+          "maxX": 5,
+          "maxY": 7
+        },
+        "start": {
+          "x": 1,
+          "y": 3,
+          "dir": 1
+        },
+        "stars": [
+          {
+            "x": 3,
+            "y": 1
+          },
+          {
+            "x": 3,
+            "y": 6
+          }
+        ],
+        "tiles": [
+          {
+            "x": 3,
+            "y": 1,
+            "color": "B"
+          },
+          {
+            "x": 3,
+            "y": 2,
+            "color": "R"
+          },
+          {
+            "x": 1,
+            "y": 3,
+            "color": "R"
+          },
+          {
+            "x": 2,
+            "y": 3,
+            "color": "R"
+          },
+          {
+            "x": 3,
+            "y": 3,
+            "color": "G"
+          },
+          {
+            "x": 3,
+            "y": 4,
+            "color": "R"
+          },
+          {
+            "x": 3,
+            "y": 5,
+            "color": "R"
+          },
+          {
+            "x": 3,
+            "y": 6,
+            "color": "R"
+          }
+        ]
+      },
+      "solution": {
+        "f0": [
+          "move",
+          "f1:G",
+          "f2:B",
+          "f0"
+        ],
+        "f1": [
+          "turn_left",
+          "paint_red"
+        ],
+        "f2": [
+          "turn_left",
+          "turn_left"
+        ]
+      },
+      "solution_steps": 37
+    },
+    {
+      "id": "official-26",
+      "order": 26,
+      "number": "5-4",
+      "chapter_id": "chapter-5",
+      "title": "第二圈",
+      "goal": "中間的星星要繞到第二圈才能拿。",
+      "hint": "第一次經過藍色地板時先做記號，第二次經過才轉進去。",
+      "config": {
+        "f0": 4,
+        "f1": 0,
+        "f2": 0,
+        "tools": {
+          "paint_red": false,
+          "paint_green": true,
+          "paint_blue": false
+        }
+      },
+      "map": {
+        "gridSize": 7,
+        "padding": 1,
+        "bounds": {
+          "minX": 0,
+          "minY": 0,
+          "maxX": 6,
+          "maxY": 6
+        },
+        "start": {
+          "x": 2,
+          "y": 1,
+          "dir": 1
+        },
+        "stars": [
+          {
+            "x": 4,
+            "y": 1
+          },
+          {
+            "x": 1,
+            "y": 3
+          },
+          {
+            "x": 3,
+            "y": 3
+          },
+          {
+            "x": 5,
+            "y": 3
+          }
+        ],
+        "tiles": [
+          {
+            "x": 1,
+            "y": 1,
+            "color": "G"
+          },
+          {
+            "x": 2,
+            "y": 1,
+            "color": "R"
+          },
+          {
+            "x": 3,
+            "y": 1,
+            "color": "R"
+          },
+          {
+            "x": 4,
+            "y": 1,
+            "color": "R"
+          },
+          {
+            "x": 5,
+            "y": 1,
+            "color": "G"
+          },
+          {
+            "x": 1,
+            "y": 2,
+            "color": "R"
+          },
+          {
+            "x": 5,
+            "y": 2,
+            "color": "R"
+          },
+          {
+            "x": 1,
+            "y": 3,
+            "color": "R"
+          },
+          {
+            "x": 3,
+            "y": 3,
+            "color": "R"
+          },
+          {
+            "x": 5,
+            "y": 3,
+            "color": "R"
+          },
+          {
+            "x": 1,
+            "y": 4,
+            "color": "R"
+          },
+          {
+            "x": 3,
+            "y": 4,
+            "color": "R"
+          },
+          {
+            "x": 5,
+            "y": 4,
+            "color": "R"
+          },
+          {
+            "x": 1,
+            "y": 5,
+            "color": "G"
+          },
+          {
+            "x": 2,
+            "y": 5,
+            "color": "R"
+          },
+          {
+            "x": 3,
+            "y": 5,
+            "color": "B"
+          },
+          {
+            "x": 4,
+            "y": 5,
+            "color": "R"
+          },
+          {
+            "x": 5,
+            "y": 5,
+            "color": "G"
+          }
+        ]
+      },
+      "solution": {
+        "f0": [
+          "move",
+          "turn_right:G",
+          "paint_green:B",
+          "f0"
+        ],
+        "f1": [],
+        "f2": []
+      },
+      "solution_steps": 105
+    },
+    {
+      "id": "official-27",
+      "order": 27,
+      "number": "5-5",
+      "chapter_id": "chapter-5",
+      "title": "兩個環",
+      "goal": "繞完右邊的環，再繞左邊的環，最後走到出口。",
+      "hint": "用的程式和「塗掉轉角」一樣。真正的難題是：怎麼讓機器人進到左邊的環裡？",
+      "config": {
+        "f0": 3,
+        "f1": 2,
+        "f2": 0,
+        "tools": {
+          "paint_red": true,
+          "paint_green": false,
+          "paint_blue": false
+        }
+      },
+      "map": {
+        "gridSize": 13,
+        "padding": 1,
+        "bounds": {
+          "minX": 0,
+          "minY": 0,
+          "maxX": 12,
+          "maxY": 10
+        },
+        "start": {
+          "x": 11,
+          "y": 7,
+          "dir": 0
+        },
+        "stars": [
+          {
+            "x": 7,
+            "y": 1
+          },
+          {
+            "x": 2,
+            "y": 5
+          },
+          {
+            "x": 9,
+            "y": 5
+          },
+          {
+            "x": 1,
+            "y": 7
+          },
+          {
+            "x": 5,
+            "y": 7
+          },
+          {
+            "x": 7,
+            "y": 7
+          },
+          {
+            "x": 6,
+            "y": 9
+          },
+          {
+            "x": 9,
+            "y": 9
+          }
+        ],
+        "tiles": [
+          {
+            "x": 3,
+            "y": 1,
+            "color": "G"
+          },
+          {
+            "x": 4,
+            "y": 1,
+            "color": "R"
+          },
+          {
+            "x": 5,
+            "y": 1,
+            "color": "R"
+          },
+          {
+            "x": 6,
+            "y": 1,
+            "color": "R"
+          },
+          {
+            "x": 7,
+            "y": 1,
+            "color": "R"
+          },
+          {
+            "x": 8,
+            "y": 1,
+            "color": "R"
+          },
+          {
+            "x": 9,
+            "y": 1,
+            "color": "R"
+          },
+          {
+            "x": 10,
+            "y": 1,
+            "color": "R"
+          },
+          {
+            "x": 11,
+            "y": 1,
+            "color": "G"
+          },
+          {
+            "x": 3,
+            "y": 2,
+            "color": "R"
+          },
+          {
+            "x": 11,
+            "y": 2,
+            "color": "R"
+          },
+          {
+            "x": 3,
+            "y": 3,
+            "color": "R"
+          },
+          {
+            "x": 11,
+            "y": 3,
+            "color": "R"
+          },
+          {
+            "x": 3,
+            "y": 4,
+            "color": "R"
+          },
+          {
+            "x": 11,
+            "y": 4,
+            "color": "R"
+          },
+          {
+            "x": 1,
+            "y": 5,
+            "color": "G"
+          },
+          {
+            "x": 2,
+            "y": 5,
+            "color": "R"
+          },
+          {
+            "x": 3,
+            "y": 5,
+            "color": "R"
+          },
+          {
+            "x": 4,
+            "y": 5,
+            "color": "R"
+          },
+          {
+            "x": 5,
+            "y": 5,
+            "color": "G"
+          },
+          {
+            "x": 7,
+            "y": 5,
+            "color": "G"
+          },
+          {
+            "x": 8,
+            "y": 5,
+            "color": "R"
+          },
+          {
+            "x": 9,
+            "y": 5,
+            "color": "R"
+          },
+          {
+            "x": 10,
+            "y": 5,
+            "color": "R"
+          },
+          {
+            "x": 11,
+            "y": 5,
+            "color": "G"
+          },
+          {
+            "x": 1,
+            "y": 6,
+            "color": "R"
+          },
+          {
+            "x": 3,
+            "y": 6,
+            "color": "R"
+          },
+          {
+            "x": 5,
+            "y": 6,
+            "color": "R"
+          },
+          {
+            "x": 7,
+            "y": 6,
+            "color": "R"
+          },
+          {
+            "x": 11,
+            "y": 6,
+            "color": "R"
+          },
+          {
+            "x": 1,
+            "y": 7,
+            "color": "R"
+          },
+          {
+            "x": 3,
+            "y": 7,
+            "color": "R"
+          },
+          {
+            "x": 5,
+            "y": 7,
+            "color": "R"
+          },
+          {
+            "x": 7,
+            "y": 7,
+            "color": "R"
+          },
+          {
+            "x": 11,
+            "y": 7,
+            "color": "R"
+          },
+          {
+            "x": 1,
+            "y": 8,
+            "color": "R"
+          },
+          {
+            "x": 3,
+            "y": 8,
+            "color": "R"
+          },
+          {
+            "x": 5,
+            "y": 8,
+            "color": "R"
+          },
+          {
+            "x": 7,
+            "y": 8,
+            "color": "R"
+          },
+          {
+            "x": 11,
+            "y": 8,
+            "color": "R"
+          },
+          {
+            "x": 1,
+            "y": 9,
+            "color": "G"
+          },
+          {
+            "x": 2,
+            "y": 9,
+            "color": "R"
+          },
+          {
+            "x": 3,
+            "y": 9,
+            "color": "G"
+          },
+          {
+            "x": 4,
+            "y": 9,
+            "color": "R"
+          },
+          {
+            "x": 5,
+            "y": 9,
+            "color": "G"
+          },
+          {
+            "x": 6,
+            "y": 9,
+            "color": "R"
+          },
+          {
+            "x": 7,
+            "y": 9,
+            "color": "G"
+          },
+          {
+            "x": 8,
+            "y": 9,
+            "color": "R"
+          },
+          {
+            "x": 9,
+            "y": 9,
+            "color": "R"
+          },
+          {
+            "x": 10,
+            "y": 9,
+            "color": "R"
+          },
+          {
+            "x": 11,
+            "y": 9,
+            "color": "G"
+          }
+        ]
+      },
+      "solution": {
+        "f0": [
+          "move",
+          "f1:G",
+          "f0"
+        ],
+        "f1": [
+          "turn_left",
+          "paint_red"
+        ],
+        "f2": []
+      },
+      "solution_steps": 191
+    },
+    {
+      "id": "official-28",
+      "order": 28,
+      "number": "6-1",
+      "chapter_id": "chapter-6",
+      "title": "原路折返",
+      "goal": "走到路的盡頭，再剛好退回起點，往上走。",
+      "hint": "起點和左邊的地板長得一樣，靠顏色分不出來，要讓程式自己「數」走了幾步。函式呼叫結束後，會接著執行呼叫點後面的指令。",
+      "config": {
+        "f0": 4,
+        "f1": 4,
+        "f2": 2,
+        "tools": {
+          "paint_red": false,
+          "paint_green": false,
+          "paint_blue": false
+        }
+      },
+      "map": {
+        "gridSize": 11,
+        "padding": 1,
+        "bounds": {
+          "minX": 0,
+          "minY": 0,
+          "maxX": 10,
+          "maxY": 4
+        },
+        "start": {
+          "x": 4,
+          "y": 3,
+          "dir": 1
+        },
+        "stars": [
+          {
+            "x": 4,
+            "y": 1
+          },
+          {
+            "x": 7,
+            "y": 3
+          },
+          {
+            "x": 9,
+            "y": 3
+          }
+        ],
+        "tiles": [
+          {
+            "x": 4,
+            "y": 1,
+            "color": "R"
+          },
+          {
+            "x": 4,
+            "y": 2,
+            "color": "R"
+          },
+          {
+            "x": 1,
+            "y": 3,
+            "color": "R"
+          },
+          {
+            "x": 2,
+            "y": 3,
+            "color": "R"
+          },
+          {
+            "x": 3,
+            "y": 3,
+            "color": "R"
+          },
+          {
+            "x": 4,
+            "y": 3,
+            "color": "R"
+          },
+          {
+            "x": 5,
+            "y": 3,
+            "color": "R"
+          },
+          {
+            "x": 6,
+            "y": 3,
+            "color": "R"
+          },
+          {
+            "x": 7,
+            "y": 3,
+            "color": "R"
+          },
+          {
+            "x": 8,
+            "y": 3,
+            "color": "R"
+          },
+          {
+            "x": 9,
+            "y": 3,
+            "color": "B"
+          }
+        ]
+      },
+      "solution": {
+        "f0": [
+          "f1",
+          "turn_right",
+          "move",
+          "move"
+        ],
+        "f1": [
+          "move",
+          "f1:R",
+          "f2:B",
+          "move"
+        ],
+        "f2": [
+          "turn_left",
+          "turn_left"
+        ]
+      },
+      "solution_steps": 26
+    },
+    {
+      "id": "official-29",
+      "order": 29,
+      "number": "6-2",
+      "chapter_id": "chapter-6",
+      "title": "等距",
+      "goal": "往下走的距離，要和往右走的距離一樣。",
+      "hint": "往右走了幾格，就要往下走幾格。試著讓遞迴「記住」次數。",
+      "config": {
+        "f0": 4,
+        "f1": 4,
+        "f2": 0,
+        "tools": {
+          "paint_red": false,
+          "paint_green": false,
+          "paint_blue": false
+        }
+      },
+      "map": {
+        "gridSize": 9,
+        "padding": 1,
+        "bounds": {
+          "minX": 0,
+          "minY": 0,
+          "maxX": 8,
+          "maxY": 8
+        },
+        "start": {
+          "x": 1,
+          "y": 1,
+          "dir": 1
+        },
+        "stars": [
+          {
+            "x": 3,
+            "y": 1
+          },
+          {
+            "x": 7,
+            "y": 5
+          }
+        ],
+        "tiles": [
+          {
+            "x": 1,
+            "y": 1,
+            "color": "R"
+          },
+          {
+            "x": 2,
+            "y": 1,
+            "color": "R"
+          },
+          {
+            "x": 3,
+            "y": 1,
+            "color": "R"
+          },
+          {
+            "x": 4,
+            "y": 1,
+            "color": "R"
+          },
+          {
+            "x": 5,
+            "y": 1,
+            "color": "G"
+          },
+          {
+            "x": 5,
+            "y": 2,
+            "color": "R"
+          },
+          {
+            "x": 5,
+            "y": 3,
+            "color": "R"
+          },
+          {
+            "x": 5,
+            "y": 4,
+            "color": "R"
+          },
+          {
+            "x": 5,
+            "y": 5,
+            "color": "R"
+          },
+          {
+            "x": 6,
+            "y": 5,
+            "color": "R"
+          },
+          {
+            "x": 7,
+            "y": 5,
+            "color": "R"
+          },
+          {
+            "x": 5,
+            "y": 6,
+            "color": "R"
+          },
+          {
+            "x": 5,
+            "y": 7,
+            "color": "R"
+          }
+        ]
+      },
+      "solution": {
+        "f0": [
+          "f1",
+          "turn_left",
+          "move",
+          "move"
+        ],
+        "f1": [
+          "move",
+          "f1:R",
+          "turn_right:G",
+          "move"
+        ],
+        "f2": []
+      },
+      "solution_steps": 20
+    },
+    {
+      "id": "official-30",
+      "order": 30,
+      "number": "6-3",
+      "chapter_id": "chapter-6",
+      "title": "金字塔",
+      "goal": "爬上金字塔再爬下來，回到地面後往右走。",
+      "hint": "下山的階數要和上山一樣。上山的動作寫在遞迴呼叫之前，下山寫在之後。",
+      "config": {
+        "f0": 3,
+        "f1": 6,
+        "f2": 4,
+        "tools": {
+          "paint_red": false,
+          "paint_green": false,
+          "paint_blue": false
+        }
+      },
+      "map": {
+        "gridSize": 13,
+        "padding": 1,
+        "bounds": {
+          "minX": 0,
+          "minY": 0,
+          "maxX": 12,
+          "maxY": 8
+        },
+        "start": {
+          "x": 1,
+          "y": 5,
+          "dir": 1
+        },
+        "stars": [
+          {
+            "x": 5,
+            "y": 1
+          },
+          {
+            "x": 7,
+            "y": 3
+          },
+          {
+            "x": 11,
+            "y": 5
+          }
+        ],
+        "tiles": [
+          {
+            "x": 4,
+            "y": 1,
+            "color": "R"
+          },
+          {
+            "x": 5,
+            "y": 1,
+            "color": "G"
+          },
+          {
+            "x": 3,
+            "y": 2,
+            "color": "R"
+          },
+          {
+            "x": 4,
+            "y": 2,
+            "color": "R"
+          },
+          {
+            "x": 5,
+            "y": 2,
+            "color": "R"
+          },
+          {
+            "x": 6,
+            "y": 2,
+            "color": "R"
+          },
+          {
+            "x": 2,
+            "y": 3,
+            "color": "R"
+          },
+          {
+            "x": 3,
+            "y": 3,
+            "color": "R"
+          },
+          {
+            "x": 6,
+            "y": 3,
+            "color": "R"
+          },
+          {
+            "x": 7,
+            "y": 3,
+            "color": "R"
+          },
+          {
+            "x": 1,
+            "y": 4,
+            "color": "R"
+          },
+          {
+            "x": 2,
+            "y": 4,
+            "color": "R"
+          },
+          {
+            "x": 7,
+            "y": 4,
+            "color": "R"
+          },
+          {
+            "x": 8,
+            "y": 4,
+            "color": "R"
+          },
+          {
+            "x": 1,
+            "y": 5,
+            "color": "R"
+          },
+          {
+            "x": 8,
+            "y": 5,
+            "color": "R"
+          },
+          {
+            "x": 9,
+            "y": 5,
+            "color": "R"
+          },
+          {
+            "x": 10,
+            "y": 5,
+            "color": "R"
+          },
+          {
+            "x": 11,
+            "y": 5,
+            "color": "R"
+          },
+          {
+            "x": 9,
+            "y": 6,
+            "color": "R"
+          },
+          {
+            "x": 10,
+            "y": 6,
+            "color": "R"
+          },
+          {
+            "x": 10,
+            "y": 7,
+            "color": "R"
+          },
+          {
+            "x": 11,
+            "y": 7,
+            "color": "R"
+          }
+        ]
+      },
+      "solution": {
+        "f0": [
+          "f1",
+          "move",
+          "move"
+        ],
+        "f1": [
+          "f2",
+          "f1:R",
+          "turn_right",
+          "move",
+          "turn_left",
+          "move"
+        ],
+        "f2": [
+          "turn_left",
+          "move",
+          "turn_right",
+          "move"
+        ]
+      },
+      "solution_steps": 43
+    },
+    {
+      "id": "official-31",
+      "order": 31,
+      "number": "6-4",
+      "chapter_id": "chapter-6",
+      "title": "兩倍遠",
+      "goal": "往下走的距離，是往右走的兩倍。",
+      "hint": "跟「等距」很像，差在每一層遞迴回來時要多做一點事。",
+      "config": {
+        "f0": 4,
+        "f1": 5,
+        "f2": 0,
+        "tools": {
+          "paint_red": false,
+          "paint_green": false,
+          "paint_blue": false
+        }
+      },
+      "map": {
+        "gridSize": 11,
+        "padding": 1,
+        "bounds": {
+          "minX": 0,
+          "minY": 0,
+          "maxX": 7,
+          "maxY": 10
+        },
+        "start": {
+          "x": 1,
+          "y": 1,
+          "dir": 1
+        },
+        "stars": [
+          {
+            "x": 3,
+            "y": 1
+          },
+          {
+            "x": 6,
+            "y": 7
+          }
+        ],
+        "tiles": [
+          {
+            "x": 1,
+            "y": 1,
+            "color": "R"
+          },
+          {
+            "x": 2,
+            "y": 1,
+            "color": "R"
+          },
+          {
+            "x": 3,
+            "y": 1,
+            "color": "R"
+          },
+          {
+            "x": 4,
+            "y": 1,
+            "color": "G"
+          },
+          {
+            "x": 4,
+            "y": 2,
+            "color": "R"
+          },
+          {
+            "x": 4,
+            "y": 3,
+            "color": "R"
+          },
+          {
+            "x": 4,
+            "y": 4,
+            "color": "R"
+          },
+          {
+            "x": 5,
+            "y": 4,
+            "color": "R"
+          },
+          {
+            "x": 4,
+            "y": 5,
+            "color": "R"
+          },
+          {
+            "x": 4,
+            "y": 6,
+            "color": "R"
+          },
+          {
+            "x": 4,
+            "y": 7,
+            "color": "R"
+          },
+          {
+            "x": 5,
+            "y": 7,
+            "color": "R"
+          },
+          {
+            "x": 6,
+            "y": 7,
+            "color": "R"
+          },
+          {
+            "x": 4,
+            "y": 8,
+            "color": "R"
+          },
+          {
+            "x": 4,
+            "y": 9,
+            "color": "R"
+          }
+        ]
+      },
+      "solution": {
+        "f0": [
+          "f1",
+          "turn_left",
+          "move",
+          "move"
+        ],
+        "f1": [
+          "move",
+          "f1:R",
+          "turn_right:G",
+          "move",
+          "move"
+        ],
+        "f2": []
+      },
+      "solution_steps": 19
+    },
+    {
+      "id": "official-32",
+      "order": 32,
+      "number": "6-5",
+      "chapter_id": "chapter-6",
+      "title": "最終關",
+      "goal": "先數步數退回起點，再穿進環裡繞一圈，最後從左上角出去。",
+      "hint": "這關把「原路折返」和「塗掉轉角」結合起來。顏色條件不一定要放在函式呼叫上，轉彎和塗色也能加條件。",
+      "config": {
+        "f0": 3,
+        "f1": 5,
+        "f2": 4,
+        "tools": {
+          "paint_red": true,
+          "paint_green": false,
+          "paint_blue": false
+        }
+      },
+      "map": {
+        "gridSize": 11,
+        "padding": 1,
+        "bounds": {
+          "minX": 0,
+          "minY": 0,
+          "maxX": 10,
+          "maxY": 8
+        },
+        "start": {
+          "x": 4,
+          "y": 7,
+          "dir": 1
+        },
+        "stars": [
+          {
+            "x": 1,
+            "y": 1
+          },
+          {
+            "x": 2,
+            "y": 3
+          },
+          {
+            "x": 4,
+            "y": 3
+          },
+          {
+            "x": 6,
+            "y": 3
+          },
+          {
+            "x": 9,
+            "y": 7
+          }
+        ],
+        "tiles": [
+          {
+            "x": 1,
+            "y": 1,
+            "color": "R"
+          },
+          {
+            "x": 2,
+            "y": 1,
+            "color": "G"
+          },
+          {
+            "x": 3,
+            "y": 1,
+            "color": "R"
+          },
+          {
+            "x": 4,
+            "y": 1,
+            "color": "G"
+          },
+          {
+            "x": 5,
+            "y": 1,
+            "color": "R"
+          },
+          {
+            "x": 6,
+            "y": 1,
+            "color": "G"
+          },
+          {
+            "x": 2,
+            "y": 2,
+            "color": "R"
+          },
+          {
+            "x": 4,
+            "y": 2,
+            "color": "R"
+          },
+          {
+            "x": 6,
+            "y": 2,
+            "color": "R"
+          },
+          {
+            "x": 2,
+            "y": 3,
+            "color": "R"
+          },
+          {
+            "x": 4,
+            "y": 3,
+            "color": "R"
+          },
+          {
+            "x": 6,
+            "y": 3,
+            "color": "R"
+          },
+          {
+            "x": 2,
+            "y": 4,
+            "color": "R"
+          },
+          {
+            "x": 4,
+            "y": 4,
+            "color": "R"
+          },
+          {
+            "x": 6,
+            "y": 4,
+            "color": "R"
+          },
+          {
+            "x": 2,
+            "y": 5,
+            "color": "G"
+          },
+          {
+            "x": 3,
+            "y": 5,
+            "color": "R"
+          },
+          {
+            "x": 4,
+            "y": 5,
+            "color": "R"
+          },
+          {
+            "x": 5,
+            "y": 5,
+            "color": "R"
+          },
+          {
+            "x": 6,
+            "y": 5,
+            "color": "G"
+          },
+          {
+            "x": 4,
+            "y": 6,
+            "color": "R"
+          },
+          {
+            "x": 1,
+            "y": 7,
+            "color": "R"
+          },
+          {
+            "x": 2,
+            "y": 7,
+            "color": "R"
+          },
+          {
+            "x": 3,
+            "y": 7,
+            "color": "R"
+          },
+          {
+            "x": 4,
+            "y": 7,
+            "color": "R"
+          },
+          {
+            "x": 5,
+            "y": 7,
+            "color": "R"
+          },
+          {
+            "x": 6,
+            "y": 7,
+            "color": "R"
+          },
+          {
+            "x": 7,
+            "y": 7,
+            "color": "R"
+          },
+          {
+            "x": 8,
+            "y": 7,
+            "color": "R"
+          },
+          {
+            "x": 9,
+            "y": 7,
+            "color": "B"
+          }
+        ]
+      },
+      "solution": {
+        "f0": [
+          "f1",
+          "turn_right",
+          "f2"
+        ],
+        "f1": [
+          "move",
+          "f1:R",
+          "turn_left:B",
+          "turn_left:B",
+          "move"
+        ],
+        "f2": [
+          "move",
+          "turn_left:G",
+          "paint_red:G",
+          "f2"
+        ]
+      },
+      "solution_steps": 125
+    }
+  ]
+}
